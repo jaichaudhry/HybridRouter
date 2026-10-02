@@ -1,0 +1,12 @@
+// Shared build settings. Local values come from the optional, gitignored Secrets.xcconfig.
+
+// Defaults that work for anyone who clones the repo.
+HR_BUNDLE_ID = dev.hybridrouter.HybridRouter
+HR_APPLE_CLOUD_ENABLED = NO
+DEVELOPMENT_TEAM =
+ANTHROPIC_API_KEY =
+CLAUDE_CLIENT_ID =
+
+#include? "Secrets.xcconfig"
+
+PRODUCT_BUNDLE_IDENTIFIER = $(HR_BUNDLE_ID)
