@@ -82,7 +82,7 @@ struct RoutedSessionTests {
     @Test func partialTextStreamsCumulatively() async throws {
         let session = makeSession(onDevice: FakeProvider(route: .onDevice, reply: "one two three"))
         var partials: [String] = []
-        _ = try await session.respond(to: "Count", decision: .forced(.onDevice)) { partials.append($0) }
+        _ = try await session.respond(to: "Count", decision: .forced(.onDevice)) { partials.append($0.text) }
         #expect(partials.last == "one two three")
         #expect(partials.count >= 2)
         #expect(zip(partials, partials.dropFirst()).allSatisfy { $1.hasPrefix($0) })
@@ -164,5 +164,49 @@ extension RoutedSessionTests {
         session.prewarm(.claude)
         let result = try await session.respond(to: "Hi", decision: .forced(.onDevice))
         #expect(result.text == "on-device reply")
+    }
+}
+
+extension RoutedSessionTests {
+    @Generable
+    struct Place: Equatable {
+        var name: String
+        var days: Int
+    }
+
+    @Test func schemaRepliesAreStructured() async throws {
+        let session = makeSession(appleCloud: FakeProvider(route: .appleCloud, reply: #"{"name": "Kyoto", "days": 3}"#))
+        var partials = 0
+        let result = try await session.respond(
+            to: "Plan Kyoto",
+            decision: .forced(.appleCloud),
+            schema: Place.generationSchema
+        ) { _ in partials += 1 }
+
+        guard case .structured(let content) = result.content else {
+            Issue.record("Expected structured content")
+            return
+        }
+        #expect(try Place(content) == Place(name: "Kyoto", days: 3))
+        #expect(partials > 0)
+        #expect(!result.content.isEmpty)
+    }
+
+    @Test func discardingTheLastTurnRemovesItsPromptAndReply() async throws {
+        let onDevice = FakeProvider(route: .onDevice, reply: "kept")
+        let session = makeSession(onDevice: onDevice)
+        _ = try await session.respond(to: "Keep me", decision: .forced(.onDevice))
+        _ = try await session.respond(to: "Drop me", decision: .forced(.onDevice))
+
+        session.discardLastTurn()
+        _ = try await session.respond(to: "Next", decision: .forced(.onDevice))
+
+        let saw = try #require(onDevice.requests.last)
+        #expect(texts(in: saw) == ["Keep me", "kept", "Next"])
+    }
+
+    @Test func emptyContentIsDetected() {
+        #expect(TurnContent.text("  \n").isEmpty)
+        #expect(!TurnContent.text("hi").isEmpty)
     }
 }

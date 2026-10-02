@@ -28,7 +28,7 @@ public struct FakeLanguageModel: LanguageModel {
         self.delay = delay
     }
 
-    public var capabilities: LanguageModelCapabilities { LanguageModelCapabilities([.toolCalling]) }
+    public var capabilities: LanguageModelCapabilities { LanguageModelCapabilities([.toolCalling, .guidedGeneration]) }
 
     public var executorConfiguration: FakeExecutor.Configuration {
         FakeExecutor.Configuration(name: name, reply: reply, usage: usage, delay: delay)

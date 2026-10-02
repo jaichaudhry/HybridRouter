@@ -93,7 +93,7 @@ public final class ChatModel {
 
         do {
             let result = try await session.respond(to: prompt, decision: decision) { [weak self] partial in
-                self?.messages[index].text = partial
+                self?.messages[index].text = partial.text
             }
             messages[index].text = result.text
             messages[index].metrics = result.metrics

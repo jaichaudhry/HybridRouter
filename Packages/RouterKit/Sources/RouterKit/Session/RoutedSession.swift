@@ -15,8 +15,11 @@ public final class RoutedSession {
     }
 
     public struct TurnResult: Sendable {
-        public let text: String
+        public let content: TurnContent
         public let metrics: StepMetrics
+
+        /// The reply as text (structured replies as JSON).
+        public var text: String { content.text }
     }
 
     public private(set) var isResponding = false
@@ -64,11 +67,13 @@ public final class RoutedSession {
         session.prewarm()
     }
 
-    /// Runs one turn on the decided route, reporting the cumulative text as it streams.
+    /// Runs one turn on the decided route, reporting the cumulative reply as it streams.
+    /// - Parameter schema: if set, the reply is structured content matching it.
     public func respond(
         to prompt: String,
         decision: RouteDecision,
-        onPartial: (String) -> Void = { _ in }
+        schema: GenerationSchema? = nil,
+        onPartial: (TurnContent) -> Void = { _ in }
     ) async throws -> TurnResult {
         guard !isResponding else { throw Error.busy }
         let provider = provider(for: decision.route)
@@ -84,14 +89,21 @@ public final class RoutedSession {
         let clock = ContinuousClock()
         let start = clock.now
         var firstToken: ContinuousClock.Instant?
-        var text = ""
+        var content = schema == nil ? TurnContent.text("") : .structured(GeneratedContent(properties: [:]))
 
-        for try await snapshot in session.streamResponse(to: prompt) {
-            if firstToken == nil, !snapshot.content.isEmpty {
-                firstToken = clock.now
+        func receive(_ next: TurnContent) {
+            if firstToken == nil, !next.isEmpty { firstToken = clock.now }
+            content = next
+            onPartial(next)
+        }
+        if let schema {
+            for try await snapshot in session.streamResponse(to: prompt, schema: schema) {
+                receive(.structured(snapshot.rawContent))
             }
-            text = snapshot.content
-            onPartial(text)
+        } else {
+            for try await snapshot in session.streamResponse(to: prompt) {
+                receive(.text(snapshot.content))
+            }
         }
 
         let usage = TokenUsage(
@@ -107,7 +119,44 @@ public final class RoutedSession {
             usage: usage,
             estimatedCost: costTable.cost(of: usage, modelID: provider.modelID)
         )
-        return TurnResult(text: text, metrics: metrics)
+        return TurnResult(content: content, metrics: metrics)
+    }
+
+    /// Removes the most recent turn (its prompt and everything after it) from the history,
+    /// so a failed attempt that returned normally (e.g. an empty reply) can be retried cleanly.
+    public func discardLastTurn() {
+        guard !isResponding else { return }
+        session.transcript.history.removeLastTurn()
+    }
+}
+
+extension Transcript.HistoryView {
+    /// Removes the last prompt and everything after it. Indices are only valid on the view
+    /// they came from, so the search and removal happen on the same instance.
+    mutating func removeLastTurn() {
+        guard let lastPrompt = lastIndex(where: \.isPrompt) else { return }
+        removeSubrange(lastPrompt...)
+    }
+}
+
+/// A reply: plain text, or structured content generated from a schema.
+public enum TurnContent: Equatable, Sendable {
+    case text(String)
+    case structured(GeneratedContent)
+
+    public var text: String {
+        switch self {
+        case .text(let text): text
+        case .structured(let content): content.jsonString
+        }
+    }
+
+    /// True when nothing visible has been generated.
+    public var isEmpty: Bool {
+        switch self {
+        case .text(let text): text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .structured(let content): content.jsonString.trimmingCharacters(in: CharacterSet(charactersIn: "{}[] \n")).isEmpty
+        }
     }
 }
 
