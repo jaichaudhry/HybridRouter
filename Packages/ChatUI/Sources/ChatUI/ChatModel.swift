@@ -44,8 +44,10 @@ public final class ChatModel {
     /// True from the moment a message is sent until its reply finishes, including route selection.
     public private(set) var isSending = false
     public var draft = ""
-    /// Nil means Auto.
-    public var routeOverride: Route?
+    /// Nil means Auto. Picking a route starts loading its model right away.
+    public var routeOverride: Route? {
+        didSet { prewarm() }
+    }
 
     public private(set) var session: RoutedSession
     @ObservationIgnored private let autoRouter: AutoRouter
@@ -101,6 +103,13 @@ public final class ChatModel {
             messages[index].errorMessage = error.localizedDescription
         }
         messages[index].isStreaming = false
+    }
+
+    /// Loads the model the next message will most likely use, so its first reply starts sooner.
+    /// On Auto that's the cheapest available route.
+    public func prewarm() {
+        let route = routeOverride ?? Route.allCases.first { session.availability(of: $0).isAvailable }
+        if let route { session.prewarm(route) }
     }
 
     /// Swaps in a new session (e.g. after Claude credentials change) that continues the same

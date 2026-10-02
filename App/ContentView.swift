@@ -5,6 +5,7 @@ import SwiftUI
 struct ContentView: View {
     let model: AppModel
 
+    @Environment(\.scenePhase) private var scenePhase
     @State private var showsSettings = false
     @State private var showsSummary = false
 
@@ -22,6 +23,9 @@ struct ContentView: View {
                         Button("Settings", systemImage: "gearshape") { showsSettings = true }
                     }
                 }
+        }
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            if phase == .active { model.chat.prewarm() }
         }
         .sheet(isPresented: $showsSettings) {
             SettingsView(model: model)
