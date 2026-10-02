@@ -21,7 +21,8 @@ struct AppConfig {
         )
     }
 
-    func claudeAuthEnvironment() -> ClaudeAuthEnvironment {
+    /// - Parameter skipAppAttest: true after App Attest failed, so a key can be used instead.
+    func claudeAuthEnvironment(skipAppAttest: Bool = false) -> ClaudeAuthEnvironment {
         #if targetEnvironment(simulator)
         let isPhysicalDevice = false
         #else
@@ -35,7 +36,7 @@ struct AppConfig {
         #endif
 
         return ClaudeAuthEnvironment(
-            clientID: claudeClientID,
+            clientID: skipAppAttest ? nil : claudeClientID,
             isPhysicalDevice: isPhysicalDevice,
             isAppAttestSupported: DCAppAttestService.shared.isSupported,
             developerKey: developerKey,

@@ -13,6 +13,8 @@ final class AppModel {
         """
 
     private(set) var claudeAuth: ClaudeAuth
+    /// Why App Attest was abandoned this launch, if it was.
+    private(set) var appAttestFailure: String?
     let chat: ChatModel
 
     @ObservationIgnored private let config: AppConfig
@@ -32,7 +34,7 @@ final class AppModel {
         }
         self.costTable = costTable
 
-        let auth = Self.resolveAuth(config: config, secrets: secrets)
+        let auth = Self.resolveAuth(config: config, secrets: secrets, skipAppAttest: false)
         self.claudeAuth = auth
         let session = Self.makeSession(config: config, auth: auth, costTable: costTable, history: [])
         self.chat = ChatModel(session: session, costTable: costTable)
@@ -61,7 +63,7 @@ final class AppModel {
     }
 
     private func reloadClaude() {
-        claudeAuth = Self.resolveAuth(config: config, secrets: secrets)
+        claudeAuth = Self.resolveAuth(config: config, secrets: secrets, skipAppAttest: appAttestFailure != nil)
         let auth = claudeAuth
         chat.replaceSession { [config, costTable] history in
             Self.makeSession(config: config, auth: auth, costTable: costTable, history: history)
@@ -72,20 +74,24 @@ final class AppModel {
     private func prewarmClaude() {
         guard case .appAttest = claudeAuth.mode else { return }
         let provider = ClaudeProvider(auth: claudeAuth)
-        let logger = logger
         Task {
             do {
                 try await provider.authenticateIfNeeded()
             } catch {
                 // The error never contains credentials; it describes the attestation step that failed.
-                logger.error("App Attest prewarm failed: \(error.localizedDescription, privacy: .public)")
+                logger.error("App Attest failed: \(error.localizedDescription, privacy: .public)")
+                appAttestFailure = error.localizedDescription
+                reloadClaude()
             }
         }
     }
 
-    private static func resolveAuth(config: AppConfig, secrets: any SecretStore) -> ClaudeAuth {
+    private static func resolveAuth(config: AppConfig, secrets: any SecretStore, skipAppAttest: Bool) -> ClaudeAuth {
         let userKey = (try? secrets.read(KeychainStore.claudeAPIKeyAccount)) ?? nil
-        return ClaudeAuthSource.resolve(environment: config.claudeAuthEnvironment(), userKey: userKey)
+        return ClaudeAuthSource.resolve(
+            environment: config.claudeAuthEnvironment(skipAppAttest: skipAppAttest),
+            userKey: userKey
+        )
     }
 
     private static func makeSession(

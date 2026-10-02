@@ -21,6 +21,11 @@ struct SettingsView: View {
 
                 Section {
                     LabeledContent("Claude", value: model.claudeAuth.mode.displayName)
+                    if let failure = model.appAttestFailure {
+                        Label("App Attest failed: \(failure)", systemImage: "exclamationmark.triangle")
+                            .font(.footnote)
+                            .foregroundStyle(.orange)
+                    }
                     if model.hasUserKey {
                         Button("Remove your key", role: .destructive) {
                             perform { try model.removeUserKey() }
