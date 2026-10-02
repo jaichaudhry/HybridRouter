@@ -31,7 +31,7 @@ Pick an iOS 27 simulator and run. That's all the setup on-device needs. To run o
 Either:
 
 - **In the app:** open Settings and paste an Anthropic API key. It's stored in the device's Keychain.
-- **For development:** set `ANTHROPIC_API_KEY` in `Config/Secrets.xcconfig` or in the scheme's environment variables. Debug builds only; Release builds ignore it.
+- **For development:** set `ANTHROPIC_API_KEY` in `Config/Secrets.xcconfig`, which is gitignored. Debug builds only; Release builds ignore it. Don't put keys in the scheme's environment variables: the scheme is shared and committed.
 
 For builds you give to other people, use App Attest instead of a key: set `CLAUDE_CLIENT_ID` to a client ID from the Claude Console (Settings › App integrations). See Anthropic's [Apple Foundation Models guide](https://platform.claude.com/docs/en/cli-sdks-libraries/libraries/apple-foundation-models).
 

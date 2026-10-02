@@ -8,15 +8,16 @@ struct AppConfig {
     let claudeClientID: String?
     let developerKey: String?
 
-    static func load(bundle: Bundle = .main, environment: [String: String] = ProcessInfo.processInfo.environment) -> AppConfig {
+    static func load(bundle: Bundle = .main) -> AppConfig {
         func value(_ key: String) -> String? {
             (bundle.object(forInfoDictionaryKey: key) as? String).flatMap { $0.isEmpty ? nil : $0 }
         }
         return AppConfig(
             isAppleCloudEnabled: value("HRAppleCloudEnabled") == "YES",
             claudeClientID: value("HRClaudeClientID"),
-            // A scheme environment variable wins over Secrets.xcconfig.
-            developerKey: environment["ANTHROPIC_API_KEY"] ?? value("HRDeveloperAnthropicKey")
+            // Only from the gitignored Secrets.xcconfig. The shared scheme is committed, so keys
+            // must never go in its environment variables.
+            developerKey: value("HRDeveloperAnthropicKey")
         )
     }
 
