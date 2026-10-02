@@ -1,4 +1,5 @@
 import FoundationModels
+import OSLog
 
 /// A schema a scenario wants for certain kinds of turns, e.g. an itinerary for planning turns.
 public struct StructuredOutput: Sendable {
@@ -60,7 +61,7 @@ public struct TurnCoordinator {
         public var content: TurnContent?
         /// The route that produced the reply, or the last one tried.
         public var decision: RouteDecision?
-        /// Every step that ran, including failed attempts that returned normally.
+        /// Every step that ran, including failed attempts.
         public var steps: [StepMetrics]
         public var classifier: ClassifierRun?
         /// Shown to the user when the turn couldn't be answered.
@@ -73,6 +74,7 @@ public struct TurnCoordinator {
     /// Share of each model's context window the router may plan to use.
     public var contextMargin: Double
     private let isOnline: @Sendable () -> Bool
+    private static let logger = Logger(subsystem: "dev.hybridrouter", category: "routing")
 
     public init(
         router: Router,
@@ -110,29 +112,39 @@ public struct TurnCoordinator {
         while true {
             onEvent(.routed(decision))
             let cause: FailureCause
+            func record(_ metrics: StepMetrics, failure: FailureCause?) {
+                var metrics = metrics
+                metrics.escalationCause = escalationCause?.label
+                metrics.classifierLatency = steps.isEmpty ? classifier?.latency : nil
+                metrics.failure = failure?.label
+                steps.append(metrics)
+            }
             do {
                 let result = try await session.respond(to: request.prompt, decision: decision, schema: structured?.schema) {
                     onEvent(.partial($0))
                 }
-                var metrics = result.metrics
-                metrics.escalationCause = escalationCause?.label
-                metrics.classifierLatency = steps.isEmpty ? classifier?.latency : nil
-                steps.append(metrics)
                 guard result.content.isEmpty else {
+                    record(result.metrics, failure: nil)
                     return Outcome(content: result.content, decision: decision, steps: steps, classifier: classifier, failure: nil)
                 }
                 // Claude refusals and truncation return normally with nothing in them.
                 session.discardLastTurn()
                 cause = .emptyReply
+                record(result.metrics, failure: cause)
+            } catch let failure as RoutedSession.StepFailure {
+                cause = FailureCause(failure)
+                record(failure.metrics, failure: cause)
             } catch {
                 cause = FailureCause(error)
             }
 
             switch policy.next(after: cause, decision: decision, input: input) {
             case .retry(let next):
+                Self.logger.info("Escalating \(decision.route.rawValue, privacy: .public) → \(next.route.rawValue, privacy: .public): \(cause.label, privacy: .public)")
                 escalationCause = cause
                 decision = next
             case .stop(let reason):
+                Self.logger.notice("Turn failed on \(decision.route.rawValue, privacy: .public): \(cause.label, privacy: .public)")
                 return Outcome(content: nil, decision: decision, steps: steps, classifier: classifier, failure: reason)
             }
         }

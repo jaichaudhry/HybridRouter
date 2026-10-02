@@ -15,6 +15,8 @@ public struct StepMetrics: Codable, Equatable, Sendable, Identifiable {
     public var escalationCause: String?
     /// How long the on-device classifier took to pick this route, if it ran.
     public var classifierLatency: TimeInterval?
+    /// Why this attempt failed, if it did (the turn may have escalated after it).
+    public var failure: String?
 
     public init(
         id: UUID = UUID(),

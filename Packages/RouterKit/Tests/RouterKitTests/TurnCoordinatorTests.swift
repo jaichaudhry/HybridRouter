@@ -60,6 +60,10 @@ struct TurnCoordinatorTests {
         #expect(outcome.content == .text("cloud"))
         #expect(outcome.decision == RouteDecision(route: .appleCloud, reason: "Escalated: timed out", source: .escalation))
         #expect(outcome.steps.last?.escalationCause == "timed out")
+        #expect(outcome.steps.map(\.route) == [.onDevice, .appleCloud])
+        #expect(outcome.steps.map(\.failure) == ["timed out", nil])
+        #expect(outcome.steps[0].classifierLatency != nil)
+        #expect(outcome.steps[1].classifierLatency == nil)
     }
 
     @Test func escalationCanClimbTwice() async {
@@ -68,7 +72,7 @@ struct TurnCoordinatorTests {
             appleCloud: FakeProvider(route: .appleCloud, reply: "x", behavior: .timeout)
         ))
         #expect(outcome.content == .text("claude"))
-        #expect(outcome.steps.last?.escalationCause == "timed out")
+        #expect(outcome.steps.map(\.escalationCause) == [nil, "context too long", "timed out"])
     }
 
     @Test func emptyReplyIsDiscardedAndEscalated() async {
@@ -131,6 +135,7 @@ struct TurnCoordinatorTests {
         )
         #expect(outcome.content == nil)
         #expect(outcome.failure == "On-device couldn't answer (timed out). Try another route.")
+        #expect(outcome.steps.count == 1) // the failed attempt is still recorded
     }
 
     @Test func structuredRequestsPassTheSchemaThrough() async throws {

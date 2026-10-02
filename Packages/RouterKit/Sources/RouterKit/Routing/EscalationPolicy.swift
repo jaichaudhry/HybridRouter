@@ -34,6 +34,10 @@ public enum FailureCause: Equatable, Sendable {
 
     /// Maps the iOS 27 Foundation Models, Private Cloud Compute and Claude errors (API_NOTES §6).
     public init(_ error: any Error) {
+        if let failure = error as? RoutedSession.StepFailure {
+            self.init(failure.underlying)
+            return
+        }
         switch error {
         case let error as LanguageModelError:
             self = switch error {

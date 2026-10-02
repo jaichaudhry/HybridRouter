@@ -14,6 +14,12 @@ public final class RoutedSession {
         case busy
     }
 
+    /// A step that failed after it started, with what it used before failing.
+    public struct StepFailure: Swift.Error {
+        public let underlying: any Swift.Error
+        public let metrics: StepMetrics
+    }
+
     public struct TurnResult: Sendable {
         public let content: TurnContent
         public let metrics: StepMetrics
@@ -97,30 +103,36 @@ public final class RoutedSession {
             content = next
             onPartial(next)
         }
-        if let schema {
-            for try await snapshot in session.streamResponse(to: prompt, schema: schema) {
-                receive(.structured(snapshot.rawContent))
-            }
-        } else {
-            for try await snapshot in session.streamResponse(to: prompt) {
-                receive(.text(snapshot.content))
-            }
+        func metrics() -> StepMetrics {
+            let usage = TokenUsage(
+                difference: session.usage,
+                minus: usageBefore,
+                reportsReasoning: decision.route != .claude
+            )
+            return StepMetrics(
+                decision: decision,
+                modelID: provider.modelID,
+                timeToFirstToken: firstToken.map { (start.duration(to: $0)).seconds },
+                totalLatency: start.duration(to: clock.now).seconds,
+                usage: usage,
+                estimatedCost: costTable.cost(of: usage, modelID: provider.modelID)
+            )
         }
 
-        let usage = TokenUsage(
-            difference: session.usage,
-            minus: usageBefore,
-            reportsReasoning: decision.route != .claude
-        )
-        let metrics = StepMetrics(
-            decision: decision,
-            modelID: provider.modelID,
-            timeToFirstToken: firstToken.map { (start.duration(to: $0)).seconds },
-            totalLatency: start.duration(to: clock.now).seconds,
-            usage: usage,
-            estimatedCost: costTable.cost(of: usage, modelID: provider.modelID)
-        )
-        return TurnResult(content: content, metrics: metrics)
+        do {
+            if let schema {
+                for try await snapshot in session.streamResponse(to: prompt, schema: schema) {
+                    receive(.structured(snapshot.rawContent))
+                }
+            } else {
+                for try await snapshot in session.streamResponse(to: prompt) {
+                    receive(.text(snapshot.content))
+                }
+            }
+        } catch {
+            throw StepFailure(underlying: error, metrics: metrics())
+        }
+        return TurnResult(content: content, metrics: metrics())
     }
 
     /// Removes the most recent turn (its prompt and everything after it) from the history,
