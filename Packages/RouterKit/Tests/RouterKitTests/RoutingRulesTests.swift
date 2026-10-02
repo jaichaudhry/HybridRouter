@@ -30,9 +30,15 @@ struct RoutingRulesTests {
 
     // MARK: Layer 0
 
-    @Test func overrideWinsOverEveryRule() {
-        let outcome = RoutingRules.evaluate(input(override: .claude, privacyReason: "PII", isOnline: false))
+    @Test func overrideWinsOverTheOtherRules() {
+        let outcome = RoutingRules.evaluate(input(override: .claude, tokens: 2_000_000, hasImage: true, visionRoutes: []))
         #expect(outcome == .decided(.forced(.claude)))
+    }
+
+    @Test func forcingACloudRouteOfflineSaysWhy() {
+        #expect(RoutingRules.evaluate(input(override: .claude, isOnline: false))
+            == .blocked(reason: "Offline: Claude needs a network connection."))
+        #expect(RoutingRules.evaluate(input(override: .onDevice, isOnline: false)) == .decided(.forced(.onDevice)))
     }
 
     @Test func overrideToAnUnavailableRouteSaysWhy() {

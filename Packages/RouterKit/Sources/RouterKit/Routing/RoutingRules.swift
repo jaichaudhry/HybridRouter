@@ -64,6 +64,9 @@ public enum RoutingRules {
             if let reason = input.availability[override]?.reason {
                 return .blocked(reason: "\(override.displayName) unavailable: \(reason)")
             }
+            if !input.isOnline, override != .onDevice {
+                return .blocked(reason: "Offline: \(override.displayName) needs a network connection.")
+            }
             return .decided(.forced(override))
         }
 
