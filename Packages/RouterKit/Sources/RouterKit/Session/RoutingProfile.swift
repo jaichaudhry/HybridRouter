@@ -9,12 +9,16 @@ extension SessionPropertyValues {
 /// routes keeps the shared transcript (SPEC §6, Dynamic Profiles).
 struct RoutingProfile: LanguageModelSession.DynamicProfile {
     let instructions: String
+    let tools: [any Tool]
     let models: RouteModels
 
     @SessionProperty(\.activeRoute) var route
 
     var body: some DynamicProfile {
-        Profile { Instructions(instructions) }
+        Profile {
+            Instructions(instructions)
+            tools
+        }
             .model(models[route])
             .historyTransform(HistoryPolicy.dropEarlierReasoning)
     }

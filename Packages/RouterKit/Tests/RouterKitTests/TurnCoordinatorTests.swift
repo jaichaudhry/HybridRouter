@@ -136,7 +136,7 @@ struct TurnCoordinatorTests {
     @Test func structuredRequestsPassTheSchemaThrough() async throws {
         let appleCloud = FakeProvider(route: .appleCloud, reply: #"{"name": "Kyoto", "days": 3}"#)
         let outcome = await coordinator(.always("moderate", task: "plan")).run(
-            .init(prompt: "Plan Kyoto", schema: RoutedSessionTests.Place.generationSchema),
+            .init(prompt: "Plan Kyoto", structuredOutput: StructuredOutput(schema: RoutedSessionTests.Place.generationSchema, tasks: ["plan"])),
             in: session(appleCloud: appleCloud)
         )
         guard case .structured(let content) = outcome.content else {
@@ -144,5 +144,17 @@ struct TurnCoordinatorTests {
             return
         }
         #expect(try RoutedSessionTests.Place(content).name == "Kyoto")
+    }
+
+    @Test func structuredOutputSkipsTurnsItDoesntApplyTo() async {
+        let output = StructuredOutput(schema: RoutedSessionTests.Place.generationSchema, tasks: ["plan"])
+        let outcome = await coordinator(.always("simple", task: "plan")).run(
+            .init(prompt: "5 trip ideas", structuredOutput: output),
+            in: session()
+        )
+        #expect(outcome.content == .text("device"))
+        #expect(!output.applies(to: nil))
+        #expect(!output.applies(to: RouteClassification(complexity: "complex", task: "chat")))
+        #expect(output.applies(to: RouteClassification(complexity: "complex", task: "plan")))
     }
 }

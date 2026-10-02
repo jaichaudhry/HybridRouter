@@ -67,7 +67,11 @@ public struct FakeExecutor: LanguageModelExecutor {
         model: FakeLanguageModel,
         streamingInto channel: LanguageModelExecutorGenerationChannel
     ) async throws {
-        RequestLog.shared.record(model: configuration.name, transcript: request.transcript)
+        RequestLog.shared.record(
+            model: configuration.name,
+            transcript: request.transcript,
+            toolNames: request.enabledToolDefinitions.map(\.name)
+        )
         if configuration.delay > .zero {
             try await Task.sleep(for: configuration.delay)
         }
@@ -98,9 +102,16 @@ public final class RequestLog: Sendable {
     public static let shared = RequestLog()
 
     private let requests = Mutex<[String: [Transcript]]>([:])
+    private let tools = Mutex<[String: [String]]>([:])
 
-    public func record(model: String, transcript: Transcript) {
+    public func record(model: String, transcript: Transcript, toolNames: [String] = []) {
         requests.withLock { $0[model, default: []].append(transcript) }
+        tools.withLock { $0[model] = toolNames }
+    }
+
+    /// Tool names offered to the model on its latest request.
+    public func toolNames(for model: String) -> [String] {
+        tools.withLock { $0[model] ?? [] }
     }
 
     public func transcripts(for model: String) -> [Transcript] {
@@ -139,4 +150,6 @@ public struct FakeProvider: ModelProvider {
     public func contextSize() async -> Int? { contextLimit }
 
     public var requests: [Transcript] { RequestLog.shared.transcripts(for: fake.name) }
+
+    public var offeredTools: [String] { RequestLog.shared.toolNames(for: fake.name) }
 }

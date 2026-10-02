@@ -30,6 +30,7 @@ public final class RoutedSession {
 
     public init(
         instructions: String,
+        tools: [any Tool] = [],
         onDevice: any ModelProvider,
         appleCloud: any ModelProvider,
         claude: any ModelProvider,
@@ -42,7 +43,7 @@ public final class RoutedSession {
         self.costTable = costTable
         let models = RouteModels(onDevice: onDevice.model, appleCloud: appleCloud.model, claude: claude.model)
         self.session = LanguageModelSession(
-            profile: RoutingProfile(instructions: instructions, models: models),
+            profile: RoutingProfile(instructions: instructions, tools: tools, models: models),
             history: history
         )
         session.transcriptErrorHandlingPolicy = .revertTranscript

@@ -1,5 +1,27 @@
 import FoundationModels
 
+/// A schema a scenario wants for certain kinds of turns, e.g. an itinerary for planning turns.
+public struct StructuredOutput: Sendable {
+    public var schema: GenerationSchema
+    /// Classifier tasks that get the schema, e.g. ["plan"].
+    public var tasks: Set<String>
+    /// Classifier complexities that get the schema; simple turns usually want plain text.
+    public var complexities: Set<String>
+
+    public init(schema: GenerationSchema, tasks: Set<String>, complexities: Set<String> = ["moderate", "complex"]) {
+        self.schema = schema
+        self.tasks = tasks
+        self.complexities = complexities
+    }
+
+    /// Whether a turn with this classification should be structured. Turns the classifier
+    /// didn't see (overrides, rule decisions) stay plain text.
+    public func applies(to classification: RouteClassification?) -> Bool {
+        guard let classification else { return false }
+        return tasks.contains(classification.task) && complexities.contains(classification.complexity)
+    }
+}
+
 /// Runs one user turn end to end: route it, answer it, and escalate on failure (SPEC §6).
 @MainActor
 public struct TurnCoordinator {
@@ -9,15 +31,21 @@ public struct TurnCoordinator {
         /// Why the turn must stay off Claude, or nil.
         public var privacyReason: String?
         public var hasImage: Bool
-        /// Structured output for this turn, if the scenario wants it.
-        public var schema: GenerationSchema?
+        /// Structured output the scenario wants for some turns.
+        public var structuredOutput: StructuredOutput?
 
-        public init(prompt: String, override: Route? = nil, privacyReason: String? = nil, hasImage: Bool = false, schema: GenerationSchema? = nil) {
+        public init(
+            prompt: String,
+            override: Route? = nil,
+            privacyReason: String? = nil,
+            hasImage: Bool = false,
+            structuredOutput: StructuredOutput? = nil
+        ) {
             self.prompt = prompt
             self.override = override
             self.privacyReason = privacyReason
             self.hasImage = hasImage
-            self.schema = schema
+            self.structuredOutput = structuredOutput
         }
     }
 
@@ -76,13 +104,14 @@ public struct TurnCoordinator {
             classifier = run
         }
 
+        let structured = request.structuredOutput.flatMap { $0.applies(to: classifier?.classification) ? $0 : nil }
         var steps: [StepMetrics] = []
         var escalationCause: FailureCause?
         while true {
             onEvent(.routed(decision))
             let cause: FailureCause
             do {
-                let result = try await session.respond(to: request.prompt, decision: decision, schema: request.schema) {
+                let result = try await session.respond(to: request.prompt, decision: decision, schema: structured?.schema) {
                     onEvent(.partial($0))
                 }
                 var metrics = result.metrics

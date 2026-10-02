@@ -210,3 +210,36 @@ extension RoutedSessionTests {
         #expect(!TurnContent.text("hi").isEmpty)
     }
 }
+
+extension RoutedSessionTests {
+    struct EchoTool: Tool {
+        let name = "echo"
+        let description = "Repeats its input."
+
+        @Generable
+        struct Arguments {
+            var text: String
+        }
+
+        func call(arguments: Arguments) async throws -> String {
+            arguments.text
+        }
+    }
+
+    @Test func scenarioToolsAreOfferedOnEveryRoute() async throws {
+        let onDevice = FakeProvider(route: .onDevice, reply: "a")
+        let claude = FakeProvider(route: .claude, reply: "b")
+        let session = RoutedSession(
+            instructions: "Be brief.",
+            tools: [EchoTool()],
+            onDevice: onDevice,
+            appleCloud: FakeProvider(route: .appleCloud, reply: "c"),
+            claude: claude,
+            costTable: costTable
+        )
+        _ = try await session.respond(to: "Hi", decision: .forced(.onDevice))
+        _ = try await session.respond(to: "Again", decision: .forced(.claude))
+        #expect(onDevice.offeredTools == ["echo"])
+        #expect(claude.offeredTools == ["echo"])
+    }
+}
