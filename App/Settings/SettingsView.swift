@@ -55,6 +55,12 @@ struct SettingsView: View {
                 } footer: {
                     Text("Apple Cloud needs Apple's Private Cloud Compute entitlement. See the README.")
                 }
+
+                Section("Developer") {
+                    NavigationLink("Routing benchmark") {
+                        RoutingBenchmarkView()
+                    }
+                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
