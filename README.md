@@ -33,7 +33,16 @@ Either:
 - **In the app:** open Settings and paste an Anthropic API key. It's stored in the device's Keychain.
 - **For development:** set `ANTHROPIC_API_KEY` in `Config/Secrets.xcconfig`, which is gitignored. Debug builds only; Release builds ignore it. Don't put keys in the scheme's environment variables: the scheme is shared and committed.
 
-For builds you give to other people, use App Attest instead of a key: set `CLAUDE_CLIENT_ID` to a client ID from the Claude Console (Settings › App integrations). See Anthropic's [Apple Foundation Models guide](https://platform.claude.com/docs/en/cli-sdks-libraries/libraries/apple-foundation-models).
+## Shipping with App Attest
+
+For builds that run on other people's devices, don't embed a key. App Attest lets each install prove it's your genuine app and get short-lived Claude tokens:
+
+1. In the [Claude Console](https://platform.claude.com/settings/workspaces/default/app-integrations), open your workspace's **App integrations** and create one with your Apple Team ID and bundle ID. You need the admin or owner role. Copy the client ID (`clid_…`).
+2. Register an explicit App ID for your bundle ID with the App Attest capability.
+3. In `Config/Secrets.xcconfig`, set `CLAUDE_CLIENT_ID` and `CODE_SIGN_ENTITLEMENTS = Config/AppAttest.entitlements` (or `Config/AppAttestAppleCloud.entitlements` if you also enabled Apple Cloud).
+4. Set a spend limit for the workspace in the Claude Console, since every install's usage is billed to you.
+
+App Attest only works on physical devices. In the Simulator, or if attestation fails, the app falls back to a key from Settings or `Secrets.xcconfig`. See Anthropic's [Apple Foundation Models guide](https://platform.claude.com/docs/en/cli-sdks-libraries/libraries/apple-foundation-models).
 
 ## Enabling Apple Cloud
 
@@ -43,6 +52,8 @@ Apple Cloud uses Apple's Private Cloud Compute. Apple grants its entitlement to 
 HR_APPLE_CLOUD_ENABLED = YES
 CODE_SIGN_ENTITLEMENTS = Config/AppleCloud.entitlements
 ```
+
+(Use `Config/AppAttestAppleCloud.entitlements` instead if you also use App Attest.)
 
 Without it, the app runs normally and shows Apple Cloud as unavailable. There's no API cost: each user's requests count against their own daily Apple Cloud allowance.
 
