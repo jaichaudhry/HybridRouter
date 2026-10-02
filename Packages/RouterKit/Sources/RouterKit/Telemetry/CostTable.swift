@@ -24,12 +24,24 @@ public struct CostTable: Codable, Equatable, Sendable {
         public var input: Double
         public var cachedInput: Double
         public var output: Double
+
+        public init(input: Double, cachedInput: Double, output: Double) {
+            self.input = input
+            self.cachedInput = cachedInput
+            self.output = output
+        }
     }
 
     /// When the prices were checked, and where they came from.
     public var updated: String
     public var source: String
     public var models: [String: Price]
+
+    public init(updated: String, source: String, models: [String: Price]) {
+        self.updated = updated
+        self.source = source
+        self.models = models
+    }
 
     public static func bundled() throws -> CostTable {
         guard let url = Bundle.module.url(forResource: "prices", withExtension: "json") else {
