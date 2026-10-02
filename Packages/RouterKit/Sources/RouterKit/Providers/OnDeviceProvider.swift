@@ -16,6 +16,10 @@ public struct OnDeviceProvider: ModelProvider {
         Self.map(systemModel.availability)
     }
 
+    public func contextSize() async -> Int? {
+        systemModel.contextSize
+    }
+
     static func map(_ availability: SystemLanguageModel.Availability) -> ProviderAvailability {
         switch availability {
         case .available:

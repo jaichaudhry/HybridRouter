@@ -19,11 +19,15 @@ public struct ClaudeProvider: ModelProvider {
     public let route = Route.claude
     public let tier: Tier
     private let auth: ClaudeAuth
+    private let configuredContextSize: Int
     private let claudeModel: ClaudeLanguageModel
 
-    public init(auth: ClaudeAuth, tier: Tier = .standard) {
+    /// - Parameter contextSize: ClaudeForFoundationModels doesn't expose it. Anthropic's pricing
+    ///   page lists a 1M-token window for Claude 4.6 and later models.
+    public init(auth: ClaudeAuth, tier: Tier = .standard, contextSize: Int = 1_000_000) {
         self.auth = auth
         self.tier = tier
+        self.configuredContextSize = contextSize
         // With auth off, an empty key makes any accidental request fail with `missingCredential`.
         self.claudeModel = ClaudeLanguageModel(name: tier.claudeModel, auth: auth.authMode ?? .apiKey(""))
     }
@@ -34,6 +38,10 @@ public struct ClaudeProvider: ModelProvider {
 
     public var availability: ProviderAvailability {
         auth.isEnabled ? .available : .unavailable(reason: "Claude not configured")
+    }
+
+    public func contextSize() async -> Int? {
+        configuredContextSize
     }
 
     /// Prewarms App Attest so the first Claude turn doesn't wait for attestation.

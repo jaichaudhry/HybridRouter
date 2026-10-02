@@ -13,6 +13,8 @@ public struct StepMetrics: Codable, Equatable, Sendable, Identifiable {
     public var usage: TokenUsage
     public var estimatedCost: Double?
     public var escalationCause: String?
+    /// How long the on-device classifier took to pick this route, if it ran.
+    public var classifierLatency: TimeInterval?
 
     public init(
         id: UUID = UUID(),
@@ -22,7 +24,8 @@ public struct StepMetrics: Codable, Equatable, Sendable, Identifiable {
         totalLatency: TimeInterval,
         usage: TokenUsage,
         estimatedCost: Double?,
-        escalationCause: String? = nil
+        escalationCause: String? = nil,
+        classifierLatency: TimeInterval? = nil
     ) {
         self.id = id
         self.route = decision.route
@@ -34,6 +37,7 @@ public struct StepMetrics: Codable, Equatable, Sendable, Identifiable {
         self.usage = usage
         self.estimatedCost = estimatedCost
         self.escalationCause = escalationCause
+        self.classifierLatency = classifierLatency
     }
 
     /// Output tokens per second.

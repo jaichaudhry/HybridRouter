@@ -15,4 +15,6 @@ public protocol ModelProvider: Sendable {
     var modelID: String { get }
     var model: any LanguageModel { get }
     var availability: ProviderAvailability { get }
+    /// The model's context window in tokens, or nil if unknown (treated as unlimited).
+    func contextSize() async -> Int?
 }

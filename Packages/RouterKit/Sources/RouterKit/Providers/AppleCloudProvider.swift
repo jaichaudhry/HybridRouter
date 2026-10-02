@@ -24,6 +24,11 @@ public struct AppleCloudProvider: ModelProvider {
         return Self.map(cloudModel.availability, isLimitReached: cloudModel.quotaUsage.isLimitReached)
     }
 
+    public func contextSize() async -> Int? {
+        guard isEnabled else { return nil }
+        return try? await cloudModel.contextSize
+    }
+
     /// Quota is checked separately: the model can be available after the daily limit is reached.
     static func map(
         _ availability: PrivateCloudComputeLanguageModel.Availability,
