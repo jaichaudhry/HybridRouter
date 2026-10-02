@@ -71,7 +71,10 @@ Run the tests on a Mac with Xcode 27:
 ```sh
 swift test --package-path Packages/RouterKit
 swift test --package-path Packages/ChatUI
+swift test --package-path Evals
 ```
+
+`Evals/routing_cases.json` lists prompts with the route each should take. The evals check them against the router with labeled classifications everywhere, and with the real on-device classifier wherever Apple Intelligence is available.
 
 The project file is generated from `project.yml` with [XcodeGen](https://github.com/yonaskolb/XcodeGen). After changing `project.yml`, run `xcodegen generate`.
 

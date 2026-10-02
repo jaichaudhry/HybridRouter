@@ -37,6 +37,9 @@ jobs:
         run: swift test --package-path Packages/RouterKit
       - name: Test ChatUI
         run: swift test --package-path Packages/ChatUI
+      - name: Routing evals
+        # The live-classifier evals skip themselves where Apple Intelligence isn't available.
+        run: swift test --package-path Evals
       - name: Build app
         run: >
           xcodebuild build
