@@ -148,3 +148,21 @@ private extension Array where Element == Transcript.Segment {
         }.joined()
     }
 }
+
+extension RoutedSessionTests {
+    @Test func prewarmingThenRespondingUsesTheDecidedRoute() async throws {
+        let claude = FakeProvider(route: .claude, reply: "claude")
+        let session = makeSession(claude: claude)
+        session.prewarm(.claude)
+        let result = try await session.respond(to: "Hi", decision: .forced(.onDevice))
+        #expect(result.text == "on-device reply")
+        #expect(claude.requests.isEmpty)
+    }
+
+    @Test func prewarmingAnUnavailableRouteIsIgnored() async throws {
+        let session = makeSession(claude: FakeProvider(route: .claude, reply: "x", availability: .unavailable(reason: "off")))
+        session.prewarm(.claude)
+        let result = try await session.respond(to: "Hi", decision: .forced(.onDevice))
+        #expect(result.text == "on-device reply")
+    }
+}

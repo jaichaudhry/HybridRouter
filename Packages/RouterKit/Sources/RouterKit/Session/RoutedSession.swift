@@ -56,6 +56,14 @@ public final class RoutedSession {
         provider(for: route).availability
     }
 
+    /// Loads the route's model ahead of the next turn, so its first reply starts sooner.
+    /// Call it when the user picks a route or the app comes to the foreground.
+    public func prewarm(_ route: Route) {
+        guard !isResponding, provider(for: route).availability.isAvailable else { return }
+        session.properties.activeRoute = route
+        session.prewarm()
+    }
+
     /// Runs one turn on the decided route, reporting the cumulative text as it streams.
     public func respond(
         to prompt: String,
