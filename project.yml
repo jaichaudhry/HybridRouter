@@ -1,0 +1,62 @@
+name: HybridRouter
+options:
+  bundleIdPrefix: dev.hybridrouter
+  deploymentTarget:
+    iOS: "27.0"
+  createIntermediateGroups: true
+configFiles:
+  Debug: Config/Debug.xcconfig
+  Release: Config/Release.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+    TARGETED_DEVICE_FAMILY: "1,2"
+packages:
+  RouterKit:
+    path: Packages/RouterKit
+  ChatUI:
+    path: Packages/ChatUI
+targets:
+  HybridRouter:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+    dependencies:
+      - package: RouterKit
+        product: RouterKit
+      - package: ChatUI
+        product: ChatUI
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: HybridRouter
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~iphone:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        HRAppleCloudEnabled: $(HR_APPLE_CLOUD_ENABLED)
+        HRClaudeClientID: $(CLAUDE_CLIENT_ID)
+        HRDeveloperAnthropicKey: $(ANTHROPIC_API_KEY)
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: NO
+schemes:
+  HybridRouter:
+    build:
+      targets:
+        HybridRouter: all
+    run:
+      config: Debug
+    test:
+      config: Debug

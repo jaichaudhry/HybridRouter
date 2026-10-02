@@ -1,0 +1,384 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		14036354A649CE383BEBB1BE /* ChatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 26BB5A6C5BE7C9FEC71C1110 /* ChatUI */; };
+		4ABC43073CB23616BF6A9641 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF2EF4049958BD1AF58338A /* AppModel.swift */; };
+		82A204264E0B2AC4EC6255CE /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D9E8BDCF8EEBF317AD45C7 /* AppConfig.swift */; };
+		91492B8BCA83F48890A1E49E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3A2B3F2007FA3C54EF3F9DF /* ContentView.swift */; };
+		A85ED142CB286D27CA187F13 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */; };
+		D026BB74E903117DCE548FD2 /* HybridRouterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F403000424EB9780533C886E /* HybridRouterApp.swift */; };
+		F751E029F9FD712552A4E662 /* RouterKit in Frameworks */ = {isa = PBXBuildFile; productRef = 2D45F172E9133E014270FF74 /* RouterKit */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		40D9B067395E4F3454748AD4 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		5C5A008662A9462F1B26DCD3 /* ChatUI */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ChatUI; path = Packages/ChatUI; sourceTree = SOURCE_ROOT; };
+		6252FCEEC31F47631727B1EA /* RouterKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = RouterKit; path = Packages/RouterKit; sourceTree = SOURCE_ROOT; };
+		85B747C17A70C0450B37AA8E /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		A21E9E88842F2D84380001A9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		A3A2B3F2007FA3C54EF3F9DF /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		DCF2EF4049958BD1AF58338A /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		E3D9E8BDCF8EEBF317AD45C7 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		F403000424EB9780533C886E /* HybridRouterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HybridRouterApp.swift; sourceTree = "<group>"; };
+		FEACF29366B59AAC7EAB091C /* HybridRouter.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HybridRouter.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5FEE4E747AE2A33319FADDDC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F751E029F9FD712552A4E662 /* RouterKit in Frameworks */,
+				14036354A649CE383BEBB1BE /* ChatUI in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		7074C4713B21998C4F26070A = {
+			isa = PBXGroup;
+			children = (
+				7470848FFE7DC04F4AA3EAEE /* App */,
+				E7E575DCBF4034EF87AE4F52 /* Config */,
+				DD81C6FD145D2F4C385790AD /* Packages */,
+				770EAD2940452EDF82857B0A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7470848FFE7DC04F4AA3EAEE /* App */ = {
+			isa = PBXGroup;
+			children = (
+				E3D9E8BDCF8EEBF317AD45C7 /* AppConfig.swift */,
+				DCF2EF4049958BD1AF58338A /* AppModel.swift */,
+				A3A2B3F2007FA3C54EF3F9DF /* ContentView.swift */,
+				F403000424EB9780533C886E /* HybridRouterApp.swift */,
+				A21E9E88842F2D84380001A9 /* Info.plist */,
+				A469DD2F840798F83C7E5C7E /* Settings */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		770EAD2940452EDF82857B0A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FEACF29366B59AAC7EAB091C /* HybridRouter.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A469DD2F840798F83C7E5C7E /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		DD81C6FD145D2F4C385790AD /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				5C5A008662A9462F1B26DCD3 /* ChatUI */,
+				6252FCEEC31F47631727B1EA /* RouterKit */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
+		E7E575DCBF4034EF87AE4F52 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				85B747C17A70C0450B37AA8E /* Debug.xcconfig */,
+				40D9B067395E4F3454748AD4 /* Release.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		FC6F68AC88ABF61E49C12455 /* HybridRouter */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E057FDD71171C69A1DF3D9B5 /* Build configuration list for PBXNativeTarget "HybridRouter" */;
+			buildPhases = (
+				E8DCACF63ED45AD8E7093C47 /* Sources */,
+				5FEE4E747AE2A33319FADDDC /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HybridRouter;
+			packageProductDependencies = (
+				2D45F172E9133E014270FF74 /* RouterKit */,
+				26BB5A6C5BE7C9FEC71C1110 /* ChatUI */,
+			);
+			productName = HybridRouter;
+			productReference = FEACF29366B59AAC7EAB091C /* HybridRouter.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B7249754D0FA4A8ECFB0C41F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					FC6F68AC88ABF61E49C12455 = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = FD27FFF40241FCB65DCE8A2F /* Build configuration list for PBXProject "HybridRouter" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 7074C4713B21998C4F26070A;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E238C8DD7D579C1528480EA0 /* XCLocalSwiftPackageReference "Packages/ChatUI" */,
+				A6DAA4B9C531198B7919929E /* XCLocalSwiftPackageReference "Packages/RouterKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				FC6F68AC88ABF61E49C12455 /* HybridRouter */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E8DCACF63ED45AD8E7093C47 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				82A204264E0B2AC4EC6255CE /* AppConfig.swift in Sources */,
+				4ABC43073CB23616BF6A9641 /* AppModel.swift in Sources */,
+				91492B8BCA83F48890A1E49E /* ContentView.swift in Sources */,
+				D026BB74E903117DCE548FD2 /* HybridRouterApp.swift in Sources */,
+				A85ED142CB286D27CA187F13 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2D252A057E23DF9267E4DA78 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2FC097B7AF555F54E144152C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		BE3D460ABE245359EBF8CB23 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 85B747C17A70C0450B37AA8E /* Debug.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E390185B8BAB2C7C2CFC4556 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 40D9B067395E4F3454748AD4 /* Release.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E057FDD71171C69A1DF3D9B5 /* Build configuration list for PBXNativeTarget "HybridRouter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2D252A057E23DF9267E4DA78 /* Debug */,
+				2FC097B7AF555F54E144152C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FD27FFF40241FCB65DCE8A2F /* Build configuration list for PBXProject "HybridRouter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BE3D460ABE245359EBF8CB23 /* Debug */,
+				E390185B8BAB2C7C2CFC4556 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A6DAA4B9C531198B7919929E /* XCLocalSwiftPackageReference "Packages/RouterKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/RouterKit;
+		};
+		E238C8DD7D579C1528480EA0 /* XCLocalSwiftPackageReference "Packages/ChatUI" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/ChatUI;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		26BB5A6C5BE7C9FEC71C1110 /* ChatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ChatUI;
+		};
+		2D45F172E9133E014270FF74 /* RouterKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = RouterKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = B7249754D0FA4A8ECFB0C41F /* Project object */;
+}
