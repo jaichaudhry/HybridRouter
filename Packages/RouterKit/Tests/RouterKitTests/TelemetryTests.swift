@@ -38,10 +38,23 @@ struct TelemetryTests {
             modelID: "apple-on-device",
             timeToFirstToken: 0.5,
             totalLatency: 2.5,
-            usage: TokenUsage(input: 20, cachedInput: 0, output: 100, reasoning: nil),
+            usage: TokenUsage(input: 20, cachedInput: 0, output: 100, reasoning: 0),
             estimatedCost: 0
         )
         #expect(metrics.tokensPerSecond == 50)
+    }
+
+    @Test func tokensPerSecondIncludesThinkingTimeWhenReasoningIsUnreported() {
+        // Claude: 2,000 thinking + 200 text tokens; 20 s thinking, then 2 s of text.
+        let metrics = StepMetrics(
+            decision: .forced(.claude),
+            modelID: "claude-sonnet-5-5",
+            timeToFirstToken: 20,
+            totalLatency: 22,
+            usage: TokenUsage(input: 20, cachedInput: 0, output: 2_200, reasoning: nil),
+            estimatedCost: nil
+        )
+        #expect(metrics.tokensPerSecond == 100)
     }
 
     @Test func summaryReportsRouteMixAndSavings() {

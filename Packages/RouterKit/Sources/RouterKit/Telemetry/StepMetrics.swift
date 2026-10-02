@@ -36,9 +36,13 @@ public struct StepMetrics: Codable, Equatable, Sendable, Identifiable {
         self.escalationCause = escalationCause
     }
 
-    /// Output tokens per second while streaming, measured from the first token.
+    /// Output tokens per second.
+    ///
+    /// Measured from the first visible token, except when reasoning isn't reported separately
+    /// (Claude): then output includes thinking that happened before the first visible token,
+    /// so the whole turn is used.
     public var tokensPerSecond: Double? {
-        let start = timeToFirstToken ?? 0
+        let start = usage.reasoning == nil ? 0 : (timeToFirstToken ?? 0)
         let streaming = totalLatency - start
         guard usage.output > 0, streaming > 0 else { return nil }
         return Double(usage.output) / streaming
