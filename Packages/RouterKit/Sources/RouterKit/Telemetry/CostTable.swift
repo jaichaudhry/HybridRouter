@@ -1,7 +1,7 @@
 import Foundation
 
 /// Token counts for one step, as reported by the model.
-public struct TokenUsage: Codable, Equatable, Sendable {
+public struct TokenUsage: Codable, Hashable, Sendable {
     /// All input tokens, including cached ones.
     public var input: Int
     public var cachedInput: Int
