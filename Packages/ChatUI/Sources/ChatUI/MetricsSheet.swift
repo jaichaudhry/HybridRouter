@@ -25,6 +25,9 @@ public struct MetricsSheet: View {
                     }
                 }
                 Section("Speed") {
+                    if let latency = metrics.classifierLatency {
+                        LabeledContent("Routing", value: Format.seconds(latency))
+                    }
                     LabeledContent("First token", value: Format.seconds(metrics.timeToFirstToken))
                     LabeledContent("Total", value: Format.seconds(metrics.totalLatency))
                     LabeledContent("Tokens/sec", value: metrics.tokensPerSecond.map { String(format: "%.1f", $0) } ?? "—")

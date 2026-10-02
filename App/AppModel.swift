@@ -21,6 +21,7 @@ final class AppModel {
     @ObservationIgnored private let secrets: any SecretStore
     @ObservationIgnored private let costTable: CostTable
     @ObservationIgnored private let logger = Logger(subsystem: "dev.hybridrouter", category: "app")
+    @ObservationIgnored private let network = NetworkMonitor()
 
     init(config: AppConfig = .load(), secrets: any SecretStore = KeychainStore(service: "dev.hybridrouter.HybridRouter")) {
         self.config = config
@@ -37,7 +38,13 @@ final class AppModel {
         let auth = Self.resolveAuth(config: config, secrets: secrets, skipAppAttest: false)
         self.claudeAuth = auth
         let session = Self.makeSession(config: config, auth: auth, costTable: costTable, history: [])
-        self.chat = ChatModel(session: session, costTable: costTable)
+        let network = network
+        let coordinator = TurnCoordinator(
+            router: Router(classifier: OnDeviceClassifier()),
+            estimator: OnDeviceTokenEstimator(),
+            isOnline: { network.isOnline }
+        )
+        self.chat = ChatModel(session: session, coordinator: coordinator, costTable: costTable)
         prewarmClaude()
     }
 

@@ -14,19 +14,39 @@ extension Route {
 
 /// Shows where a reply ran and why. Tapping it opens the step's metrics.
 public struct RouteBadge: View {
-    let decision: RouteDecision
+    /// Nil while the router is still choosing.
+    let decision: RouteDecision?
     let metrics: StepMetrics?
     let isPrivate: Bool
 
-    @State private var showsMetrics = false
-
-    public init(decision: RouteDecision, metrics: StepMetrics?, isPrivate: Bool = false) {
+    public init(decision: RouteDecision?, metrics: StepMetrics?, isPrivate: Bool = false) {
         self.decision = decision
         self.metrics = metrics
         self.isPrivate = isPrivate
     }
 
     public var body: some View {
+        if let decision {
+            DecidedRouteBadge(decision: decision, metrics: metrics, isPrivate: isPrivate)
+        } else {
+            Label("Routing…", systemImage: "arrow.triangle.branch")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(.fill.tertiary, in: .capsule)
+        }
+    }
+}
+
+private struct DecidedRouteBadge: View {
+    let decision: RouteDecision
+    let metrics: StepMetrics?
+    let isPrivate: Bool
+
+    @State private var showsMetrics = false
+
+    var body: some View {
         Button {
             showsMetrics = true
         } label: {

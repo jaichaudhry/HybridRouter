@@ -1,4 +1,5 @@
 import Foundation
+import FoundationModels
 import RouterKit
 import RouterKitTesting
 import Testing
@@ -18,7 +19,8 @@ struct ChatModelTests {
     private func makeModel(
         onDevice: FakeProvider = FakeProvider(route: .onDevice, reply: "from device"),
         appleCloud: FakeProvider = FakeProvider(route: .appleCloud, reply: "from cloud"),
-        claude: FakeProvider = FakeProvider(route: .claude, reply: "from claude")
+        claude: FakeProvider = FakeProvider(route: .claude, reply: "from claude"),
+        classifier: FakeClassifier = .always("simple")
     ) -> ChatModel {
         let session = RoutedSession(
             instructions: "Be brief.",
@@ -27,7 +29,12 @@ struct ChatModelTests {
             claude: claude,
             costTable: costTable
         )
-        return ChatModel(session: session, costTable: costTable)
+        let coordinator = TurnCoordinator(
+            router: Router(classifier: classifier),
+            estimator: FixedTokenEstimator(100),
+            isOnline: { true }
+        )
+        return ChatModel(session: session, coordinator: coordinator, costTable: costTable)
     }
 
     @Test func sendingAddsUserAndAssistantMessages() async {
@@ -37,7 +44,7 @@ struct ChatModelTests {
 
         #expect(model.draft.isEmpty)
         #expect(model.messages.map(\.role) == [.user, .assistant])
-        #expect(model.messages[1].text == "from device")
+        #expect(model.messages[1].content == .text("from device"))
         #expect(model.messages[1].isStreaming == false)
         #expect(model.messages[1].metrics?.route == .onDevice)
         #expect(model.isSending == false)
@@ -49,18 +56,39 @@ struct ChatModelTests {
         await model.send("Think hard")
 
         let reply = model.messages[1]
-        #expect(reply.text == "from claude")
+        #expect(reply.content == .text("from claude"))
         #expect(reply.decision == .forced(.claude))
     }
 
-    @Test func autoSkipsUnavailableRoutes() async {
-        let model = makeModel(
-            onDevice: FakeProvider(route: .onDevice, reply: "x", availability: .unavailable(reason: "off")),
-            appleCloud: FakeProvider(route: .appleCloud, reply: "x", availability: .unavailable(reason: "off"))
-        )
+    @Test func autoRoutesThroughTheClassifier() async {
+        let model = makeModel(classifier: .always("complex", task: "reason"))
+        await model.send("Is this realistic?")
+        #expect(model.messages[1].decision == RouteDecision(route: .claude, reason: "Complex reasoning", source: .classifier))
+        #expect(model.messages[1].content == .text("from claude"))
+    }
+
+    @Test func escalationShowsOnTheReply() async {
+        let model = makeModel(onDevice: FakeProvider(route: .onDevice, reply: "x", behavior: .timeout))
         await model.send("Hi")
-        #expect(model.messages[1].decision?.route == .claude)
-        #expect(model.messages[1].text == "from claude")
+        let reply = model.messages[1]
+        #expect(reply.decision?.source == .escalation)
+        #expect(reply.decision?.reason == "Escalated: timed out")
+        #expect(reply.content == .text("from cloud"))
+        #expect(reply.metrics?.escalationCause == "timed out")
+    }
+
+    @Test func structuredRepliesAreKeptStructured() async {
+        let model = makeModel(
+            appleCloud: FakeProvider(route: .appleCloud, reply: #"{"name": "Kyoto"}"#),
+            classifier: .always("moderate", task: "plan")
+        )
+        model.structuredOutput = StructuredOutput(schema: Stop.generationSchema, tasks: ["plan"])
+        await model.send("Plan Kyoto")
+        guard case .structured(let content) = model.messages[1].content else {
+            Issue.record("Expected structured content")
+            return
+        }
+        #expect((try? Stop(content))?.name == "Kyoto")
     }
 
     @Test func unavailableOverrideShowsTheReason() async {
@@ -115,7 +143,7 @@ extension ChatModelTests {
         model.routeOverride = .claude
         await model.send("Do you?")
 
-        #expect(model.messages.last?.text == "I remember")
+        #expect(model.messages.last?.content == .text("I remember"))
         // The new Claude model saw both prompts, including the one sent before the swap.
         let prompts = try #require(newClaude.requests.last).filter { entry in
             if case .prompt = entry { true } else { false }
@@ -142,15 +170,20 @@ extension ChatModelTests {
             )
         }
         await sending.value
-        #expect(model.messages[1].text == "slow")
+        #expect(model.messages[1].content == .text("slow"))
 
         model.routeOverride = .claude
         await model.send("Second")
-        #expect(model.messages.last?.text == "new key works")
+        #expect(model.messages.last?.content == .text("new key works"))
         // The swapped-in session kept the reply that was streaming during the swap.
         let responses = try #require(newClaude.requests.last).filter { entry in
             if case .response = entry { true } else { false }
         }
         #expect(responses.count == 1)
     }
+}
+
+@Generable
+struct Stop {
+    var name: String
 }

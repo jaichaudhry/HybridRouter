@@ -1,16 +1,19 @@
+import FoundationModels
 import RouterKit
 import SwiftUI
 
-/// One chat bubble. Assistant replies render Markdown and carry a route badge.
+/// One chat bubble. Assistant replies render Markdown or structured cards and carry a route badge.
 struct MessageRow: View {
     let message: ChatMessage
+
+    @Environment(\.structuredContentRenderer) private var renderStructured
 
     var body: some View {
         switch message.role {
         case .user:
             HStack {
                 Spacer(minLength: 48)
-                Text(message.text)
+                Text(message.content.text)
                     .textSelection(.enabled)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
@@ -19,22 +22,37 @@ struct MessageRow: View {
             }
         case .assistant:
             VStack(alignment: .leading, spacing: 6) {
-                if let decision = message.decision {
-                    RouteBadge(decision: decision, metrics: message.metrics)
-                }
-                if message.text.isEmpty, message.isStreaming {
-                    ProgressView()
-                        .accessibilityLabel("Thinking")
-                } else if !message.text.isEmpty {
-                    Text(Self.markdown(message.text))
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                RouteBadge(decision: message.decision, metrics: message.metrics)
+                if message.content.isEmpty {
+                    if message.isStreaming {
+                        ProgressView()
+                            .accessibilityLabel("Thinking")
+                    }
+                } else {
+                    reply
                 }
                 if let error = message.errorMessage {
                     Label(error, systemImage: "exclamationmark.triangle")
                         .font(.footnote)
                         .foregroundStyle(.red)
                 }
+            }
+        }
+    }
+
+    @ViewBuilder private var reply: some View {
+        switch message.content {
+        case .text(let text):
+            Text(Self.markdown(text))
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        case .structured(let content):
+            if let renderStructured {
+                renderStructured.render(content)
+            } else {
+                Text(content.jsonString)
+                    .font(.caption.monospaced())
+                    .textSelection(.enabled)
             }
         }
     }

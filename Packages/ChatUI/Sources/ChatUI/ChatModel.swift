@@ -9,39 +9,43 @@ public struct ChatMessage: Identifiable, Equatable, Sendable {
 
     public let id: UUID
     public let role: Role
-    public var text: String
+    public var content: TurnContent
+    /// Nil while the router is still choosing.
     public var decision: RouteDecision?
-    public var metrics: StepMetrics?
+    /// Every model step behind this reply, including escalated attempts.
+    public var steps: [StepMetrics]
     public var isStreaming: Bool
     public var errorMessage: String?
 
     public init(
         id: UUID = UUID(),
         role: Role,
-        text: String,
+        content: TurnContent,
         decision: RouteDecision? = nil,
-        metrics: StepMetrics? = nil,
+        steps: [StepMetrics] = [],
         isStreaming: Bool = false,
         errorMessage: String? = nil
     ) {
         self.id = id
         self.role = role
-        self.text = text
+        self.content = content
         self.decision = decision
-        self.metrics = metrics
+        self.steps = steps
         self.isStreaming = isStreaming
         self.errorMessage = errorMessage
     }
+
+    /// Metrics for the step that produced the reply.
+    public var metrics: StepMetrics? { steps.last }
 }
 
-/// Chat state for one conversation. Scenario-agnostic: the app supplies how Auto picks a route.
+/// Chat state for one conversation. Scenario-agnostic: the app supplies the router setup,
+/// tools and structured output through the session and coordinator.
 @MainActor
 @Observable
 public final class ChatModel {
-    public typealias AutoRouter = @MainActor (String, RoutedSession) async -> RouteDecision
-
     public private(set) var messages: [ChatMessage] = []
-    /// True from the moment a message is sent until its reply finishes, including route selection.
+    /// True from the moment a message is sent until its reply finishes, including routing.
     public private(set) var isSending = false
     public var draft = ""
     /// Nil means Auto. Picking a route starts loading its model right away.
@@ -50,22 +54,29 @@ public final class ChatModel {
     }
 
     public private(set) var session: RoutedSession
-    @ObservationIgnored private let autoRouter: AutoRouter
+    public var coordinator: TurnCoordinator
+    public var structuredOutput: StructuredOutput?
+    @ObservationIgnored private let costTable: CostTable
     /// A session swap requested mid-reply, applied when the reply finishes.
     @ObservationIgnored private var pendingSession: (([Transcript.Entry]) -> RoutedSession)?
-    @ObservationIgnored private let costTable: CostTable
 
-    public init(session: RoutedSession, costTable: CostTable, autoRouter: @escaping AutoRouter = ChatModel.firstAvailable) {
+    public init(
+        session: RoutedSession,
+        coordinator: TurnCoordinator,
+        costTable: CostTable,
+        structuredOutput: StructuredOutput? = nil
+    ) {
         self.session = session
+        self.coordinator = coordinator
         self.costTable = costTable
-        self.autoRouter = autoRouter
+        self.structuredOutput = structuredOutput
     }
 
     public var canSend: Bool {
         !isSending && !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    public var steps: [StepMetrics] { messages.compactMap(\.metrics) }
+    public var steps: [StepMetrics] { messages.flatMap(\.steps) }
 
     public var summary: SessionSummary {
         SessionSummary(steps: steps, costTable: costTable, claudeModelID: session.provider(for: .claude).modelID)
@@ -82,26 +93,29 @@ public final class ChatModel {
         }
         if text == nil { draft = "" }
 
-        messages.append(ChatMessage(role: .user, text: prompt))
-        let decision: RouteDecision = if let routeOverride {
-            .forced(routeOverride)
-        } else {
-            await autoRouter(prompt, session)
-        }
-        messages.append(ChatMessage(role: .assistant, text: "", decision: decision, isStreaming: true))
+        messages.append(ChatMessage(role: .user, content: .text(prompt)))
+        messages.append(ChatMessage(role: .assistant, content: .text(""), isStreaming: true))
         let index = messages.count - 1
 
-        do {
-            let result = try await session.respond(to: prompt, decision: decision) { [weak self] partial in
-                self?.messages[index].text = partial.text
+        let request = TurnCoordinator.Request(prompt: prompt, override: routeOverride, structuredOutput: structuredOutput)
+        let outcome = await coordinator.run(request, in: session) { [weak self] event in
+            guard let self else { return }
+            switch event {
+            case .routed(let decision):
+                // A new route (first pick or escalation) starts the reply over.
+                messages[index].decision = decision
+                messages[index].content = .text("")
+            case .partial(let content):
+                messages[index].content = content
             }
-            messages[index].text = result.text
-            messages[index].metrics = result.metrics
-        } catch let error as RoutedSession.Error {
-            messages[index].errorMessage = Self.describe(error)
-        } catch {
-            messages[index].errorMessage = error.localizedDescription
         }
+
+        messages[index].steps = outcome.steps
+        messages[index].decision = outcome.decision ?? messages[index].decision
+        if let content = outcome.content {
+            messages[index].content = content
+        }
+        messages[index].errorMessage = outcome.failure
         messages[index].isStreaming = false
     }
 
@@ -129,22 +143,6 @@ public final class ChatModel {
     public func exportMetrics() throws -> Data {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        encoder.dateEncodingStrategy = .iso8601
         return try encoder.encode(steps)
-    }
-
-    /// M1 default for Auto: the cheapest available route. The real router arrives in M2.
-    public static func firstAvailable(_ prompt: String, _ session: RoutedSession) async -> RouteDecision {
-        for route in Route.allCases where session.availability(of: route).isAvailable {
-            return RouteDecision(route: route, reason: "Cheapest available route", source: .rule)
-        }
-        return RouteDecision(route: .onDevice, reason: "No route is available", source: .rule)
-    }
-
-    static func describe(_ error: RoutedSession.Error) -> String {
-        switch error {
-        case .routeUnavailable(let route, let reason): "\(route.displayName) unavailable: \(reason)"
-        case .busy: "Still answering the previous message"
-        }
     }
 }
