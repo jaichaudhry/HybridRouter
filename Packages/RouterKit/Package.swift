@@ -16,7 +16,8 @@ let package = Package(
             name: "RouterKit",
             dependencies: [
                 .product(name: "ClaudeForFoundationModels", package: "ClaudeForFoundationModels"),
-            ]
+            ],
+            resources: [.process("Resources")]
         ),
         .testTarget(
             name: "RouterKitTests",

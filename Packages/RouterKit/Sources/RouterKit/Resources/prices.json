@@ -1,0 +1,11 @@
+{
+  "updated": "2026-10-02",
+  "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+  "notes": "USD per million tokens. Apple Cloud is free for developers eligible for Private Cloud Compute (App Store Small Business Program, under 2M first-time downloads); there is no paid tier. Claude cache writes are billed at the input rate here, which slightly underestimates them.",
+  "models": {
+    "apple-on-device": { "input": 0, "cachedInput": 0, "output": 0 },
+    "apple-private-cloud-compute": { "input": 0, "cachedInput": 0, "output": 0 },
+    "claude-sonnet-5-5": { "input": 2.0, "cachedInput": 0.2, "output": 10.0 },
+    "claude-opus-5-5": { "input": 4.0, "cachedInput": 0.2, "output": 20.0 }
+  }
+}
