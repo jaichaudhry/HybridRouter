@@ -44,6 +44,11 @@ public enum RoutingBenchmark {
     public struct Report: Sendable {
         public let results: [Result]
 
+        /// Also used to summarize a run in progress.
+        public init(results: [Result]) {
+            self.results = results
+        }
+
         public var matches: Int { results.filter(\.isMatch).count }
         public var accuracy: Double { results.isEmpty ? 0 : Double(matches) / Double(results.count) }
         public var misses: [Result] { results.filter { !$0.isMatch } }
