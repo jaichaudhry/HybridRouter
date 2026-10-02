@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+*.xccheckout
+*.moved-aside
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Secrets (see Config/Secrets.example.xcconfig)
+Config/Secrets.xcconfig
+*.p8
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Private planning notes (separate private repo, cloned here)
+notes/
