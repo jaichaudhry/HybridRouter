@@ -35,6 +35,13 @@ struct RoutingRulesTests {
         #expect(outcome == .decided(.forced(.claude)))
     }
 
+    @Test func overrideToAnUnavailableRouteSaysWhy() {
+        var availability = Self.allAvailable
+        availability[.claude] = .unavailable(reason: "Claude not configured")
+        #expect(RoutingRules.evaluate(input(override: .claude, availability: availability))
+            == .blocked(reason: "Claude unavailable: Claude not configured"))
+    }
+
     // MARK: A1 privacy
 
     @Test func privateTurnStaysOnDevice() {

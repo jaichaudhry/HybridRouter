@@ -61,6 +61,9 @@ public enum RoutingRules {
     public static func evaluate(_ input: RoutingInput) -> RuleOutcome {
         // Layer 0: the user's choice.
         if let override = input.override {
+            if let reason = input.availability[override]?.reason {
+                return .blocked(reason: "\(override.displayName) unavailable: \(reason)")
+            }
             return .decided(.forced(override))
         }
 
