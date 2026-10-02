@@ -1,4 +1,5 @@
 import Foundation
+import FoundationModels
 import Observation
 import RouterKit
 
@@ -46,7 +47,7 @@ public final class ChatModel {
     /// Nil means Auto.
     public var routeOverride: Route?
 
-    public let session: RoutedSession
+    public private(set) var session: RoutedSession
     @ObservationIgnored private let autoRouter: AutoRouter
     @ObservationIgnored private let costTable: CostTable
 
@@ -95,6 +96,13 @@ public final class ChatModel {
             messages[index].errorMessage = error.localizedDescription
         }
         messages[index].isStreaming = false
+    }
+
+    /// Swaps in a new session (e.g. after Claude credentials change) that continues the same
+    /// conversation. Ignored while a message is being sent.
+    public func replaceSession(_ makeSession: ([Transcript.Entry]) -> RoutedSession) {
+        guard !isSending else { return }
+        session = makeSession(Array(session.transcript))
     }
 
     /// Exports every step's metrics as JSON (SPEC §9).

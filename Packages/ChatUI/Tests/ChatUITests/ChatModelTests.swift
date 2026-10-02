@@ -95,3 +95,31 @@ struct ChatModelTests {
         #expect(exported.map(\.route) == [.onDevice, .claude])
     }
 }
+
+extension ChatModelTests {
+    @Test func replacingTheSessionKeepsTheConversation() async throws {
+        let model = makeModel()
+        await model.send("Remember me")
+
+        let newClaude = FakeProvider(route: .claude, reply: "I remember")
+        model.replaceSession { history in
+            RoutedSession(
+                instructions: "Be brief.",
+                onDevice: FakeProvider(route: .onDevice, reply: "x"),
+                appleCloud: FakeProvider(route: .appleCloud, reply: "x"),
+                claude: newClaude,
+                costTable: costTable,
+                history: history
+            )
+        }
+        model.routeOverride = .claude
+        await model.send("Do you?")
+
+        #expect(model.messages.last?.text == "I remember")
+        // The new Claude model saw both prompts, including the one sent before the swap.
+        let prompts = try #require(newClaude.requests.last).filter { entry in
+            if case .prompt = entry { true } else { false }
+        }
+        #expect(prompts.count == 2)
+    }
+}
