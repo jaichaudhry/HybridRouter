@@ -14,6 +14,7 @@ public struct OnDeviceClassifier: RouteClassifier {
         complex: judging whether something is realistic, trade-offs, what to cut or push back on, critique, advice under constraints, code.
         Examples:
         "Give me 10 dinner ideas" -> simple, chat
+        "Make a grocery checklist for a camping weekend" -> simple, chat
         "Turn this into a short email" -> simple, rewrite
         "Make a 5-day Rome itinerary for a couple" -> moderate, plan
         "List the main points of this article" -> moderate, summarize
