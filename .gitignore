@@ -21,3 +21,6 @@ Config/Secrets.xcconfig
 
 # Private planning notes (separate private repo, cloned here)
 notes/
+
+# Library packages don't pin dependencies; the app project does
+Packages/*/Package.resolved
