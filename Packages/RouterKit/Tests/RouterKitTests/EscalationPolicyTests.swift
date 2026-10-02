@@ -98,6 +98,13 @@ struct FailureCauseTests {
         #expect(FailureCause(ClaudeError.missingCredential) == .providerError)
     }
 
+    @Test func onDeviceOverflowMidGenerationCountsAsContext() {
+        struct GenerativeError: Error, CustomStringConvertible {
+            var description: String { "Provided 4,161 tokens, but the maximum allowed is 4,096." }
+        }
+        #expect(FailureCause(GenerativeError()) == .contextExceeded)
+    }
+
     @Test func everyCauseHasALabel() {
         let causes: [FailureCause] = [.contextExceeded, .guardrail, .refusal, .decodingFailed, .timeout,
                                       .rateLimited, .emptyReply, .unsupported, .cancelled, .providerError]

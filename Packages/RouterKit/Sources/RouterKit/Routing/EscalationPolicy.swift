@@ -60,8 +60,15 @@ public enum FailureCause: Equatable, Sendable {
         case let error as URLError where error.code == .cancelled:
             self = .cancelled
         default:
-            self = .providerError
+            self = Self.isContextOverflow(error) ? .contextExceeded : .providerError
         }
+    }
+
+    /// When the on-device model runs out of context mid-generation (e.g. after tool calls), it
+    /// throws a non-public `GenerativeError` ("Provided 4,161 tokens, but the maximum allowed
+    /// is 4,096") instead of `LanguageModelError.contextSizeExceeded`. Observed on macOS 27.0.
+    static func isContextOverflow(_ error: any Error) -> Bool {
+        String(describing: error).contains("maximum allowed is")
     }
 }
 
