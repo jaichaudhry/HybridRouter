@@ -1,21 +1,40 @@
 import FoundationModels
 
 /// The on-device classifier's read of a turn (SPEC §6 Layer B).
+///
+/// The reason shown to the user is derived from these labels rather than generated: on an
+/// M1 Max, generating it added about 600 ms per turn.
 @Generable
 public struct RouteClassification: Equatable, Sendable {
-    @Guide(description: "How hard the request is", .anyOf(["simple", "moderate", "complex"]))
+    @Guide(.anyOf(["simple", "moderate", "complex"]))
     public var complexity: String
 
-    @Guide(description: "What the user wants", .anyOf(["chat", "rewrite", "extract", "summarize", "plan", "reason", "code"]))
+    @Guide(.anyOf(["chat", "rewrite", "extract", "summarize", "plan", "reason", "code"]))
     public var task: String
 
-    @Guide(description: "One short sentence, shown to the user, saying why this route fits")
-    public var reason: String
-
-    public init(complexity: String, task: String, reason: String) {
+    public init(complexity: String, task: String) {
         self.complexity = complexity
         self.task = task
-        self.reason = reason
+    }
+
+    /// A short reason for the route badge, e.g. "Complex reasoning".
+    public var reason: String {
+        let subject = switch task {
+        case "chat": "conversation"
+        case "rewrite": "rewrite"
+        case "extract": "extraction"
+        case "summarize": "summary"
+        case "plan": "planning"
+        case "reason": "reasoning"
+        case "code": "coding"
+        default: "request"
+        }
+        let size = switch complexity {
+        case "simple": "Quick"
+        case "moderate": "Multi-step"
+        default: "Complex"
+        }
+        return "\(size) \(subject)"
     }
 }
 
