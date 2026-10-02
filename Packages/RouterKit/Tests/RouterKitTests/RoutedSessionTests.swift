@@ -1,5 +1,6 @@
 import Foundation
 import FoundationModels
+import RouterKitTesting
 import Testing
 @testable import RouterKit
 

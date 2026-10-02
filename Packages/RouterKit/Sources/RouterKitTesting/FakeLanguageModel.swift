@@ -1,20 +1,22 @@
 import Foundation
 import FoundationModels
 import Synchronization
-@testable import RouterKit
+import RouterKit
+
+/// Test doubles for RouterKit. Not for production use.
 
 /// A LanguageModel that streams a canned reply word by word and records every request,
 /// so tests can drive a real LanguageModelSession without a device or network.
-struct FakeLanguageModel: LanguageModel {
-    typealias Executor = FakeExecutor
+public struct FakeLanguageModel: LanguageModel {
+    public typealias Executor = FakeExecutor
 
-    let name: String
-    let reply: String
-    let usage: TokenUsage
+    public let name: String
+    public let reply: String
+    public let usage: TokenUsage
     /// Pause before replying, to hold a turn open.
-    let delay: Duration
+    public let delay: Duration
 
-    init(
+    public init(
         name: String,
         reply: String,
         usage: TokenUsage = TokenUsage(input: 10, cachedInput: 2, output: 5, reasoning: 0),
@@ -26,15 +28,15 @@ struct FakeLanguageModel: LanguageModel {
         self.delay = delay
     }
 
-    var capabilities: LanguageModelCapabilities { LanguageModelCapabilities([.toolCalling]) }
+    public var capabilities: LanguageModelCapabilities { LanguageModelCapabilities([.toolCalling]) }
 
-    var executorConfiguration: FakeExecutor.Configuration {
+    public var executorConfiguration: FakeExecutor.Configuration {
         FakeExecutor.Configuration(name: name, reply: reply, usage: usage, delay: delay)
     }
 }
 
-struct FakeExecutor: LanguageModelExecutor {
-    struct Configuration: Hashable, Sendable {
+public struct FakeExecutor: LanguageModelExecutor {
+    public struct Configuration: Hashable, Sendable {
         let name: String
         let reply: String
         let usage: TokenUsage
@@ -43,11 +45,11 @@ struct FakeExecutor: LanguageModelExecutor {
 
     private let configuration: Configuration
 
-    init(configuration: Configuration) throws {
+    public init(configuration: Configuration) throws {
         self.configuration = configuration
     }
 
-    nonisolated(nonsending) func respond(
+    public nonisolated(nonsending) func respond(
         to request: LanguageModelExecutorGenerationRequest,
         model: FakeLanguageModel,
         streamingInto channel: LanguageModelExecutorGenerationChannel
@@ -70,28 +72,28 @@ struct FakeExecutor: LanguageModelExecutor {
 }
 
 /// Requests each fake model received, keyed by model name.
-final class RequestLog: Sendable {
-    static let shared = RequestLog()
+public final class RequestLog: Sendable {
+    public static let shared = RequestLog()
 
     private let requests = Mutex<[String: [Transcript]]>([:])
 
-    func record(model: String, transcript: Transcript) {
+    public func record(model: String, transcript: Transcript) {
         requests.withLock { $0[model, default: []].append(transcript) }
     }
 
-    func transcripts(for model: String) -> [Transcript] {
+    public func transcripts(for model: String) -> [Transcript] {
         requests.withLock { $0[model] ?? [] }
     }
 }
 
 /// A provider wrapping a fake model, with controllable availability.
-struct FakeProvider: ModelProvider {
-    let route: Route
-    let modelID: String
-    let fake: FakeLanguageModel
-    var availability: ProviderAvailability
+public struct FakeProvider: ModelProvider {
+    public let route: Route
+    public let modelID: String
+    public let fake: FakeLanguageModel
+    public var availability: ProviderAvailability
 
-    init(
+    public init(
         route: Route,
         reply: String,
         availability: ProviderAvailability = .available,
@@ -106,7 +108,7 @@ struct FakeProvider: ModelProvider {
         self.availability = availability
     }
 
-    var model: any LanguageModel { fake }
+    public var model: any LanguageModel { fake }
 
-    var requests: [Transcript] { RequestLog.shared.transcripts(for: fake.name) }
+    public var requests: [Transcript] { RequestLog.shared.transcripts(for: fake.name) }
 }

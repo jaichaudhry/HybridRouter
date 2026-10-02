@@ -7,6 +7,8 @@ let package = Package(
     platforms: [.iOS("27.0"), .macOS("27.0")],
     products: [
         .library(name: "RouterKit", targets: ["RouterKit"]),
+        // Fake models and providers for tests and previews.
+        .library(name: "RouterKitTesting", targets: ["RouterKitTesting"]),
     ],
     dependencies: [
         .package(url: "https://github.com/anthropics/ClaudeForFoundationModels", from: "0.2.2"),
@@ -19,9 +21,13 @@ let package = Package(
             ],
             resources: [.process("Resources")]
         ),
+        .target(
+            name: "RouterKitTesting",
+            dependencies: ["RouterKit"]
+        ),
         .testTarget(
             name: "RouterKitTests",
-            dependencies: ["RouterKit"]
+            dependencies: ["RouterKit", "RouterKitTesting"]
         ),
     ],
     swiftLanguageModes: [.v6]
