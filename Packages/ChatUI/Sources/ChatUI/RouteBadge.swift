@@ -12,22 +12,22 @@ extension Route {
     }
 }
 
-/// Shows where a reply ran and why. Tapping it opens the step's metrics.
+/// Shows where a reply ran and why. Tapping it opens the metrics of every step behind it.
 public struct RouteBadge: View {
     /// Nil while the router is still choosing.
     let decision: RouteDecision?
-    let metrics: StepMetrics?
+    let steps: [StepMetrics]
     let isPrivate: Bool
 
-    public init(decision: RouteDecision?, metrics: StepMetrics?, isPrivate: Bool = false) {
+    public init(decision: RouteDecision?, steps: [StepMetrics], isPrivate: Bool = false) {
         self.decision = decision
-        self.metrics = metrics
+        self.steps = steps
         self.isPrivate = isPrivate
     }
 
     public var body: some View {
         if let decision {
-            DecidedRouteBadge(decision: decision, metrics: metrics, isPrivate: isPrivate)
+            DecidedRouteBadge(decision: decision, steps: steps, isPrivate: isPrivate)
         } else {
             Label("Routing…", systemImage: "arrow.triangle.branch")
                 .font(.caption)
@@ -41,7 +41,7 @@ public struct RouteBadge: View {
 
 private struct DecidedRouteBadge: View {
     let decision: RouteDecision
-    let metrics: StepMetrics?
+    let steps: [StepMetrics]
     let isPrivate: Bool
 
     @State private var showsMetrics = false
@@ -65,13 +65,11 @@ private struct DecidedRouteBadge: View {
             .background(decision.route.tint.opacity(0.12), in: .capsule)
         }
         .buttonStyle(.plain)
-        .disabled(metrics == nil)
+        .disabled(steps.isEmpty)
         .accessibilityLabel("Ran on \(decision.route.displayName). \(decision.reason)")
-        .accessibilityHint(metrics == nil ? "" : "Shows latency, tokens and cost")
+        .accessibilityHint(steps.isEmpty ? "" : "Shows latency, tokens and cost")
         .sheet(isPresented: $showsMetrics) {
-            if let metrics {
-                MetricsSheet(metrics: metrics)
-            }
+            MetricsSheet(steps: steps)
         }
     }
 

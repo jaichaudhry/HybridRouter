@@ -1,45 +1,21 @@
 import RouterKit
 import SwiftUI
 
-/// Details for one model step: where it ran, how fast, how many tokens, what it cost.
+/// Details for each model step behind a reply: where it ran, how fast, how many tokens,
+/// what it cost. Escalated replies list every attempt.
 public struct MetricsSheet: View {
-    let metrics: StepMetrics
+    let steps: [StepMetrics]
     @Environment(\.dismiss) private var dismiss
 
-    public init(metrics: StepMetrics) {
-        self.metrics = metrics
+    public init(steps: [StepMetrics]) {
+        self.steps = steps
     }
 
     public var body: some View {
         NavigationStack {
             List {
-                Section("Route") {
-                    LabeledContent("Ran on") {
-                        Label(metrics.route.displayName, systemImage: metrics.route.symbolName)
-                            .foregroundStyle(metrics.route.tint)
-                    }
-                    LabeledContent("Model", value: metrics.modelID)
-                    LabeledContent("Why", value: metrics.reason)
-                    if let cause = metrics.escalationCause {
-                        LabeledContent("Escalated", value: cause)
-                    }
-                }
-                Section("Speed") {
-                    if let latency = metrics.classifierLatency {
-                        LabeledContent("Routing", value: Format.seconds(latency))
-                    }
-                    LabeledContent("First token", value: Format.seconds(metrics.timeToFirstToken))
-                    LabeledContent("Total", value: Format.seconds(metrics.totalLatency))
-                    LabeledContent("Tokens/sec", value: metrics.tokensPerSecond.map { String(format: "%.1f", $0) } ?? "—")
-                }
-                Section("Tokens") {
-                    LabeledContent("Input", value: "\(metrics.usage.input)")
-                    LabeledContent("Cached input", value: "\(metrics.usage.cachedInput)")
-                    LabeledContent("Output", value: "\(metrics.usage.output)")
-                    LabeledContent("Reasoning", value: metrics.usage.reasoning.map(String.init) ?? "Not reported")
-                }
-                Section("Cost") {
-                    LabeledContent("Estimated", value: Format.cost(metrics.estimatedCost))
+                ForEach(Array(steps.enumerated()), id: \.element.id) { index, metrics in
+                    StepSections(metrics: metrics, attempt: steps.count > 1 ? index + 1 : nil)
                 }
             }
             .navigationTitle("Step details")
@@ -53,6 +29,49 @@ public struct MetricsSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+    }
+}
+
+private struct StepSections: View {
+    let metrics: StepMetrics
+    /// 1-based attempt number when a reply took several steps.
+    let attempt: Int?
+
+    var body: some View {
+        Section {
+            LabeledContent("Ran on") {
+                Label(metrics.route.displayName, systemImage: metrics.route.symbolName)
+                    .foregroundStyle(metrics.route.tint)
+            }
+            LabeledContent("Model", value: metrics.modelID)
+            LabeledContent("Why", value: metrics.reason)
+            if let cause = metrics.escalationCause {
+                LabeledContent("Escalated after", value: cause)
+            }
+            if let failure = metrics.failure {
+                LabeledContent("Failed", value: failure)
+                    .foregroundStyle(.red)
+            }
+        } header: {
+            Text(attempt.map { "Attempt \($0)" } ?? "Route")
+        }
+        Section("Speed") {
+            if let latency = metrics.classifierLatency {
+                LabeledContent("Routing", value: Format.seconds(latency))
+            }
+            LabeledContent("First token", value: Format.seconds(metrics.timeToFirstToken))
+            LabeledContent("Total", value: Format.seconds(metrics.totalLatency))
+            LabeledContent("Tokens/sec", value: metrics.tokensPerSecond.map { String(format: "%.1f", $0) } ?? "—")
+        }
+        Section("Tokens") {
+            LabeledContent("Input", value: "\(metrics.usage.input)")
+            LabeledContent("Cached input", value: "\(metrics.usage.cachedInput)")
+            LabeledContent("Output", value: "\(metrics.usage.output)")
+            LabeledContent("Reasoning", value: metrics.usage.reasoning.map(String.init) ?? "Not reported")
+        }
+        Section("Cost") {
+            LabeledContent("Estimated", value: Format.cost(metrics.estimatedCost))
+        }
     }
 }
 

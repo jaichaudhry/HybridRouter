@@ -112,9 +112,9 @@ public final class ChatModel {
 
         messages[index].steps = outcome.steps
         messages[index].decision = outcome.decision ?? messages[index].decision
-        if let content = outcome.content {
-            messages[index].content = content
-        }
+        // A failed turn's half-streamed text was already dropped from the session (the
+        // transcript reverts on error), so don't leave it on screen either.
+        messages[index].content = outcome.content ?? .text("")
         messages[index].errorMessage = outcome.failure
         messages[index].isStreaming = false
     }

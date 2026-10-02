@@ -75,6 +75,16 @@ struct ChatModelTests {
         #expect(reply.decision?.reason == "Escalated: timed out")
         #expect(reply.content == .text("from cloud"))
         #expect(reply.metrics?.escalationCause == "timed out")
+        #expect(reply.steps.map(\.route) == [.onDevice, .appleCloud])
+    }
+
+    @Test func failedTurnsClearPartialText() async {
+        let model = makeModel(claude: FakeProvider(route: .claude, reply: "x", behavior: .timeout))
+        model.routeOverride = .claude
+        await model.send("Hi")
+        #expect(model.messages[1].content == .text(""))
+        #expect(model.messages[1].errorMessage == "Claude couldn't answer (timed out). Try another route.")
+        #expect(model.messages[1].steps.map(\.failure) == ["timed out"])
     }
 
     @Test func structuredRepliesAreKeptStructured() async {

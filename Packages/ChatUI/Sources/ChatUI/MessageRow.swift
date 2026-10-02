@@ -22,7 +22,7 @@ struct MessageRow: View {
             }
         case .assistant:
             VStack(alignment: .leading, spacing: 6) {
-                RouteBadge(decision: message.decision, metrics: message.metrics)
+                RouteBadge(decision: message.decision, steps: message.steps)
                 if message.content.isEmpty {
                     if message.isStreaming {
                         ProgressView()
