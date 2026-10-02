@@ -1,0 +1,354 @@
+[
+ {
+  "id": 1,
+  "group": "trip",
+  "prompt": "What's the best month to visit Japan for cherry blossoms?",
+  "complexity": "simple",
+  "task": "chat"
+ },
+ {
+  "id": 2,
+  "group": "trip",
+  "prompt": "List 10 things to pack for a beach trip",
+  "complexity": "simple",
+  "task": "chat"
+ },
+ {
+  "id": 3,
+  "group": "trip",
+  "prompt": "Translate 'where is the train station' into Japanese",
+  "complexity": "simple",
+  "task": "rewrite"
+ },
+ {
+  "id": 4,
+  "group": "trip",
+  "prompt": "Plan a 4-day Lisbon trip for two foodies on a mid-range budget",
+  "complexity": "moderate",
+  "task": "plan"
+ },
+ {
+  "id": 5,
+  "group": "trip",
+  "prompt": "Build a day-by-day road trip from San Francisco to Los Angeles over 5 days",
+  "complexity": "moderate",
+  "task": "plan"
+ },
+ {
+  "id": 6,
+  "group": "trip",
+  "prompt": "Turn this itinerary into a checklist of bookings I need to make",
+  "complexity": "moderate",
+  "task": "extract"
+ },
+ {
+  "id": 7,
+  "group": "trip",
+  "prompt": "We have $3,000 for a week in Italy with two teens. Is that realistic, and where should we cut?",
+  "complexity": "complex",
+  "task": "reason"
+ },
+ {
+  "id": 8,
+  "group": "trip",
+  "prompt": "Compare a Disney cruise vs Disney World for a 6-year-old who gets seasick",
+  "complexity": "complex",
+  "task": "reason"
+ },
+ {
+  "id": 9,
+  "group": "trip",
+  "prompt": "My flight got cancelled and I'm stuck in Frankfurt overnight with a toddler. What are my options?",
+  "complexity": "complex",
+  "task": "reason"
+ },
+ {
+  "id": 10,
+  "group": "trip",
+  "prompt": "Shorten this plan to fit on one page",
+  "complexity": "moderate",
+  "task": "rewrite"
+ },
+ {
+  "id": 11,
+  "group": "trip",
+  "prompt": "Is a 50-minute layover in Chicago O'Hare enough to change terminals?",
+  "complexity": "complex",
+  "task": "reason"
+ },
+ {
+  "id": 12,
+  "group": "trip",
+  "prompt": "Suggest three rainy-day activities in Seattle",
+  "complexity": "simple",
+  "task": "chat"
+ },
+ {
+  "id": 13,
+  "group": "trip",
+  "prompt": "Plan a weekend in Kyoto that avoids the biggest crowds",
+  "complexity": "moderate",
+  "task": "plan"
+ },
+ {
+  "id": 14,
+  "group": "trip",
+  "prompt": "Write a polite email asking the hotel for early check-in",
+  "complexity": "simple",
+  "task": "rewrite"
+ },
+ {
+  "id": 15,
+  "group": "trip",
+  "prompt": "Given my partner's knee injury, how should we change this hiking itinerary?",
+  "complexity": "complex",
+  "task": "reason"
+ },
+ {
+  "id": 16,
+  "group": "document",
+  "prompt": "Extract the total and merchant from this receipt",
+  "complexity": "simple",
+  "task": "extract"
+ },
+ {
+  "id": 17,
+  "group": "document",
+  "prompt": "What date is on this invoice?",
+  "complexity": "simple",
+  "task": "extract"
+ },
+ {
+  "id": 18,
+  "group": "document",
+  "prompt": "Summarize this article in three bullet points",
+  "complexity": "moderate",
+  "task": "summarize"
+ },
+ {
+  "id": 19,
+  "group": "document",
+  "prompt": "Explain this lab report in plain English",
+  "complexity": "moderate",
+  "task": "summarize"
+ },
+ {
+  "id": 20,
+  "group": "document",
+  "prompt": "List every deadline mentioned in this contract",
+  "complexity": "moderate",
+  "task": "extract"
+ },
+ {
+  "id": 21,
+  "group": "document",
+  "prompt": "Summarize the key risks in this contract",
+  "complexity": "complex",
+  "task": "summarize"
+ },
+ {
+  "id": 22,
+  "group": "document",
+  "prompt": "What should I push back on in negotiation?",
+  "complexity": "complex",
+  "task": "reason"
+ },
+ {
+  "id": 23,
+  "group": "document",
+  "prompt": "Is this lease clause about early termination fair to me?",
+  "complexity": "complex",
+  "task": "reason"
+ },
+ {
+  "id": 24,
+  "group": "document",
+  "prompt": "Rewrite this paragraph to sound more professional",
+  "complexity": "simple",
+  "task": "rewrite"
+ },
+ {
+  "id": 25,
+  "group": "document",
+  "prompt": "Turn these meeting notes into action items with owners",
+  "complexity": "moderate",
+  "task": "extract"
+ },
+ {
+  "id": 26,
+  "group": "document",
+  "prompt": "Fix the typos in this text",
+  "complexity": "simple",
+  "task": "rewrite"
+ },
+ {
+  "id": 27,
+  "group": "document",
+  "prompt": "Compare these two insurance quotes and tell me which is better value",
+  "complexity": "complex",
+  "task": "reason"
+ },
+ {
+  "id": 28,
+  "group": "document",
+  "prompt": "Categorize these expenses into food, travel and office",
+  "complexity": "simple",
+  "task": "extract"
+ },
+ {
+  "id": 29,
+  "group": "document",
+  "prompt": "What does 'indemnify' mean in this contract?",
+  "complexity": "simple",
+  "task": "chat"
+ },
+ {
+  "id": 30,
+  "group": "document",
+  "prompt": "Draft a reply to this letter disputing the late fee",
+  "complexity": "moderate",
+  "task": "rewrite"
+ },
+ {
+  "id": 31,
+  "group": "general",
+  "prompt": "Hi!",
+  "complexity": "simple",
+  "task": "chat"
+ },
+ {
+  "id": 32,
+  "group": "general",
+  "prompt": "What's 15% of 240?",
+  "complexity": "simple",
+  "task": "chat"
+ },
+ {
+  "id": 33,
+  "group": "general",
+  "prompt": "Give me a fun fact about octopuses",
+  "complexity": "simple",
+  "task": "chat"
+ },
+ {
+  "id": 34,
+  "group": "general",
+  "prompt": "Explain how a refrigerator works",
+  "complexity": "simple",
+  "task": "chat"
+ },
+ {
+  "id": 35,
+  "group": "general",
+  "prompt": "Write a haiku about Monday mornings",
+  "complexity": "simple",
+  "task": "chat"
+ },
+ {
+  "id": 36,
+  "group": "general",
+  "prompt": "Explain the difference between a Roth and a traditional IRA",
+  "complexity": "moderate",
+  "task": "chat"
+ },
+ {
+  "id": 37,
+  "group": "general",
+  "prompt": "Should I refinance my mortgage at 6.1% if I plan to move in 3 years?",
+  "complexity": "complex",
+  "task": "reason"
+ },
+ {
+  "id": 38,
+  "group": "general",
+  "prompt": "Write a Swift function that debounces a closure",
+  "complexity": "complex",
+  "task": "code"
+ },
+ {
+  "id": 39,
+  "group": "general",
+  "prompt": "Why does this Swift code crash with 'index out of range'?",
+  "complexity": "complex",
+  "task": "code"
+ },
+ {
+  "id": 40,
+  "group": "general",
+  "prompt": "Plan a weekly study schedule for learning Spanish in 3 months",
+  "complexity": "moderate",
+  "task": "plan"
+ },
+ {
+  "id": 41,
+  "group": "general",
+  "prompt": "Outline a 5-minute talk on climate adaptation",
+  "complexity": "moderate",
+  "task": "plan"
+ },
+ {
+  "id": 42,
+  "group": "general",
+  "prompt": "Rewrite this tweet to be funnier",
+  "complexity": "simple",
+  "task": "rewrite"
+ },
+ {
+  "id": 43,
+  "group": "general",
+  "prompt": "Which is better for a startup: Postgres or DynamoDB? Consider cost and scale",
+  "complexity": "complex",
+  "task": "reason"
+ },
+ {
+  "id": 44,
+  "group": "general",
+  "prompt": "Prove that the square root of 2 is irrational",
+  "complexity": "complex",
+  "task": "reason"
+ },
+ {
+  "id": 45,
+  "group": "follow-up",
+  "prompt": "Make it shorter",
+  "complexity": "simple",
+  "task": "rewrite"
+ },
+ {
+  "id": 46,
+  "group": "follow-up",
+  "prompt": "Now do the same for Osaka",
+  "complexity": "moderate",
+  "task": "plan",
+  "previousPrompt": "Make a 3-day Kyoto itinerary for a family with two kids"
+ },
+ {
+  "id": 47,
+  "group": "follow-up",
+  "prompt": "Why?",
+  "complexity": "complex",
+  "task": "reason",
+  "previousRoute": "claude"
+ },
+ {
+  "id": 48,
+  "group": "follow-up",
+  "prompt": "Thanks, that helps",
+  "complexity": "simple",
+  "task": "chat"
+ },
+ {
+  "id": 49,
+  "group": "follow-up",
+  "prompt": "Can you add a rest day?",
+  "complexity": "moderate",
+  "task": "plan"
+ },
+ {
+  "id": 50,
+  "group": "follow-up",
+  "prompt": "What would you change?",
+  "complexity": "complex",
+  "task": "reason"
+ }
+]

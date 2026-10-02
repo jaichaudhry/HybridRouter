@@ -87,3 +87,35 @@ struct RoutingEvalTests {
                 "Classified \(run?.classification?.complexity ?? "-")/\(run?.classification?.task ?? "-") in \(Int((run?.latency ?? 0) * 1000)) ms")
     }
 }
+
+/// The 50 hand-reviewed prompts in classifier_benchmark.json, run through the real on-device
+/// classifier. The app's debug screen runs the same benchmark on a device.
+struct ClassifierBenchmarkTests {
+    /// 48/50 when tuned (M1 Max, macOS 27.0). The margin absorbs small model updates.
+    static let minimumAccuracy = 0.9
+
+    static let cases: [RoutingBenchmark.Case] = {
+        guard let url = Bundle.module.url(forResource: "classifier_benchmark", withExtension: "json"),
+              let data = try? Data(contentsOf: url) else { return [] }
+        return (try? RoutingBenchmark.load(data)) ?? []
+    }()
+
+    @Test func benchmarkLoads() {
+        #expect(Self.cases.count == 50)
+    }
+
+    @Test(.enabled(if: SystemLanguageModel.default.isAvailable, "Needs the on-device model"))
+    func classifierMeetsTheBenchmark() async {
+        let report = await RoutingBenchmark.run(Self.cases, classifier: OnDeviceClassifier())
+        let median = Int((report.medianLatency ?? 0) * 1000)
+        print("BENCHMARK \(report.matches)/\(report.results.count), median \(median) ms")
+        for group in report.accuracyByGroup {
+            print("BENCHMARK   \(group.group): \(group.matches)/\(group.total)")
+        }
+        for miss in report.misses {
+            let got = miss.classification.map { "\($0.complexity)/\($0.task)" } ?? "rule"
+            print("BENCHMARK   miss #\(miss.case.id) want \(miss.expected?.rawValue ?? "-") got \(miss.decision?.route.rawValue ?? "-") [\(got)]: \(miss.case.prompt)")
+        }
+        #expect(report.accuracy >= Self.minimumAccuracy)
+    }
+}

@@ -18,7 +18,7 @@ let package = Package(
             path: ".",
             exclude: ["Package.swift"],
             sources: ["RoutingEvalTests.swift"],
-            resources: [.copy("routing_cases.json")]
+            resources: [.copy("routing_cases.json"), .copy("classifier_benchmark.json")]
         ),
     ],
     swiftLanguageModes: [.v6]
