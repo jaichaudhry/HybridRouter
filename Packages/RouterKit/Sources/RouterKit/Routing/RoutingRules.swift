@@ -1,3 +1,5 @@
+import Foundation
+
 /// Everything the hard rules look at for one turn. Built by the app; plain values so the
 /// rules stay pure and unit-testable.
 public struct RoutingInput: Equatable, Sendable {
@@ -14,6 +16,11 @@ public struct RoutingInput: Equatable, Sendable {
     public var hasImage: Bool
     /// Routes whose model accepts images.
     public var visionRoutes: Set<Route>
+    /// The route of the previous reply, if this turn is a bare follow-up question to it
+    /// ("Why?"). Such turns stay on that route.
+    public var followsUpOn: Route?
+    /// The previous user message, shown to the classifier for short turns.
+    public var previousPrompt: String?
 
     public init(
         override: Route? = nil,
@@ -23,7 +30,9 @@ public struct RoutingInput: Equatable, Sendable {
         estimatedTokens: Int = 0,
         contextBudgets: [Route: Int] = [:],
         hasImage: Bool = false,
-        visionRoutes: Set<Route> = []
+        visionRoutes: Set<Route> = [],
+        followsUpOn: Route? = nil,
+        previousPrompt: String? = nil
     ) {
         self.override = override
         self.privacyReason = privacyReason
@@ -33,6 +42,8 @@ public struct RoutingInput: Equatable, Sendable {
         self.contextBudgets = contextBudgets
         self.hasImage = hasImage
         self.visionRoutes = visionRoutes
+        self.followsUpOn = followsUpOn
+        self.previousPrompt = previousPrompt
     }
 
     public var isPrivate: Bool { privacyReason != nil }
@@ -43,6 +54,18 @@ public struct RoutingInput: Equatable, Sendable {
 
     func isAvailable(_ route: Route) -> Bool {
         availability[route]?.isAvailable ?? false
+    }
+}
+
+/// Recognizes a bare follow-up question such as "Why?" or "How come?": one or two words
+/// ending in a question mark. Longer follow-ups go to the classifier with the previous message.
+public enum FollowUp {
+    public static func isBare(_ prompt: String) -> Bool {
+        let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        let words = trimmed.split(whereSeparator: \.isWhitespace)
+        return trimmed.hasSuffix("?")
+            && (1...2).contains(words.count)
+            && trimmed.contains(where: \.isLetter)
     }
 }
 
@@ -105,6 +128,11 @@ public enum RoutingRules {
         if !input.isOnline {
             return .decided(RouteDecision(route: .onDevice, reason: "Offline", source: .rule))
         }
+        // A bare follow-up ("Why?") stays with the model that gave the previous reply.
+        if let previous = input.followsUpOn, fitting.contains(previous) {
+            return .decided(RouteDecision(route: previous, reason: "Follow-up", source: .rule))
+        }
+
         // Only one route is big enough: no choice left for the classifier.
         if fitting.count == 1, smallestFit != allowed.first {
             return .decided(RouteDecision(route: smallestFit, reason: "Too long for \(allowed[0].displayName)", source: .rule))

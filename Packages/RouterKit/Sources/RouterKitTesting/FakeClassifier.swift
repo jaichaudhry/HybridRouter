@@ -22,7 +22,7 @@ public struct FakeClassifier: RouteClassifier {
 
     public static let failing = FakeClassifier()
 
-    public func classify(_ prompt: String) async throws -> RouteClassification {
+    public func classify(_ prompt: String, previous: String?) async throws -> RouteClassification {
         guard let answer = answers[prompt] ?? fallback else { throw Failure() }
         return answer
     }

@@ -2,7 +2,14 @@ import FoundationModels
 
 /// Classifies a turn's complexity and task (SPEC §6 Layer B).
 public protocol RouteClassifier: Sendable {
-    func classify(_ prompt: String) async throws -> RouteClassification
+    /// - Parameter previous: the previous user message, for short follow-ups; nil otherwise.
+    func classify(_ prompt: String, previous: String?) async throws -> RouteClassification
+}
+
+extension RouteClassifier {
+    public func classify(_ prompt: String) async throws -> RouteClassification {
+        try await classify(prompt, previous: nil)
+    }
 }
 
 /// Classifies with the on-device model, using a fresh, short session per turn so it stays fast.
@@ -22,16 +29,26 @@ public struct OnDeviceClassifier: RouteClassifier {
         "Which offer should I take and why?" -> complex, reason
         """
 
+    /// Short messages get the previous one for context ("Now do the same for Osaka").
+    /// Longer ones stand alone, which keeps the prompt, and the latency, small.
+    static let contextWordLimit = 8
+
+    static func classifierPrompt(_ prompt: String, previous: String?) -> String {
+        let words = prompt.split(whereSeparator: \.isWhitespace).count
+        guard let previous, words <= contextWordLimit else { return prompt }
+        return "Previous message: \(previous.prefix(240))\nMessage to label: \(prompt)"
+    }
+
     private let model: SystemLanguageModel
 
     public init(model: SystemLanguageModel = .default) {
         self.model = model
     }
 
-    public func classify(_ prompt: String) async throws -> RouteClassification {
+    public func classify(_ prompt: String, previous: String?) async throws -> RouteClassification {
         let session = LanguageModelSession(model: model, instructions: Self.instructions)
         let response = try await session.respond(
-            to: prompt,
+            to: Self.classifierPrompt(prompt, previous: previous),
             generating: RouteClassification.self,
             options: GenerationOptions(samplingMode: .greedy)
         )

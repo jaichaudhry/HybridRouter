@@ -40,7 +40,7 @@ public struct Router: Sendable {
 
         let clock = ContinuousClock()
         let start = clock.now
-        let classification = try? await classifier.classify(prompt)
+        let classification = try? await classifier.classify(prompt, previous: input.previousPrompt)
         let run = ClassifierRun(classification: classification, latency: start.duration(to: clock.now).seconds)
         return .routed(Self.decide(classification, mapping: mapping, allowed: allowed, input: input), classifier: run)
     }

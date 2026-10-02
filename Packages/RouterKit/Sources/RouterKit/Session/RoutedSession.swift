@@ -29,6 +29,8 @@ public final class RoutedSession {
     }
 
     public private(set) var isResponding = false
+    /// The route of the last reply that succeeded.
+    public private(set) var lastRoute: Route?
 
     @ObservationIgnored private let session: LanguageModelSession
     @ObservationIgnored private let providers: [Route: any ModelProvider]
@@ -56,6 +58,15 @@ public final class RoutedSession {
     }
 
     public var transcript: Transcript { session.transcript }
+
+    /// The text of the most recent user message in the history, if any.
+    public var lastPromptText: String? {
+        guard case .prompt(let prompt) = session.transcript.last(where: \.isPrompt) else { return nil }
+        let text = prompt.segments.compactMap { segment -> String? in
+            if case .text(let text) = segment { text.content } else { nil }
+        }.joined()
+        return text.isEmpty ? nil : text
+    }
 
     public func provider(for route: Route) -> any ModelProvider {
         // Every route is filled in init.
@@ -132,6 +143,7 @@ public final class RoutedSession {
         } catch {
             throw StepFailure(underlying: error, metrics: metrics())
         }
+        lastRoute = decision.route
         return TurnResult(content: content, metrics: metrics())
     }
 

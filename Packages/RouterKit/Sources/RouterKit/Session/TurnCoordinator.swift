@@ -181,7 +181,9 @@ public struct TurnCoordinator {
             estimatedTokens: await estimator.estimate(history: Array(session.transcript), prompt: request.prompt),
             contextBudgets: budgets,
             hasImage: request.hasImage,
-            visionRoutes: vision
+            visionRoutes: vision,
+            followsUpOn: FollowUp.isBare(request.prompt) ? session.lastRoute : nil,
+            previousPrompt: session.lastPromptText
         )
     }
 }
