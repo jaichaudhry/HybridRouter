@@ -49,6 +49,8 @@ public final class ChatModel {
 
     public private(set) var session: RoutedSession
     @ObservationIgnored private let autoRouter: AutoRouter
+    /// A session swap requested mid-reply, applied when the reply finishes.
+    @ObservationIgnored private var pendingSession: (([Transcript.Entry]) -> RoutedSession)?
     @ObservationIgnored private let costTable: CostTable
 
     public init(session: RoutedSession, costTable: CostTable, autoRouter: @escaping AutoRouter = ChatModel.firstAvailable) {
@@ -72,7 +74,10 @@ public final class ChatModel {
         let prompt = (text ?? draft).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !prompt.isEmpty, !isSending else { return }
         isSending = true
-        defer { isSending = false }
+        defer {
+            isSending = false
+            applyPendingSession()
+        }
         if text == nil { draft = "" }
 
         messages.append(ChatMessage(role: .user, text: prompt))
@@ -99,9 +104,15 @@ public final class ChatModel {
     }
 
     /// Swaps in a new session (e.g. after Claude credentials change) that continues the same
-    /// conversation. Ignored while a message is being sent.
-    public func replaceSession(_ makeSession: ([Transcript.Entry]) -> RoutedSession) {
-        guard !isSending else { return }
+    /// conversation. If a reply is in progress, the swap happens as soon as it finishes.
+    public func replaceSession(_ makeSession: @escaping ([Transcript.Entry]) -> RoutedSession) {
+        pendingSession = makeSession
+        if !isSending { applyPendingSession() }
+    }
+
+    private func applyPendingSession() {
+        guard let makeSession = pendingSession else { return }
+        pendingSession = nil
         session = makeSession(Array(session.transcript))
     }
 

@@ -123,3 +123,34 @@ extension ChatModelTests {
         #expect(prompts.count == 2)
     }
 }
+
+extension ChatModelTests {
+    @Test func replacingTheSessionMidReplyAppliesWhenTheReplyEnds() async throws {
+        let model = makeModel(onDevice: FakeProvider(route: .onDevice, reply: "slow", delay: .milliseconds(200)))
+        let sending = Task { await model.send("First") }
+        while !model.isSending { await Task.yield() }
+
+        let newClaude = FakeProvider(route: .claude, reply: "new key works")
+        model.replaceSession { history in
+            RoutedSession(
+                instructions: "Be brief.",
+                onDevice: FakeProvider(route: .onDevice, reply: "x"),
+                appleCloud: FakeProvider(route: .appleCloud, reply: "x"),
+                claude: newClaude,
+                costTable: costTable,
+                history: history
+            )
+        }
+        await sending.value
+        #expect(model.messages[1].text == "slow")
+
+        model.routeOverride = .claude
+        await model.send("Second")
+        #expect(model.messages.last?.text == "new key works")
+        // The swapped-in session kept the reply that was streaming during the swap.
+        let responses = try #require(newClaude.requests.last).filter { entry in
+            if case .response = entry { true } else { false }
+        }
+        #expect(responses.count == 1)
+    }
+}
