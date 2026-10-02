@@ -9,18 +9,28 @@
 /* Begin PBXBuildFile section */
 		14036354A649CE383BEBB1BE /* ChatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 26BB5A6C5BE7C9FEC71C1110 /* ChatUI */; };
 		4ABC43073CB23616BF6A9641 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF2EF4049958BD1AF58338A /* AppModel.swift */; };
+		522962104E2B3019DAD7EBE3 /* Itinerary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20F77900120E6155D0FC4141 /* Itinerary.swift */; };
+		529DD3CECA47CE1207474B77 /* ItineraryCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21346C9E4202204A5B4C946C /* ItineraryCards.swift */; };
+		6830BC7643C7CA34B77C777E /* TripPlannerScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D5D235154C4571E34593212 /* TripPlannerScenario.swift */; };
+		7A6D76409900DF6EF96E8898 /* Scenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DDD0D7C41E6B7C54D7A4C60 /* Scenario.swift */; };
 		82A204264E0B2AC4EC6255CE /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D9E8BDCF8EEBF317AD45C7 /* AppConfig.swift */; };
 		91492B8BCA83F48890A1E49E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3A2B3F2007FA3C54EF3F9DF /* ContentView.swift */; };
+		A29724AA347156C6ED0AE5E7 /* PlacesTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EDA3B0B2C8A6931897A98E6 /* PlacesTool.swift */; };
 		A85ED142CB286D27CA187F13 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */; };
 		D026BB74E903117DCE548FD2 /* HybridRouterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F403000424EB9780533C886E /* HybridRouterApp.swift */; };
 		F751E029F9FD712552A4E662 /* RouterKit in Frameworks */ = {isa = PBXBuildFile; productRef = 2D45F172E9133E014270FF74 /* RouterKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		20F77900120E6155D0FC4141 /* Itinerary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Itinerary.swift; sourceTree = "<group>"; };
+		21346C9E4202204A5B4C946C /* ItineraryCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItineraryCards.swift; sourceTree = "<group>"; };
+		2D5D235154C4571E34593212 /* TripPlannerScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlannerScenario.swift; sourceTree = "<group>"; };
 		40D9B067395E4F3454748AD4 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		5C5A008662A9462F1B26DCD3 /* ChatUI */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ChatUI; path = Packages/ChatUI; sourceTree = SOURCE_ROOT; };
+		5EDA3B0B2C8A6931897A98E6 /* PlacesTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacesTool.swift; sourceTree = "<group>"; };
 		6252FCEEC31F47631727B1EA /* RouterKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = RouterKit; path = Packages/RouterKit; sourceTree = SOURCE_ROOT; };
 		85B747C17A70C0450B37AA8E /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		8DDD0D7C41E6B7C54D7A4C60 /* Scenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scenario.swift; sourceTree = "<group>"; };
 		A21E9E88842F2D84380001A9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		A3A2B3F2007FA3C54EF3F9DF /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		DCF2EF4049958BD1AF58338A /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
@@ -61,6 +71,7 @@
 				A3A2B3F2007FA3C54EF3F9DF /* ContentView.swift */,
 				F403000424EB9780533C886E /* HybridRouterApp.swift */,
 				A21E9E88842F2D84380001A9 /* Info.plist */,
+				CBB65CE9D5DA0BF8B668D953 /* Scenarios */,
 				A469DD2F840798F83C7E5C7E /* Settings */,
 			);
 			path = App;
@@ -80,6 +91,26 @@
 				F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		C4F13B6336F0076921B49003 /* TripPlanner */ = {
+			isa = PBXGroup;
+			children = (
+				20F77900120E6155D0FC4141 /* Itinerary.swift */,
+				21346C9E4202204A5B4C946C /* ItineraryCards.swift */,
+				5EDA3B0B2C8A6931897A98E6 /* PlacesTool.swift */,
+				2D5D235154C4571E34593212 /* TripPlannerScenario.swift */,
+			);
+			path = TripPlanner;
+			sourceTree = "<group>";
+		};
+		CBB65CE9D5DA0BF8B668D953 /* Scenarios */ = {
+			isa = PBXGroup;
+			children = (
+				8DDD0D7C41E6B7C54D7A4C60 /* Scenario.swift */,
+				C4F13B6336F0076921B49003 /* TripPlanner */,
+			);
+			path = Scenarios;
 			sourceTree = "<group>";
 		};
 		DD81C6FD145D2F4C385790AD /* Packages */ = {
@@ -169,7 +200,12 @@
 				4ABC43073CB23616BF6A9641 /* AppModel.swift in Sources */,
 				91492B8BCA83F48890A1E49E /* ContentView.swift in Sources */,
 				D026BB74E903117DCE548FD2 /* HybridRouterApp.swift in Sources */,
+				522962104E2B3019DAD7EBE3 /* Itinerary.swift in Sources */,
+				529DD3CECA47CE1207474B77 /* ItineraryCards.swift in Sources */,
+				A29724AA347156C6ED0AE5E7 /* PlacesTool.swift in Sources */,
+				7A6D76409900DF6EF96E8898 /* Scenario.swift in Sources */,
 				A85ED142CB286D27CA187F13 /* SettingsView.swift in Sources */,
+				6830BC7643C7CA34B77C777E /* TripPlannerScenario.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

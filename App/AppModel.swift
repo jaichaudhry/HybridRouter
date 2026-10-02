@@ -4,18 +4,20 @@ import Observation
 import OSLog
 import RouterKit
 
-/// App-wide state: configuration, Claude credentials, and the chat.
+/// App-wide state: configuration, Claude credentials, and one chat per scenario.
 @MainActor
 @Observable
 final class AppModel {
-    static let instructions = """
-        You are a helpful assistant. Answer clearly and concisely. Use Markdown for lists and emphasis.
-        """
+    let scenarios: [any Scenario] = [TripPlannerScenario(), GeneralScenario()]
+    var selectedScenarioID = TripPlannerScenario().id {
+        didSet { chat.prewarm() }
+    }
 
     private(set) var claudeAuth: ClaudeAuth
     /// Why App Attest was abandoned this launch, if it was.
     private(set) var appAttestFailure: String?
-    let chat: ChatModel
+    /// Each scenario keeps its own conversation.
+    private let chats: [String: ChatModel]
 
     @ObservationIgnored private let config: AppConfig
     @ObservationIgnored private let secrets: any SecretStore
@@ -37,15 +39,33 @@ final class AppModel {
 
         let auth = Self.resolveAuth(config: config, secrets: secrets, skipAppAttest: false)
         self.claudeAuth = auth
-        let session = Self.makeSession(config: config, auth: auth, costTable: costTable, history: [])
         let network = network
-        let coordinator = TurnCoordinator(
-            router: Router(classifier: OnDeviceClassifier()),
-            estimator: OnDeviceTokenEstimator(),
-            isOnline: { network.isOnline }
-        )
-        self.chat = ChatModel(session: session, coordinator: coordinator, costTable: costTable)
+        var chats: [String: ChatModel] = [:]
+        for scenario in scenarios {
+            let session = Self.makeSession(scenario: scenario, config: config, auth: auth, costTable: costTable, history: [])
+            let coordinator = TurnCoordinator(
+                router: Router(classifier: OnDeviceClassifier(), mapping: scenario.mapping),
+                estimator: OnDeviceTokenEstimator(),
+                isOnline: { network.isOnline }
+            )
+            chats[scenario.id] = ChatModel(
+                session: session,
+                coordinator: coordinator,
+                costTable: costTable,
+                structuredOutput: scenario.structuredOutput
+            )
+        }
+        self.chats = chats
         prewarmClaude()
+    }
+
+    var scenario: any Scenario {
+        scenarios.first { $0.id == selectedScenarioID } ?? scenarios[0]
+    }
+
+    var chat: ChatModel {
+        // Every scenario gets a chat in init.
+        chats[scenario.id]!
     }
 
     var isAppleCloudEnabled: Bool { config.isAppleCloudEnabled }
@@ -72,8 +92,10 @@ final class AppModel {
     private func reloadClaude() {
         claudeAuth = Self.resolveAuth(config: config, secrets: secrets, skipAppAttest: appAttestFailure != nil)
         let auth = claudeAuth
-        chat.replaceSession { [config, costTable] history in
-            Self.makeSession(config: config, auth: auth, costTable: costTable, history: history)
+        for scenario in scenarios {
+            chats[scenario.id]?.replaceSession { [config, costTable] history in
+                Self.makeSession(scenario: scenario, config: config, auth: auth, costTable: costTable, history: history)
+            }
         }
         logger.info("Claude auth is now \(auth.mode.displayName, privacy: .public)")
     }
@@ -102,13 +124,15 @@ final class AppModel {
     }
 
     private static func makeSession(
+        scenario: any Scenario,
         config: AppConfig,
         auth: ClaudeAuth,
         costTable: CostTable,
         history: [Transcript.Entry]
     ) -> RoutedSession {
         RoutedSession(
-            instructions: instructions,
+            instructions: scenario.instructions,
+            tools: scenario.tools,
             onDevice: OnDeviceProvider(),
             appleCloud: AppleCloudProvider(isEnabled: config.isAppleCloudEnabled),
             claude: ClaudeProvider(auth: auth),
