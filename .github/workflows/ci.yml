@@ -8,14 +8,39 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   secrets-scan:
     name: Secrets scan (gitleaks)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-and-test:
+    name: Build and test
+    # Preview image: macOS 27 with Xcode 27.0 (actions/runner-images#14404).
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Show toolchain
+        run: xcodebuild -version && swift --version
+      - name: Test RouterKit
+        run: swift test --package-path Packages/RouterKit
+      - name: Test ChatUI
+        run: swift test --package-path Packages/ChatUI
+      - name: Build app
+        run: >
+          xcodebuild build
+          -project HybridRouter.xcodeproj
+          -scheme HybridRouter
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
