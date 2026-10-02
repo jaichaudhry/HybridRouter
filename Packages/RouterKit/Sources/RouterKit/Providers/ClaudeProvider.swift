@@ -34,6 +34,10 @@ public struct ClaudeProvider: ModelProvider {
 
     public var modelID: String { tier.claudeModel.id }
 
+    /// Set explicitly (it's also the bridge's default) so a reply that reaches it can be
+    /// reported as cut off: Claude's max_tokens stop doesn't throw. Includes thinking tokens.
+    public var maximumResponseTokens: Int? { 16_000 }
+
     public var model: any LanguageModel { claudeModel }
 
     public var availability: ProviderAvailability {

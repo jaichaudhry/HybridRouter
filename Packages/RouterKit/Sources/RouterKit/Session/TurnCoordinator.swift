@@ -125,7 +125,16 @@ public struct TurnCoordinator {
                 }
                 guard result.content.isEmpty else {
                     record(result.metrics, failure: nil)
-                    return Outcome(content: result.content, decision: decision, steps: steps, classifier: classifier, failure: nil)
+                    // A reply that reached the length cap stopped early. Keep it, but say so.
+                    let limit = session.provider(for: decision.route).maximumResponseTokens
+                    let truncated = limit.map { result.metrics.usage.output >= $0 } ?? false
+                    return Outcome(
+                        content: result.content,
+                        decision: decision,
+                        steps: steps,
+                        classifier: classifier,
+                        failure: truncated ? "Reply was cut off at the length limit." : nil
+                    )
                 }
                 // Claude refusals and truncation return normally with nothing in them.
                 session.discardLastTurn()

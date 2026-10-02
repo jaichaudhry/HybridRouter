@@ -17,4 +17,10 @@ public protocol ModelProvider: Sendable {
     var availability: ProviderAvailability { get }
     /// The model's context window in tokens, or nil if unknown (treated as unlimited).
     func contextSize() async -> Int?
+    /// A cap on reply length, if the route sets one. A reply that reaches it was cut off.
+    var maximumResponseTokens: Int? { get }
+}
+
+extension ModelProvider {
+    public var maximumResponseTokens: Int? { nil }
 }

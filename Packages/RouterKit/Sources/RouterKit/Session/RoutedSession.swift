@@ -47,7 +47,7 @@ public final class RoutedSession {
                      "Each provider must match its route")
         self.providers = [.onDevice: onDevice, .appleCloud: appleCloud, .claude: claude]
         self.costTable = costTable
-        let models = RouteModels(onDevice: onDevice.model, appleCloud: appleCloud.model, claude: claude.model)
+        let models = RouteModels(onDevice: onDevice, appleCloud: appleCloud, claude: claude)
         self.session = LanguageModelSession(
             profile: RoutingProfile(instructions: instructions, tools: tools, models: models),
             history: history

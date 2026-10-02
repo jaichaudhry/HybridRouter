@@ -20,6 +20,7 @@ struct RoutingProfile: LanguageModelSession.DynamicProfile {
             tools
         }
             .model(models[route])
+            .maximumResponseTokens(models.maximumResponseTokens(route))
             .historyTransform(HistoryPolicy.dropEarlierReasoning)
     }
 }
@@ -29,11 +30,19 @@ struct RouteModels: Sendable {
     private let onDevice: any LanguageModel
     private let appleCloud: any LanguageModel
     private let claude: any LanguageModel
+    private let responseLimits: [Route: Int]
 
-    init(onDevice: any LanguageModel, appleCloud: any LanguageModel, claude: any LanguageModel) {
-        self.onDevice = onDevice
-        self.appleCloud = appleCloud
-        self.claude = claude
+    init(onDevice: any ModelProvider, appleCloud: any ModelProvider, claude: any ModelProvider) {
+        self.onDevice = onDevice.model
+        self.appleCloud = appleCloud.model
+        self.claude = claude.model
+        self.responseLimits = [onDevice, appleCloud, claude].reduce(into: [:]) { limits, provider in
+            limits[provider.route] = provider.maximumResponseTokens
+        }
+    }
+
+    func maximumResponseTokens(_ route: Route) -> Int? {
+        responseLimits[route]
     }
 
     subscript(route: Route) -> any LanguageModel {

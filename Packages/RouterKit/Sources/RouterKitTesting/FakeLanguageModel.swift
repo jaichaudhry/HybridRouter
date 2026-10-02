@@ -126,6 +126,7 @@ public struct FakeProvider: ModelProvider {
     public let fake: FakeLanguageModel
     public var availability: ProviderAvailability
     public var contextLimit: Int?
+    public var maximumResponseTokens: Int?
 
     public init(
         route: Route,
@@ -134,10 +135,12 @@ public struct FakeProvider: ModelProvider {
         usage: TokenUsage = TokenUsage(input: 10, cachedInput: 2, output: 5, reasoning: 0),
         delay: Duration = .zero,
         contextLimit: Int? = nil,
+        maximumResponseTokens: Int? = nil,
         behavior: FakeBehavior = .reply
     ) {
         self.route = route
         self.contextLimit = contextLimit
+        self.maximumResponseTokens = maximumResponseTokens
         // Unique per test so the shared request log never mixes tests.
         let name = "\(route.rawValue)-\(UUID().uuidString)"
         self.modelID = route == .claude ? "claude-sonnet-5-5" : "apple-on-device"

@@ -24,9 +24,14 @@ public struct AppleCloudProvider: ModelProvider {
         return Self.map(cloudModel.availability, isLimitReached: cloudModel.quotaUsage.isLimitReached)
     }
 
+    /// Apple Cloud's context window per WWDC26 session 319.
+    static let documentedContextSize = 32_768
+
+    /// Falls back to the documented size if the lookup fails, so a long conversation is never
+    /// treated as fitting an unlimited window.
     public func contextSize() async -> Int? {
         guard isEnabled else { return nil }
-        return try? await cloudModel.contextSize
+        return (try? await cloudModel.contextSize) ?? Self.documentedContextSize
     }
 
     /// Quota is checked separately: the model can be available after the daily limit is reached.

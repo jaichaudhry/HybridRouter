@@ -162,4 +162,21 @@ struct TurnCoordinatorTests {
         #expect(!output.applies(to: RouteClassification(complexity: "complex", task: "chat")))
         #expect(output.applies(to: RouteClassification(complexity: "complex", task: "plan")))
     }
+
+    @Test func repliesThatHitTheLengthCapAreKeptAndFlagged() async {
+        let claude = FakeProvider(
+            route: .claude,
+            reply: "a long answer that stops",
+            usage: TokenUsage(input: 10, cachedInput: 0, output: 16_000, reasoning: nil),
+            maximumResponseTokens: 16_000
+        )
+        let outcome = await coordinator(.always("complex")).run(.init(prompt: "Explain everything"), in: session(claude: claude))
+        #expect(outcome.content == .text("a long answer that stops"))
+        #expect(outcome.failure == "Reply was cut off at the length limit.")
+    }
+
+    @Test func appleCloudFallsBackToItsDocumentedContextSize() async {
+        #expect(await AppleCloudProvider(isEnabled: false).contextSize() == nil)
+        #expect(AppleCloudProvider.documentedContextSize == 32_768)
+    }
 }
