@@ -42,21 +42,31 @@ public struct Router: Sendable {
         let start = clock.now
         let classification = try? await classifier.classify(prompt)
         let run = ClassifierRun(classification: classification, latency: start.duration(to: clock.now).seconds)
-        return .routed(Self.decide(classification, mapping: mapping, allowed: allowed), classifier: run)
+        return .routed(Self.decide(classification, mapping: mapping, allowed: allowed, input: input), classifier: run)
     }
 
     /// The classifier step as a pure function: map the complexity to a route and fit it to
     /// what's allowed. A failed or unusable classification falls back to Apple Cloud.
-    static func decide(_ classification: RouteClassification?, mapping: ComplexityMapping, allowed: [Route]) -> RouteDecision {
+    static func decide(
+        _ classification: RouteClassification?,
+        mapping: ComplexityMapping,
+        allowed: [Route],
+        input: RoutingInput
+    ) -> RouteDecision {
         guard let classification, let target = mapping.route(for: classification.complexity) else {
             let route = RoutingRules.resolve(.appleCloud, allowed: allowed) ?? allowed[0]
             return RouteDecision(route: route, reason: "Couldn't classify, so using a mid-size model", source: .classifier)
         }
         // `allowed` is never empty for an open outcome.
         let route = RoutingRules.resolve(target, allowed: allowed) ?? allowed[0]
-        let reason = route == target
-            ? classification.reason
-            : "\(classification.reason) (\(target.displayName) unavailable)"
+        let reason: String
+        if route == target {
+            reason = classification.reason
+        } else if input.isAvailable(target), !input.fits(target) {
+            reason = "\(classification.reason) (too long for \(target.displayName))"
+        } else {
+            reason = "\(classification.reason) (\(target.displayName) unavailable)"
+        }
         return RouteDecision(route: route, reason: reason, source: .classifier)
     }
 }

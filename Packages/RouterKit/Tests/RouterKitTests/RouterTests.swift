@@ -40,19 +40,31 @@ struct RouterTests {
     }
 
     @Test func classifierFailureWithoutAppleCloudUsesTheNearestRoute() {
-        let decision = Router.decide(nil, mapping: .standard, allowed: [.onDevice])
+        let decision = Router.decide(nil, mapping: .standard, allowed: [.onDevice], input: everything)
         #expect(decision.route == .onDevice)
     }
 
     @Test func unknownComplexityIsTreatedAsAFailure() {
         let odd = RouteClassification(complexity: "galactic", task: "chat")
-        #expect(Router.decide(odd, mapping: .standard, allowed: [.onDevice, .appleCloud]).route == .appleCloud)
+        #expect(Router.decide(odd, mapping: .standard, allowed: [.onDevice, .appleCloud], input: everything).route == .appleCloud)
     }
 
     @Test func unavailableTargetMovesUpAndSaysWhy() {
         let simple = RouteClassification(complexity: "simple", task: "chat")
-        let decision = Router.decide(simple, mapping: .standard, allowed: [.appleCloud, .claude])
+        var input = everything
+        input.availability[.onDevice] = .unavailable(reason: "off")
+        let decision = Router.decide(simple, mapping: .standard, allowed: [.appleCloud, .claude], input: input)
         #expect(decision == RouteDecision(route: .appleCloud, reason: "Quick conversation (On-device unavailable)", source: .classifier))
+    }
+
+    @Test func longConversationsStillReachClaudeForComplexTurns() async {
+        var input = everything
+        input.estimatedTokens = 10_000
+        input.contextBudgets = [.onDevice: 3_686, .appleCloud: 29_491, .claude: 900_000]
+        let complex = await Router(classifier: FakeClassifier.always("complex", task: "reason")).route("Realistic?", input: input)
+        #expect(complex.decision == RouteDecision(route: .claude, reason: "Complex reasoning", source: .classifier))
+        let simple = await Router(classifier: FakeClassifier.always("simple")).route("Thanks", input: input)
+        #expect(simple.decision == RouteDecision(route: .appleCloud, reason: "Quick conversation (too long for On-device)", source: .classifier))
     }
 
     @Test func scenariosCanRemapComplexity() async {

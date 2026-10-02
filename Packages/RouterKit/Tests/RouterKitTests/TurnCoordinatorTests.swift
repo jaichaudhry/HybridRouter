@@ -105,7 +105,7 @@ struct TurnCoordinatorTests {
             onDevice: FakeProvider(route: .onDevice, reply: "device", contextLimit: 4_096),
             appleCloud: FakeProvider(route: .appleCloud, reply: "cloud", contextLimit: 32_768)
         ))
-        #expect(outcome.decision == RouteDecision(route: .appleCloud, reason: "Too long for On-device", source: .rule))
+        #expect(outcome.decision == RouteDecision(route: .appleCloud, reason: "Quick conversation (too long for On-device)", source: .classifier))
     }
 
     @Test func blockedTurnReportsWhy() async {

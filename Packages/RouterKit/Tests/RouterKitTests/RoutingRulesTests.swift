@@ -94,9 +94,8 @@ struct RoutingRulesTests {
 
     // MARK: A3 context fit
 
-    @Test func tooLongForDeviceGoesToAppleCloud() {
-        let outcome = RoutingRules.evaluate(input(tokens: 10_000))
-        #expect(outcome == .decided(RouteDecision(route: .appleCloud, reason: "Too long for On-device", source: .rule)))
+    @Test func tooLongForDeviceLeavesTheLargerRoutesToTheClassifier() {
+        #expect(RoutingRules.evaluate(input(tokens: 10_000)) == .open(allowed: [.appleCloud, .claude]))
     }
 
     @Test func tooLongForAppleCloudGoesToClaude() {

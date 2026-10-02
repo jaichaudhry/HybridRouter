@@ -102,9 +102,12 @@ public enum RoutingRules {
         if !input.isOnline {
             return .decided(RouteDecision(route: .onDevice, reason: "Offline", source: .rule))
         }
-        if smallestFit != allowed.first {
+        // Only one route is big enough: no choice left for the classifier.
+        if fitting.count == 1, smallestFit != allowed.first {
             return .decided(RouteDecision(route: smallestFit, reason: "Too long for \(allowed[0].displayName)", source: .rule))
         }
+        // Otherwise the classifier still picks, among the routes that fit, so a long
+        // conversation can still reach Claude for a complex turn.
         return .open(allowed: fitting)
     }
 
