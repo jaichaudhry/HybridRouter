@@ -14,6 +14,12 @@ struct RoutingBenchmarkView: View {
             Section {
                 LabeledContent("Device", value: BenchmarkModel.deviceName)
                 LabeledContent("On-device model", value: model.modelDescription)
+                Picker("Instructions", selection: $model.instructionSet) {
+                    ForEach(OnDeviceClassifier.InstructionSet.all) { set in
+                        Text(set.id).tag(set)
+                    }
+                }
+                .disabled(model.isRunning)
                 Button(model.isRunning ? "Running \(model.results.count)/\(model.cases.count)…" : "Run \(model.cases.count) prompts") {
                     Task { await model.run() }
                 }
@@ -83,6 +89,8 @@ final class BenchmarkModel {
     let cases: [RoutingBenchmark.Case]
     private(set) var results: [RoutingBenchmark.Result] = []
     private(set) var isRunning = false
+    /// Which classifier instructions to benchmark; starts with the set tuned for this device.
+    var instructionSet = OnDeviceClassifier.InstructionSet.tuned(for: SystemLanguageModel.default.variant)
 
     init() {
         let url = Bundle.main.url(forResource: "classifier_benchmark", withExtension: "json")
@@ -110,7 +118,7 @@ final class BenchmarkModel {
         guard !isRunning else { return }
         isRunning = true
         results = []
-        _ = await RoutingBenchmark.run(cases, classifier: OnDeviceClassifier()) { result in
+        _ = await RoutingBenchmark.run(cases, classifier: OnDeviceClassifier(instructionSet: instructionSet)) { result in
             await self.append(result)
         }
         isRunning = false
@@ -126,6 +134,7 @@ final class BenchmarkModel {
             "HybridRouter routing benchmark",
             "Device: \(Self.deviceName)",
             "On-device model: \(modelDescription)",
+            "Instructions: \(instructionSet.id)",
             "Agreement: \(report.matches)/\(results.count)",
             "Median routing time: \(report.medianLatency.map { "\(Int($0 * 1000)) ms" } ?? "-")",
         ]
