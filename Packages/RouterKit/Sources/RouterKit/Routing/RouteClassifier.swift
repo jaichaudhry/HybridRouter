@@ -38,15 +38,16 @@ public struct OnDeviceClassifier: RouteClassifier {
             "Which offer should I take and why?" -> complex, reason
             """)
 
-        /// Candidate for AFM 3 Core Advanced, which labeled 6 of 50 benchmark prompts complex that
-        /// were reviewed as moderate (iPhone 17 Pro Max, iOS 27.0.1: 42/50 with `core`).
-        /// Reserves "complex" for judgment explicitly.
+        /// AFM 3 Core Advanced labeled more prompts complex than reviewed (iPhone 17 Pro Max,
+        /// iOS 27.0.1: 42/50 with `core`). Reserves "complex" for judgment explicitly. 43/50.
         public static let advancedA = InstructionSet(id: "advanced-a", text: core.text + """
 
             Most messages are simple or moderate. Use complex only when the user asks you to judge, compare options or decide something for them.
             """)
 
         /// Like `advancedA`, plus examples of writing, explaining and extracting that aren't complex.
+        /// Tuned on AFM 3 Core Advanced (iPhone 17 Pro Max, iOS 27.0.1): 46/50, every miss one
+        /// level higher, median 628 ms. On AFM 3 Core it scores 46/50, below `core`.
         public static let advancedB = InstructionSet(id: "advanced-b", text: advancedA.text + """
 
             More examples:
@@ -60,7 +61,7 @@ public struct OnDeviceClassifier: RouteClassifier {
 
         /// The set tuned for a model variant. Variants without their own tuning use `core`.
         public static func tuned(for variant: SystemLanguageModel.Variant) -> InstructionSet {
-            .core
+            variant == .coreAdvanced3 ? .advancedB : .core
         }
     }
 

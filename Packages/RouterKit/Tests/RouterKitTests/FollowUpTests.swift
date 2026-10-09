@@ -31,6 +31,11 @@ struct FollowUpTests {
         #expect(RoutingRules.evaluate(input).decidedRoute == .onDevice)
     }
 
+    @Test func eachVariantGetsItsTunedInstructions() {
+        #expect(OnDeviceClassifier.InstructionSet.tuned(for: .core3) == .core)
+        #expect(OnDeviceClassifier.InstructionSet.tuned(for: .coreAdvanced3) == .advancedB)
+    }
+
     @Test func shortMessagesGetThePreviousOne() {
         let prompt = OnDeviceClassifier.classifierPrompt("Now do the same for Osaka", previous: "Plan 3 days in Kyoto")
         #expect(prompt == "Previous message: Plan 3 days in Kyoto\nMessage to label: Now do the same for Osaka")
