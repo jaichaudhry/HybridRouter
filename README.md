@@ -29,7 +29,7 @@ Each badge says why its reply went where it did ("Multi-step planning", "Kept pr
 ## Privacy and security
 
 - **Private turns stay with Apple.** Once a conversation has a private turn, Claude sees it, and every later turn answered by Apple's models, as "[Private message withheld]". This holds across escalation, follow-ups and session rebuilds, and is covered by tests that check the request Claude actually receives.
-- **Scans are private by default.** OCR and barcode tools run only on Apple routes, and images sent anywhere are re-encoded without EXIF or GPS.
+- **Scans are private by default.** OCR and barcode tools run only on Apple routes. Images that do go to Claude (non-private photos) are re-encoded without EXIF or GPS data.
 - **No keys in the repo or the binary.** A key you paste is stored in the device's Keychain. Developer keys come only from a gitignored `Secrets.xcconfig` and are blanked in Release builds. Shipped builds use App Attest instead of a key. Keys never appear in logs, metrics or exports.
 - **Secret scanning:** gitleaks runs in a pre-commit hook and in CI.
 
