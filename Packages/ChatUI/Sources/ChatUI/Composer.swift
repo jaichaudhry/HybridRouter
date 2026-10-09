@@ -12,6 +12,7 @@ struct Composer: View {
     @State private var showsFileImporter = false
     @State private var showsScanner = false
     @State private var attachError: String?
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         VStack(spacing: 6) {
@@ -23,23 +24,26 @@ struct Composer: View {
                     .font(.caption)
                     .foregroundStyle(.red)
             }
-            HStack(alignment: .bottom, spacing: 8) {
-                attachMenu
-                routeMenu
-                TextField("Message", text: $model.draft, axis: .vertical)
-                    .lineLimit(1...6)
-                    .textFieldStyle(.plain)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(.fill.tertiary, in: .rect(cornerRadius: 18))
-                    .onSubmit(send)
-                privateToggle
-                Button(action: send) {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.title)
+            if dynamicTypeSize.isAccessibilitySize {
+                // Large text: give the message field its own full-width row.
+                HStack(alignment: .bottom, spacing: 8) {
+                    messageField
+                    sendButton
                 }
-                .disabled(!model.canSend)
-                .accessibilityLabel("Send")
+                HStack(spacing: 8) {
+                    attachMenu
+                    routeMenu
+                    privateToggle
+                    Spacer()
+                }
+            } else {
+                HStack(alignment: .bottom, spacing: 8) {
+                    attachMenu
+                    routeMenu
+                    messageField
+                    privateToggle
+                    sendButton
+                }
             }
         }
         .padding(.horizontal)
@@ -65,6 +69,33 @@ struct Composer: View {
         #endif
     }
 
+    private var messageField: some View {
+        TextField("Message", text: $model.draft, axis: .vertical)
+            .lineLimit(1...6)
+            .textFieldStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(.fill.tertiary, in: .rect(cornerRadius: 18))
+            // A vertical text field doesn't submit on Return, so handle hardware keyboards here.
+            // Shift-Return still adds a new line.
+            .onKeyPress(.return, phases: .down) { press in
+                guard !press.modifiers.contains(.shift) else { return .ignored }
+                send()
+                return .handled
+            }
+    }
+
+    private var sendButton: some View {
+        Button(action: send) {
+            Image(systemName: "arrow.up.circle.fill")
+                .font(.title)
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(.rect)
+        }
+        .disabled(!model.canSend)
+        .accessibilityLabel("Send")
+    }
+
     private var attachMenu: some View {
         Menu {
             Button("Photo", systemImage: "photo") { showsPhotoPicker = true }
@@ -78,7 +109,8 @@ struct Composer: View {
             Image(systemName: "paperclip")
                 .font(.title2)
                 .foregroundStyle(.secondary)
-                .frame(minWidth: 36, minHeight: 44)
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(.rect)
         }
         .accessibilityLabel("Attach")
     }
@@ -95,9 +127,11 @@ struct Composer: View {
             Image(systemName: model.routeOverride?.symbolName ?? "wand.and.stars")
                 .font(.title2)
                 .foregroundStyle(model.routeOverride?.tint ?? .secondary)
-                .frame(minWidth: 36, minHeight: 44)
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(.rect)
         }
-        .accessibilityLabel("Route: \(model.routeOverride?.displayName ?? "Auto")")
+        .accessibilityLabel("Route")
+        .accessibilityValue(model.routeOverride?.displayName ?? "Auto")
     }
 
     private var privateToggle: some View {
@@ -107,9 +141,12 @@ struct Composer: View {
             Image(systemName: model.isPrivate ? "lock.fill" : "lock.open")
                 .font(.title3)
                 .foregroundStyle(model.isPrivate ? Color.accentColor : .secondary)
-                .frame(minWidth: 32, minHeight: 44)
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(.rect)
         }
-        .accessibilityLabel(model.isPrivate ? "Private on" : "Private off")
+        .accessibilityLabel("Private")
+        .accessibilityValue(model.isPrivate ? "On" : "Off")
+        .accessibilityAddTraits(.isToggle)
         .accessibilityHint("Private messages never go to Claude")
     }
 
@@ -121,10 +158,15 @@ struct Composer: View {
                         Image(systemName: attachment.image == nil ? "doc.text" : (attachment.isScan ? "doc.viewfinder" : "photo"))
                         Text(attachment.name)
                             .lineLimit(1)
-                        Button("Remove", systemImage: "xmark.circle.fill") {
+                        Button("Remove \(attachment.name)", systemImage: "xmark.circle.fill") {
                             model.attachments.removeAll { $0.id == attachment.id }
                         }
                         .labelStyle(.iconOnly)
+                        // A 44pt target without making the chip bigger.
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(.rect)
+                        .padding(.vertical, -12)
+                        .padding(.trailing, -8)
                     }
                     .font(.caption)
                     .padding(.horizontal, 8)
@@ -139,11 +181,12 @@ struct Composer: View {
     private func addPhoto(_ item: PhotosPickerItem) async {
         guard let data = try? await item.loadTransferable(type: Data.self),
               let attachment = ChatAttachment.image(data: data, name: "Photo \(model.attachments.count + 1)") else {
-            attachError = "Couldn't read that photo."
+            showAttachError("Couldn't read that photo.")
             return
         }
         attachError = nil
         model.attachments.append(attachment)
+        AccessibilityNotification.Announcement("Added \(attachment.name)").post()
     }
 
     private func addDocument(_ result: Result<URL, any Error>) {
@@ -151,13 +194,20 @@ struct Composer: View {
             let url = try result.get()
             let accessing = url.startAccessingSecurityScopedResource()
             defer { if accessing { url.stopAccessingSecurityScopedResource() } }
-            model.attachments.append(try ChatAttachment.document(url: url))
+            let attachment = try ChatAttachment.document(url: url)
+            model.attachments.append(attachment)
             attachError = nil
+            AccessibilityNotification.Announcement("Added \(attachment.name)").post()
         } catch let error as ChatAttachment.DocumentError {
-            attachError = error.localizedDescription
+            showAttachError(error.localizedDescription)
         } catch {
-            attachError = "Couldn't read that file."
+            showAttachError("Couldn't read that file.")
         }
+    }
+
+    private func showAttachError(_ message: String) {
+        attachError = message
+        AccessibilityNotification.Announcement(message).post()
     }
 
     private func send() {
