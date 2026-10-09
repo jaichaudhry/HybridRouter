@@ -17,17 +17,18 @@ public struct RouteBadge: View {
     /// Nil while the router is still choosing.
     let decision: RouteDecision?
     let steps: [StepMetrics]
-    let isPrivate: Bool
+    /// Why the turn was kept off Claude, if it was private.
+    let privacyReason: String?
 
-    public init(decision: RouteDecision?, steps: [StepMetrics], isPrivate: Bool = false) {
+    public init(decision: RouteDecision?, steps: [StepMetrics], privacyReason: String? = nil) {
         self.decision = decision
         self.steps = steps
-        self.isPrivate = isPrivate
+        self.privacyReason = privacyReason
     }
 
     public var body: some View {
         if let decision {
-            DecidedRouteBadge(decision: decision, steps: steps, isPrivate: isPrivate)
+            DecidedRouteBadge(decision: decision, steps: steps, privacyReason: privacyReason)
         } else {
             Label("Routing…", systemImage: "arrow.triangle.branch")
                 .font(.caption)
@@ -42,7 +43,7 @@ public struct RouteBadge: View {
 private struct DecidedRouteBadge: View {
     let decision: RouteDecision
     let steps: [StepMetrics]
-    let isPrivate: Bool
+    let privacyReason: String?
 
     @State private var showsMetrics = false
 
@@ -66,7 +67,7 @@ private struct DecidedRouteBadge: View {
         }
         .buttonStyle(.plain)
         .disabled(steps.isEmpty)
-        .accessibilityLabel("Ran on \(decision.route.displayName). \(decision.reason)")
+        .accessibilityLabel("Ran on \(decision.route.displayName). \(label)")
         .accessibilityHint(steps.isEmpty ? "" : "Shows latency, tokens and cost")
         .sheet(isPresented: $showsMetrics) {
             MetricsSheet(steps: steps)
@@ -74,14 +75,17 @@ private struct DecidedRouteBadge: View {
     }
 
     private var label: String {
-        switch decision.source {
+        let base = switch decision.source {
         case .userOverride: decision.reason
         default: "\(decision.route.displayName) · \(decision.reason)"
         }
+        // Rule decisions already say "Kept private: …"; forced and escalated ones don't.
+        guard let privacyReason, !decision.reason.hasPrefix("Kept private") else { return base }
+        return "\(base) · Kept private: \(privacyReason)"
     }
 
     private var marker: String? {
-        if isPrivate { return "lock.fill" }
+        if privacyReason != nil { return "lock.fill" }
         return switch decision.source {
         case .escalation: "arrow.up.circle"
         case .userOverride: "hand.raised"

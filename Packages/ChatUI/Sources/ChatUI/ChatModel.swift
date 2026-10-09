@@ -102,6 +102,7 @@ public final class ChatModel {
 
     /// Sends the draft, or `text` if given (e.g. a sample-prompt chip).
     public func send(_ text: String? = nil) async {
+        let originalDraft = draft
         var prompt = (text ?? draft).trimmingCharacters(in: .whitespacesAndNewlines)
         let attachments = attachments
         guard !isSending, !prompt.isEmpty || !attachments.isEmpty else { return }
@@ -162,6 +163,15 @@ public final class ChatModel {
         messages[index].content = outcome.content ?? .text("")
         messages[index].errorMessage = outcome.failure
         messages[index].isStreaming = false
+
+        // Nothing was answered (e.g. blocked as private, or offline): give the user back their
+        // draft, attachments and Private toggle so scans don't have to be redone, unless they've
+        // already started a new message.
+        if outcome.content == nil, draft.isEmpty, self.attachments.isEmpty {
+            if text == nil { draft = originalDraft }
+            self.attachments = attachments
+            isPrivate = markedPrivate
+        }
     }
 
     /// Loads the model the next message will most likely use, so its first reply starts sooner.

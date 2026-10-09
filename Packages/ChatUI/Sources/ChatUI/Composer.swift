@@ -153,6 +153,8 @@ struct Composer: View {
             defer { if accessing { url.stopAccessingSecurityScopedResource() } }
             model.attachments.append(try ChatAttachment.document(url: url))
             attachError = nil
+        } catch let error as ChatAttachment.DocumentError {
+            attachError = error.localizedDescription
         } catch {
             attachError = "Couldn't read that file."
         }

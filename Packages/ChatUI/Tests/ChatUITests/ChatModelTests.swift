@@ -311,3 +311,22 @@ extension ChatModelTests {
         #expect(claudeSaw.contains("[Private message withheld]"))
     }
 }
+
+extension ChatModelTests {
+    @Test func blockedTurnsGiveBackTheDraftAndAttachments() async {
+        let model = makeModel()
+        model.routeOverride = .claude
+        model.draft = "Extract the total"
+        model.attachments = [.scan(Self.image(), name: "Scan 1")]
+        await model.send()
+        #expect(model.messages[1].errorMessage?.hasPrefix("Kept private") == true)
+        #expect(model.draft == "Extract the total")
+        #expect(model.attachments.count == 1)
+    }
+
+    @Test func emptyDocumentsAreRejected() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("empty-\(UUID().uuidString).txt")
+        try "  \n".write(to: url, atomically: true, encoding: .utf8)
+        #expect(throws: ChatAttachment.DocumentError.self) { try ChatAttachment.document(url: url) }
+    }
+}

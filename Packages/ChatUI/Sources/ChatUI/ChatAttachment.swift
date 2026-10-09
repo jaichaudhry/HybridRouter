@@ -55,7 +55,15 @@ public struct ChatAttachment: Identifiable, Sendable {
         return "\(base)-\(UUID().uuidString.prefix(4).lowercased())"
     }
 
-    /// Reads a plain-text or PDF file.
+    public enum DocumentError: LocalizedError {
+        case noText
+
+        public var errorDescription: String? {
+            "This file has no selectable text. Scan it with the camera instead."
+        }
+    }
+
+    /// Reads a plain-text or PDF file. A scanned PDF has no text layer and is rejected.
     public static func document(url: URL) throws -> ChatAttachment {
         let text: String
         if url.pathExtension.lowercased() == "pdf" {
@@ -66,6 +74,7 @@ public struct ChatAttachment: Identifiable, Sendable {
         } else {
             text = try String(contentsOf: url, encoding: .utf8)
         }
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw DocumentError.noText }
         return ChatAttachment(name: url.lastPathComponent, kind: .document(text: text))
     }
 }
