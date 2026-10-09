@@ -48,6 +48,13 @@ struct RoutingRulesTests {
             == .blocked(reason: "Claude unavailable: Claude not configured"))
     }
 
+    @Test func privacyWinsOverForcingClaude() {
+        #expect(RoutingRules.evaluate(input(override: .claude, privacyReason: "phone number"))
+            == .blocked(reason: "Kept private (phone number), so this can't go to Claude."))
+        #expect(RoutingRules.evaluate(input(override: .appleCloud, privacyReason: "phone number"))
+            == .decided(.forced(.appleCloud)))
+    }
+
     // MARK: A1 privacy
 
     @Test func privateTurnStaysOnDevice() {

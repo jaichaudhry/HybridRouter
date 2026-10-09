@@ -84,6 +84,10 @@ public enum RoutingRules {
     public static func evaluate(_ input: RoutingInput) -> RuleOutcome {
         // Layer 0: the user's choice.
         if let override = input.override {
+            // Privacy wins over a forced route (Jai, 2026-10-09).
+            if let reason = input.privacyReason, override == .claude {
+                return .blocked(reason: "Kept private (\(reason)), so this can't go to Claude.")
+            }
             if let reason = input.availability[override]?.reason {
                 return .blocked(reason: "\(override.displayName) unavailable: \(reason)")
             }
