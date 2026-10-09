@@ -15,6 +15,7 @@ struct MeasureRoutesView: View {
         List {
             Section {
                 LabeledContent("Device", value: BenchmarkModel.deviceName)
+                LabeledContent("Apple Cloud", value: RouteMeasurement.appleCloudStatus(app))
                 Button(measurement.isRunning ? measurement.status : "Measure") {
                     runToken = UUID()
                 }
@@ -125,6 +126,18 @@ final class RouteMeasurement {
         "Rewrite this to sound friendlier: Your order is delayed. We will update you later.",
     ]
 
+    /// Which Apple Cloud this build measures, so a report can't silently be about the wrong one.
+    static func appleCloudStatus(_ app: AppModel) -> String {
+        if app.isAppleCloudEnabled { return "Private Cloud Compute" }
+        #if DEBUG
+        return app.simulatesAppleCloud ? "Simulated on-device" : "Not enabled (Simulate Apple Cloud is off)"
+        #else
+        return "Not enabled (Release build)"
+        #endif
+    }
+
+    private var appleCloudStatus = ""
+
     private(set) var speed: [SpeedRow] = []
     private(set) var mixes: [Mix] = []
     private(set) var isRunning = false
@@ -136,6 +149,7 @@ final class RouteMeasurement {
         defer { isRunning = false }
         speed = []
         mixes = []
+        appleCloudStatus = Self.appleCloudStatus(app)
 
         let general = app.scenarios.first { $0.id == GeneralScenario().id } ?? app.scenarios[0]
         for route in Route.allCases {
@@ -196,7 +210,7 @@ final class RouteMeasurement {
     /// The README results table.
     var markdown: String {
         var lines = [
-            "Measured on \(BenchmarkModel.deviceName).",
+            "Measured on \(BenchmarkModel.deviceName). Apple Cloud: \(appleCloudStatus).",
             "",
             "| Route | Model | First token (median) | Tokens/sec (median) | Cost per reply |",
             "|---|---|---|---|---|",
