@@ -22,6 +22,7 @@
 		A85ED142CB286D27CA187F13 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */; };
 		C020849E266F855ECC342AEB /* DocumentHelperScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 749770A29283B53825397EEC /* DocumentHelperScenario.swift */; };
 		D026BB74E903117DCE548FD2 /* HybridRouterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F403000424EB9780533C886E /* HybridRouterApp.swift */; };
+		D169671AD8291E5F8AFF8848 /* MeasureRoutesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2A77CA1F811B723F0F5882C /* MeasureRoutesView.swift */; };
 		E513A3FEF9215BCE00EC66E8 /* classifier_benchmark.json in Resources */ = {isa = PBXBuildFile; fileRef = 2A0B5D7416B9B563BDAC2D6E /* classifier_benchmark.json */; };
 		F751E029F9FD712552A4E662 /* RouterKit in Frameworks */ = {isa = PBXBuildFile; productRef = 2D45F172E9133E014270FF74 /* RouterKit */; };
 /* End PBXBuildFile section */
@@ -42,6 +43,7 @@
 		A21E9E88842F2D84380001A9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		A3A2B3F2007FA3C54EF3F9DF /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		DCF2EF4049958BD1AF58338A /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		E2A77CA1F811B723F0F5882C /* MeasureRoutesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeasureRoutesView.swift; sourceTree = "<group>"; };
 		E3D9E8BDCF8EEBF317AD45C7 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		EDBDECAC3AE3C5005D93777B /* DocumentSchemas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentSchemas.swift; sourceTree = "<group>"; };
 		F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -99,6 +101,7 @@
 		A469DD2F840798F83C7E5C7E /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				E2A77CA1F811B723F0F5882C /* MeasureRoutesView.swift */,
 				F8E24A6F752500FF0E3D76E5 /* RoutingBenchmarkView.swift */,
 				F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */,
 			);
@@ -248,6 +251,7 @@
 				D026BB74E903117DCE548FD2 /* HybridRouterApp.swift in Sources */,
 				522962104E2B3019DAD7EBE3 /* Itinerary.swift in Sources */,
 				529DD3CECA47CE1207474B77 /* ItineraryCards.swift in Sources */,
+				D169671AD8291E5F8AFF8848 /* MeasureRoutesView.swift in Sources */,
 				A29724AA347156C6ED0AE5E7 /* PlacesTool.swift in Sources */,
 				7B1A64C6A3AEAAED2E5603B3 /* RoutingBenchmarkView.swift in Sources */,
 				7A6D76409900DF6EF96E8898 /* Scenario.swift in Sources */,

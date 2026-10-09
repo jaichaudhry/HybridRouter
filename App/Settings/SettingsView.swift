@@ -60,6 +60,9 @@ struct SettingsView: View {
                     NavigationLink("Routing benchmark") {
                         RoutingBenchmarkView()
                     }
+                    NavigationLink("Measure routes") {
+                        MeasureRoutesView(app: model)
+                    }
                 }
             }
             .navigationTitle("Settings")

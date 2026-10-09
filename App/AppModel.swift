@@ -43,14 +43,9 @@ final class AppModel {
         var chats: [String: ChatModel] = [:]
         for scenario in scenarios {
             let session = Self.makeSession(scenario: scenario, config: config, auth: auth, costTable: costTable, history: [])
-            let coordinator = TurnCoordinator(
-                router: Router(classifier: OnDeviceClassifier(), mapping: scenario.mapping),
-                estimator: OnDeviceTokenEstimator(),
-                isOnline: { network.isOnline }
-            )
             let chat = ChatModel(
                 session: session,
-                coordinator: coordinator,
+                coordinator: Self.makeCoordinator(scenario: scenario, network: network),
                 costTable: costTable,
                 structuredOutputs: scenario.structuredOutputs
             )
@@ -71,6 +66,17 @@ final class AppModel {
     }
 
     var isAppleCloudEnabled: Bool { config.isAppleCloudEnabled }
+
+    /// A fresh, empty session with the app's current providers, for measurements.
+    func makeFreshSession(for scenario: any Scenario) -> RoutedSession {
+        Self.makeSession(scenario: scenario, config: config, auth: claudeAuth, costTable: costTable, history: [])
+    }
+
+    func makeCoordinator(for scenario: any Scenario) -> TurnCoordinator {
+        Self.makeCoordinator(scenario: scenario, network: network)
+    }
+
+    var prices: CostTable { costTable }
 
     var hasUserKey: Bool {
         ((try? secrets.read(KeychainStore.claudeAPIKeyAccount)) ?? nil) != nil
@@ -122,6 +128,14 @@ final class AppModel {
                 reloadClaude()
             }
         }
+    }
+
+    private static func makeCoordinator(scenario: any Scenario, network: NetworkMonitor) -> TurnCoordinator {
+        TurnCoordinator(
+            router: Router(classifier: OnDeviceClassifier(), mapping: scenario.mapping),
+            estimator: OnDeviceTokenEstimator(),
+            isOnline: { network.isOnline }
+        )
     }
 
     private static func resolveAuth(config: AppConfig, secrets: any SecretStore, skipAppAttest: Bool) -> ClaudeAuth {
