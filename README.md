@@ -52,7 +52,14 @@ Speed and cost per route on an iPhone 17 Pro Max (iOS 27.0.1), median of three p
 | Apple Cloud | Private Cloud Compute | not measured yet (needs Apple's entitlement) | | |
 | Claude | Sonnet 5.5 | 1,030 ms | 89 | $0.0047 |
 
-Without Apple Cloud, "moderate" turns such as itineraries move up to Claude, so in this build most of the Trip Planner's sample conversation runs on Claude. With Apple Cloud enabled those turns run at no API cost. The same set also runs as an Apple [Evaluations](https://developer.apple.com/documentation/evaluations) framework evaluation (`Evals/AppleEvaluationTests.swift`), which scores 0.96 and writes an `.xcevalresult` you can open in Xcode.
+Route mix for each scenario's sample conversation on Auto, same iPhone, with Apple Cloud simulated on-device while the Private Cloud Compute entitlement is pending. Routing decisions and Claude costs are real; Apple Cloud has no API cost either way.
+
+| Scenario | On-device | Apple Cloud | Claude | Cost | All on Claude | Saved |
+|---|---|---|---|---|---|---|
+| Trip Planner (7 turns) | 29% | 43% | 29% | $0.034 | $0.054 | 37% |
+| Chat (3 turns) | 33% | 33% | 33% | $0.0058 | $0.0078 | 26% |
+
+Without Apple Cloud at all, its turns move up to Claude: the Trip Planner then ran 86% on Claude for $0.092. The same set also runs as an Apple [Evaluations](https://developer.apple.com/documentation/evaluations) framework evaluation (`Evals/AppleEvaluationTests.swift`), which scores 0.96 and writes an `.xcevalresult` you can open in Xcode.
 
 <!-- Device results: run Settings › Developer › Measure routes and Routing benchmark on an iPhone and paste the Markdown tables here. -->
 
