@@ -27,7 +27,14 @@ struct MeasureRoutesView: View {
                 Section("Speed and cost per route") {
                     ForEach(measurement.speed, id: \.route) { row in
                         VStack(alignment: .leading, spacing: 4) {
-                            RouteLabel(row.route)
+                            HStack {
+                                RouteLabel(row.route)
+                                if row.isSimulated {
+                                    Text("simulated on-device")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
                             if let unavailable = row.unavailableReason {
                                 Text(unavailable).font(.caption).foregroundStyle(.secondary)
                             } else {
@@ -77,6 +84,10 @@ final class RouteMeasurement {
         let modelID: String
         let steps: [StepMetrics]
         let unavailableReason: String?
+        /// Served by a stand-in model, so these aren't the real route's numbers.
+        let isSimulated: Bool
+
+        var routeName: String { route.displayName + (isSimulated ? " (simulated)" : "") }
 
         var medianFirstToken: TimeInterval? { median(steps.compactMap(\.timeToFirstToken)) }
         var medianTokensPerSecond: Double? { median(steps.compactMap(\.tokensPerSecond)) }
@@ -94,12 +105,14 @@ final class RouteMeasurement {
         let scenario: String
         let summary: SessionSummary
         let failures: Int
+        /// Routes served by a stand-in model during this run.
+        let simulatedRoutes: Set<Route>
         /// Each sample prompt with the route its reply came from and why.
         let turns: [(prompt: String, route: String, reason: String)]
 
         var shareText: String {
             Route.allCases.map { route in
-                "\(route.displayName) \(Int(((summary.routeShare[route] ?? 0) * 100).rounded()))%"
+                "\(route.displayName)\(simulatedRoutes.contains(route) ? " (simulated)" : "") \(Int(((summary.routeShare[route] ?? 0) * 100).rounded()))%"
             }.joined(separator: " · ")
         }
     }
@@ -129,7 +142,7 @@ final class RouteMeasurement {
             let probe = app.makeFreshSession(for: general)
             let provider = probe.provider(for: route)
             if case .unavailable(let reason) = provider.availability {
-                speed.append(SpeedRow(route: route, modelID: provider.modelID, steps: [], unavailableReason: reason))
+                speed.append(SpeedRow(route: route, modelID: provider.modelID, steps: [], unavailableReason: reason, isSimulated: provider.isSimulated))
                 continue
             }
             var steps: [StepMetrics] = []
@@ -142,7 +155,7 @@ final class RouteMeasurement {
                     steps.append(result.metrics)
                 }
             }
-            speed.append(SpeedRow(route: route, modelID: provider.modelID, steps: steps, unavailableReason: nil))
+            speed.append(SpeedRow(route: route, modelID: provider.modelID, steps: steps, unavailableReason: nil, isSimulated: provider.isSimulated))
         }
 
         // Document Helper's prompts need attachments, so only scenarios whose chips send directly.
@@ -163,7 +176,8 @@ final class RouteMeasurement {
                 if outcome.content == nil { failures += 1 }
                 turns.append((
                     prompt,
-                    outcome.decision?.route.displayName ?? "none",
+                    (outcome.decision?.route.displayName ?? "none")
+                        + (outcome.steps.last?.isSimulated == true ? " (simulated)" : ""),
                     outcome.failure ?? outcome.decision?.reason ?? "-"
                 ))
             }
@@ -172,6 +186,7 @@ final class RouteMeasurement {
                 scenario: scenario.title,
                 summary: SessionSummary(steps: steps, costTable: app.prices, claudeModelID: claudeID),
                 failures: failures,
+                simulatedRoutes: Set(Route.allCases.filter { session.provider(for: $0).isSimulated }),
                 turns: turns
             ))
         }
@@ -188,9 +203,9 @@ final class RouteMeasurement {
         ]
         for row in speed {
             if let reason = row.unavailableReason {
-                lines.append("| \(row.route.displayName) | \(row.modelID) | unavailable: \(reason) | | |")
+                lines.append("| \(row.routeName) | \(row.modelID) | unavailable: \(reason) | | |")
             } else {
-                lines.append("| \(row.route.displayName) | \(row.modelID) | \(row.firstTokenText) | \(row.tokensPerSecondText) | \(row.costText) |")
+                lines.append("| \(row.routeName) | \(row.modelID) | \(row.firstTokenText) | \(row.tokensPerSecondText) | \(row.costText) |")
             }
         }
         lines += ["", "| Scenario (sample prompts on Auto) | Route mix | Cost | All on Claude | Saved |", "|---|---|---|---|---|"]
