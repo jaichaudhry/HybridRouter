@@ -152,7 +152,7 @@ struct RoutingRulesTests {
 
     @Test func privateImageOnDeviceSaysKeptPrivate() {
         let outcome = RoutingRules.evaluate(input(privacyReason: "Scanned receipt", hasImage: true))
-        #expect(outcome == .decided(RouteDecision(route: .onDevice, reason: "Kept private: Image attached", source: .rule)))
+        #expect(outcome == .decided(RouteDecision(route: .onDevice, reason: "Kept private: Scanned receipt", source: .rule)))
     }
 
     // MARK: open turns

@@ -122,7 +122,7 @@ public enum RoutingRules {
             guard let route = fitting.first(where: input.visionRoutes.contains) else {
                 return .blocked(reason: "No available model can read images.")
             }
-            return .decided(decision(route, reason: "Image attached", input: input))
+            return .decided(decision(route, reason: input.privacyReason ?? "Image attached", input: input))
         }
 
         // Privacy settles the route: the cheapest private route that fits.
