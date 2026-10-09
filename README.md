@@ -42,7 +42,17 @@ Routing accuracy against 50 hand-labeled prompts in `Evals/classifier_benchmark.
 | iPhone 17 Pro Max, iOS 27.0.1 | AFM 3 Core Advanced (8K context) | **46/50** | **628 ms** |
 | MacBook Pro M1 Max, macOS 27.0 | AFM 3 Core (4K context) | **48/50** | ~900 ms |
 
-Every miss routes one level higher than labeled (the safer direction), never lower. The same set also runs as an Apple [Evaluations](https://developer.apple.com/documentation/evaluations) framework evaluation (`Evals/AppleEvaluationTests.swift`), which scores 0.96 and writes an `.xcevalresult` you can open in Xcode.
+Every miss routes one level higher than labeled (the safer direction), never lower.
+
+Speed and cost per route on an iPhone 17 Pro Max (iOS 27.0.1), median of three prompts each (Settings › Developer › Measure routes):
+
+| Route | Model | First token | Tokens/sec | Cost per reply |
+|---|---|---|---|---|
+| On-device | AFM 3 Core Advanced | 368 ms | 63 | $0 |
+| Apple Cloud | Private Cloud Compute | not measured yet (needs Apple's entitlement) | | |
+| Claude | Sonnet 5.5 | 1,030 ms | 89 | $0.0047 |
+
+Without Apple Cloud, "moderate" turns such as itineraries move up to Claude, so in this build most of the Trip Planner's sample conversation runs on Claude. With Apple Cloud enabled those turns run at no API cost. The same set also runs as an Apple [Evaluations](https://developer.apple.com/documentation/evaluations) framework evaluation (`Evals/AppleEvaluationTests.swift`), which scores 0.96 and writes an `.xcevalresult` you can open in Xcode.
 
 <!-- Device results: run Settings › Developer › Measure routes and Routing benchmark on an iPhone and paste the Markdown tables here. -->
 
