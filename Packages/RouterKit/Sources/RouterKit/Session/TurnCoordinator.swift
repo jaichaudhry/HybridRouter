@@ -120,7 +120,7 @@ public struct TurnCoordinator {
                 steps.append(metrics)
             }
             do {
-                let result = try await session.respond(to: request.prompt, decision: decision, schema: structured?.schema) {
+                let result = try await session.respond(to: request.prompt, decision: decision, schema: structured?.schema, isPrivate: request.privacyReason != nil) {
                     onEvent(.partial($0))
                 }
                 guard result.content.isEmpty else {

@@ -11,6 +11,7 @@ struct RoutingProfile: LanguageModelSession.DynamicProfile {
     let instructions: String
     let tools: [any Tool]
     let models: RouteModels
+    let privacy: PrivacyLedger
 
     @SessionProperty(\.activeRoute) var route
 
@@ -21,7 +22,11 @@ struct RoutingProfile: LanguageModelSession.DynamicProfile {
         }
             .model(models[route])
             .maximumResponseTokens(models.maximumResponseTokens(route))
-            .historyTransform(HistoryPolicy.dropEarlierReasoning)
+            .historyTransform { [privacy] entries in
+                // Read the route from the ledger, set just before each request, rather than
+                // relying on when the framework re-evaluates this body.
+                HistoryPolicy.prepare(entries, for: privacy.route, privatePromptIDs: privacy.privatePromptIDs)
+            }
     }
 }
 

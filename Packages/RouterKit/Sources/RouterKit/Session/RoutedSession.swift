@@ -35,6 +35,7 @@ public final class RoutedSession {
     @ObservationIgnored private let session: LanguageModelSession
     @ObservationIgnored private let providers: [Route: any ModelProvider]
     @ObservationIgnored private let costTable: CostTable
+    @ObservationIgnored private let privacy = PrivacyLedger()
 
     public init(
         instructions: String,
@@ -51,7 +52,7 @@ public final class RoutedSession {
         self.costTable = costTable
         let models = RouteModels(onDevice: onDevice, appleCloud: appleCloud, claude: claude)
         self.session = LanguageModelSession(
-            profile: RoutingProfile(instructions: instructions, tools: tools, models: models),
+            profile: RoutingProfile(instructions: instructions, tools: tools, models: models, privacy: privacy),
             history: history
         )
         session.transcriptErrorHandlingPolicy = .revertTranscript
@@ -82,15 +83,19 @@ public final class RoutedSession {
     public func prewarm(_ route: Route) {
         guard !isResponding, provider(for: route).availability.isAvailable else { return }
         session.properties.activeRoute = route
+        privacy.route = route
         session.prewarm()
     }
 
     /// Runs one turn on the decided route, reporting the cumulative reply as it streams.
-    /// - Parameter schema: if set, the reply is structured content matching it.
+    /// - Parameters:
+    ///   - schema: if set, the reply is structured content matching it.
+    ///   - isPrivate: the turn is private, so Claude only ever sees placeholders for it.
     public func respond(
         to prompt: String,
         decision: RouteDecision,
         schema: GenerationSchema? = nil,
+        isPrivate: Bool = false,
         onPartial: (TurnContent) -> Void = { _ in }
     ) async throws -> TurnResult {
         guard !isResponding else { throw Error.busy }
@@ -102,6 +107,7 @@ public final class RoutedSession {
         isResponding = true
         defer { isResponding = false }
         session.properties.activeRoute = decision.route
+        privacy.route = decision.route
 
         let usageBefore = session.usage
         let clock = ContinuousClock()
@@ -144,6 +150,9 @@ public final class RoutedSession {
             throw StepFailure(underlying: error, metrics: metrics())
         }
         lastRoute = decision.route
+        if isPrivate, case .prompt(let entry) = session.transcript.last(where: \.isPrompt) {
+            privacy.markPrivate(promptID: entry.id)
+        }
         return TurnResult(content: content, metrics: metrics())
     }
 
