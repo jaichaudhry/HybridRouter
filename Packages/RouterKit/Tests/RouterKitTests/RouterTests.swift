@@ -31,6 +31,12 @@ struct RouterTests {
         #expect(result.decision == nil)
     }
 
+    @Test func classifierFailureSaysWhy() {
+        let run = ClassifierRun(classification: nil, latency: 0, failure: .guardrail)
+        #expect(Router.decide(run, mapping: .standard, allowed: [.onDevice, .appleCloud], input: everything).reason
+            == "Couldn't classify (safety filter), so using a mid-size model")
+    }
+
     @Test func classifierFailureFallsBackToAppleCloud() async {
         let router = Router(classifier: FakeClassifier.failing)
         let result = await router.route("Hi", input: everything)
@@ -40,20 +46,20 @@ struct RouterTests {
     }
 
     @Test func classifierFailureWithoutAppleCloudUsesTheNearestRoute() {
-        let decision = Router.decide(nil, mapping: .standard, allowed: [.onDevice], input: everything)
+        let decision = Router.decide(ClassifierRun(classification: nil, latency: 0), mapping: .standard, allowed: [.onDevice], input: everything)
         #expect(decision.route == .onDevice)
     }
 
     @Test func unknownComplexityIsTreatedAsAFailure() {
         let odd = RouteClassification(complexity: "galactic", task: "chat")
-        #expect(Router.decide(odd, mapping: .standard, allowed: [.onDevice, .appleCloud], input: everything).route == .appleCloud)
+        #expect(Router.decide(ClassifierRun(classification: odd, latency: 0), mapping: .standard, allowed: [.onDevice, .appleCloud], input: everything).route == .appleCloud)
     }
 
     @Test func unavailableTargetMovesUpAndSaysWhy() {
         let simple = RouteClassification(complexity: "simple", task: "chat")
         var input = everything
         input.availability[.onDevice] = .unavailable(reason: "off")
-        let decision = Router.decide(simple, mapping: .standard, allowed: [.appleCloud, .claude], input: input)
+        let decision = Router.decide(ClassifierRun(classification: simple, latency: 0), mapping: .standard, allowed: [.appleCloud, .claude], input: input)
         #expect(decision == RouteDecision(route: .appleCloud, reason: "Quick conversation (On-device unavailable)", source: .classifier))
     }
 

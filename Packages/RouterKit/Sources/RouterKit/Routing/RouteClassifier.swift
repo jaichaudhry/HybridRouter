@@ -76,10 +76,21 @@ public struct OnDeviceClassifier: RouteClassifier {
     /// and keeps the classifier within the on-device context window.
     static let promptCharacterLimit = 600
 
+    /// Words that point back at the previous message ("do the same for Osaka", "make it shorter").
+    static let referenceWords: Set<String> = [
+        "that", "this", "it", "its", "those", "these", "them", "same", "again", "instead",
+        "also", "too", "more", "other", "another", "previous", "above",
+    ]
+
     static func classifierPrompt(_ prompt: String, previous: String?) -> String {
         let message = String(prompt.prefix(promptCharacterLimit))
-        let words = prompt.split(whereSeparator: \.isWhitespace).count
-        guard let previous, words <= contextWordLimit else { return message }
+        let words = prompt.lowercased().split(whereSeparator: { !$0.isLetter && $0 != "'" }).map(String.init)
+        // Only short messages that refer back get the previous one. Otherwise its label bleeds
+        // in: on an iPhone 17 Pro Max, "Make a packing list for the kids" after a trade-offs
+        // question was classified as complex reasoning.
+        guard let previous, words.count <= contextWordLimit, words.contains(where: referenceWords.contains) else {
+            return message
+        }
         return "Previous message: \(previous.prefix(240))\nMessage to label: \(message)"
     }
 

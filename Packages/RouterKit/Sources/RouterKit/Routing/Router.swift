@@ -5,6 +5,14 @@ public struct ClassifierRun: Equatable, Sendable {
     /// Nil if the classifier failed.
     public var classification: RouteClassification?
     public var latency: TimeInterval
+    /// Why the classifier failed, if it did.
+    public var failure: FailureCause?
+
+    public init(classification: RouteClassification?, latency: TimeInterval, failure: FailureCause? = nil) {
+        self.classification = classification
+        self.latency = latency
+        self.failure = failure
+    }
 }
 
 /// The router's answer for one turn.
@@ -42,27 +50,32 @@ public struct Router: Sendable {
         }
 
         let run = await classify(prompt, previous: input.previousPrompt)
-        return .routed(Self.decide(run.classification, mapping: mapping, allowed: allowed, input: input), classifier: run)
+        return .routed(Self.decide(run, mapping: mapping, allowed: allowed, input: input), classifier: run)
     }
 
     private func classify(_ prompt: String, previous: String?) async -> ClassifierRun {
         let clock = ContinuousClock()
         let start = clock.now
-        let classification = try? await classifier.classify(prompt, previous: previous)
-        return ClassifierRun(classification: classification, latency: start.duration(to: clock.now).seconds)
+        do {
+            let classification = try await classifier.classify(prompt, previous: previous)
+            return ClassifierRun(classification: classification, latency: start.duration(to: clock.now).seconds)
+        } catch {
+            return ClassifierRun(classification: nil, latency: start.duration(to: clock.now).seconds, failure: FailureCause(error))
+        }
     }
 
     /// The classifier step as a pure function: map the complexity to a route and fit it to
     /// what's allowed. A failed or unusable classification falls back to Apple Cloud.
     static func decide(
-        _ classification: RouteClassification?,
+        _ run: ClassifierRun,
         mapping: ComplexityMapping,
         allowed: [Route],
         input: RoutingInput
     ) -> RouteDecision {
-        guard let classification, let target = mapping.route(for: classification.complexity) else {
+        guard let classification = run.classification, let target = mapping.route(for: classification.complexity) else {
             let route = RoutingRules.resolve(.appleCloud, allowed: allowed) ?? allowed[0]
-            return RouteDecision(route: route, reason: "Couldn't classify, so using a mid-size model", source: .classifier)
+            let cause = run.failure.map { " (\($0.label))" } ?? ""
+            return RouteDecision(route: route, reason: "Couldn't classify\(cause), so using a mid-size model", source: .classifier)
         }
         // `allowed` is never empty for an open outcome.
         let route = RoutingRules.resolve(target, allowed: allowed) ?? allowed[0]

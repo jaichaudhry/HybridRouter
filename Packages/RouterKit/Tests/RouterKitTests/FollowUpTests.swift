@@ -39,6 +39,9 @@ struct FollowUpTests {
     @Test func shortMessagesGetThePreviousOne() {
         let prompt = OnDeviceClassifier.classifierPrompt("Now do the same for Osaka", previous: "Plan 3 days in Kyoto")
         #expect(prompt == "Previous message: Plan 3 days in Kyoto\nMessage to label: Now do the same for Osaka")
+        // Short but not referring back: no context, so the previous label can't bleed in.
+        #expect(OnDeviceClassifier.classifierPrompt("Make a packing list for the kids", previous: "Weigh the trade-offs") == "Make a packing list for the kids")
+        #expect(OnDeviceClassifier.classifierPrompt("Make it shorter", previous: "Write a toast").hasPrefix("Previous message:"))
         let long = "Plan a relaxed four day trip to Lisbon for two people who love food and walking"
         #expect(OnDeviceClassifier.classifierPrompt(long, previous: "Hi") == long)
         #expect(OnDeviceClassifier.classifierPrompt("Hi", previous: nil) == "Hi")
