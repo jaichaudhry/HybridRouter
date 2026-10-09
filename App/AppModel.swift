@@ -8,7 +8,7 @@ import RouterKit
 @MainActor
 @Observable
 final class AppModel {
-    let scenarios: [any Scenario] = [TripPlannerScenario(), GeneralScenario()]
+    let scenarios: [any Scenario] = [TripPlannerScenario(), DocumentHelperScenario(), GeneralScenario()]
     var selectedScenarioID = TripPlannerScenario().id {
         didSet { chat.prewarm() }
     }
@@ -48,12 +48,14 @@ final class AppModel {
                 estimator: OnDeviceTokenEstimator(),
                 isOnline: { network.isOnline }
             )
-            chats[scenario.id] = ChatModel(
+            let chat = ChatModel(
                 session: session,
                 coordinator: coordinator,
                 costTable: costTable,
                 structuredOutputs: scenario.structuredOutputs
             )
+            chat.imagesArePrivate = scenario.imagesArePrivate
+            chats[scenario.id] = chat
         }
         self.chats = chats
         prewarmClaude()
@@ -133,6 +135,7 @@ final class AppModel {
         RoutedSession(
             instructions: scenario.instructions,
             tools: scenario.tools,
+            appleOnlyTools: scenario.appleOnlyTools,
             onDevice: OnDeviceProvider(),
             appleCloud: AppleCloudProvider(isEnabled: config.isAppleCloudEnabled),
             claude: ClaudeProvider(auth: auth),

@@ -11,7 +11,11 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            ChatView(model: model.chat, samplePrompts: model.scenario.samplePrompts)
+            ChatView(
+                model: model.chat,
+                samplePrompts: model.scenario.samplePrompts,
+                samplePromptsFillDraft: model.scenario.samplePromptsFillDraft
+            )
                 .structuredContent(id: model.scenario.id) { content in
                     model.scenario.card(for: content)
                 }

@@ -13,6 +13,12 @@ protocol Scenario {
     var samplePrompts: [String] { get }
     var mapping: ComplexityMapping { get }
     var tools: [any Tool] { get }
+    /// Tools offered only on Apple routes, e.g. image tools.
+    var appleOnlyTools: [any Tool] { get }
+    /// Whether a sample chip fills the text field instead of sending.
+    var samplePromptsFillDraft: Bool { get }
+    /// Whether every attached image is private.
+    var imagesArePrivate: Bool { get }
     /// Schemas for chosen kinds of turns; the first that applies is used.
     var structuredOutputs: [StructuredOutput] { get }
     /// Renders this scenario's structured replies, called with partial content as it streams.
@@ -22,6 +28,9 @@ protocol Scenario {
 extension Scenario {
     var mapping: ComplexityMapping { .standard }
     var tools: [any Tool] { [] }
+    var appleOnlyTools: [any Tool] { [] }
+    var samplePromptsFillDraft: Bool { false }
+    var imagesArePrivate: Bool { false }
     var structuredOutputs: [StructuredOutput] { [] }
 
     func card(for content: GeneratedContent) -> AnyView {

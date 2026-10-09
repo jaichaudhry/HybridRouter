@@ -26,6 +26,8 @@
 	<string>$(CLAUDE_CLIENT_ID)</string>
 	<key>HRDeveloperAnthropicKey</key>
 	<string>$(ANTHROPIC_API_KEY)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Scan receipts and documents. Scans stay on your device or Apple's Private Cloud Compute and are never sent to Claude.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
