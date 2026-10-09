@@ -127,6 +127,7 @@ public struct FakeProvider: ModelProvider {
     public var availability: ProviderAvailability
     public var contextLimit: Int?
     public var maximumResponseTokens: Int?
+    public var isSimulated = false
 
     public init(
         route: Route,

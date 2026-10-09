@@ -243,3 +243,15 @@ extension RoutedSessionTests {
         #expect(claude.offeredTools == ["echo"])
     }
 }
+
+extension RoutedSessionTests {
+    @Test func stepsFromAStandInAreMarkedSimulated() async throws {
+        var standIn = FakeProvider(route: .appleCloud, reply: "simulated")
+        standIn.isSimulated = true
+        let session = makeSession(appleCloud: standIn)
+        let simulated = try await session.respond(to: "Plan", decision: .forced(.appleCloud))
+        let real = try await session.respond(to: "Hi", decision: .forced(.onDevice))
+        #expect(simulated.metrics.isSimulated)
+        #expect(!real.metrics.isSimulated)
+    }
+}

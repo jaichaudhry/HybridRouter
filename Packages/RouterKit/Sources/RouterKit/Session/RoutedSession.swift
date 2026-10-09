@@ -141,7 +141,7 @@ public final class RoutedSession {
                 minus: usageBefore,
                 reportsReasoning: decision.route != .claude
             )
-            return StepMetrics(
+            var metrics = StepMetrics(
                 decision: decision,
                 modelID: provider.modelID,
                 timeToFirstToken: firstToken.map { (start.duration(to: $0)).seconds },
@@ -149,6 +149,8 @@ public final class RoutedSession {
                 usage: usage,
                 estimatedCost: costTable.cost(of: usage, modelID: provider.modelID)
             )
+            metrics.isSimulated = provider.isSimulated
+            return metrics
         }
 
         let fullPrompt = Self.prompt(prompt, images: images)

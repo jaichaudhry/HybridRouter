@@ -19,8 +19,11 @@ public protocol ModelProvider: Sendable {
     func contextSize() async -> Int?
     /// A cap on reply length, if the route sets one. A reply that reaches it was cut off.
     var maximumResponseTokens: Int? { get }
+    /// True for a stand-in model serving another route (e.g. Apple Cloud simulated on-device).
+    var isSimulated: Bool { get }
 }
 
 extension ModelProvider {
     public var maximumResponseTokens: Int? { nil }
+    public var isSimulated: Bool { false }
 }

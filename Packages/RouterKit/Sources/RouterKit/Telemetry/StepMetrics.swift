@@ -17,6 +17,8 @@ public struct StepMetrics: Codable, Equatable, Sendable, Identifiable {
     public var classifierLatency: TimeInterval?
     /// Why this attempt failed, if it did (the turn may have escalated after it).
     public var failure: String?
+    /// The route was served by a stand-in model, so speed and cost aren't the real route's.
+    public var isSimulated = false
 
     public init(
         id: UUID = UUID(),

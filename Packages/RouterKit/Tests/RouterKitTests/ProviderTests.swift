@@ -35,4 +35,19 @@ struct ProviderTests {
         #expect(ClaudeProvider(auth: auth, tier: .deep).modelID == "claude-opus-5-5")
         #expect(ClaudeProvider(auth: auth).availability == .available)
     }
+
+    @Test func simulatedAppleCloudSaysWhatItIs() async {
+        let provider = SimulatedAppleCloudProvider()
+        #expect(provider.route == .appleCloud)
+        #expect(provider.modelID == "apple-cloud-simulated")
+        #expect(provider.isSimulated)
+        #expect(await provider.contextSize() == SystemLanguageModel.default.contextSize)
+        #expect(try! CostTable.bundled().models["apple-cloud-simulated"]?.output == 0)
+    }
+
+    @Test func realProvidersAreNotSimulated() {
+        #expect(!OnDeviceProvider().isSimulated)
+        #expect(!AppleCloudProvider(isEnabled: false).isSimulated)
+        #expect(!ClaudeProvider(auth: .off).isSimulated)
+    }
 }
