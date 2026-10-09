@@ -51,7 +51,9 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    LabeledContent("Apple Cloud", value: model.isAppleCloudEnabled ? "Enabled in this build" : "Not enabled")
+                    LabeledContent("Apple Cloud", value: model.isAppleCloudEnabled
+                        ? "Enabled in this build"
+                        : (model.simulatesAppleCloud ? "Simulated on-device" : "Not enabled"))
                 } footer: {
                     Text("Apple Cloud needs Apple's Private Cloud Compute entitlement. See the README.")
                 }
@@ -63,6 +65,14 @@ struct SettingsView: View {
                     NavigationLink("Measure routes") {
                         MeasureRoutesView(app: model)
                     }
+                    #if DEBUG
+                    if !model.isAppleCloudEnabled {
+                        Toggle("Simulate Apple Cloud", isOn: Binding(
+                            get: { model.simulatesAppleCloud },
+                            set: { model.simulatesAppleCloud = $0 }
+                        ))
+                    }
+                    #endif
                 }
             }
             .navigationTitle("Settings")

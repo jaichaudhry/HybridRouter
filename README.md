@@ -96,6 +96,8 @@ CODE_SIGN_ENTITLEMENTS = Config/AppleCloud.entitlements
 
 Without it, the app runs normally and shows Apple Cloud as unavailable. There's no API cost: each user's requests count against their own daily Apple Cloud allowance.
 
+While you wait for the entitlement, Debug builds have **Settings › Developer › Simulate Apple Cloud**, which serves the Apple Cloud route with the on-device model so you can try the three-route flow. Those replies are labeled "Apple Cloud (simulated)" and say nothing about Apple Cloud's real speed or quality. The option doesn't exist in Release builds.
+
 ## Layout
 
 ```

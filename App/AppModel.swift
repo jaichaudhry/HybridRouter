@@ -42,7 +42,14 @@ final class AppModel {
         let network = network
         var chats: [String: ChatModel] = [:]
         for scenario in scenarios {
-            let session = Self.makeSession(scenario: scenario, config: config, auth: auth, costTable: costTable, history: [])
+            let session = Self.makeSession(
+                scenario: scenario,
+                config: config,
+                auth: auth,
+                costTable: costTable,
+                simulatesAppleCloud: Self.storedSimulatesAppleCloud,
+                history: []
+            )
             let chat = ChatModel(
                 session: session,
                 coordinator: Self.makeCoordinator(scenario: scenario, network: network),
@@ -69,7 +76,14 @@ final class AppModel {
 
     /// A fresh, empty session with the app's current providers, for measurements.
     func makeFreshSession(for scenario: any Scenario) -> RoutedSession {
-        Self.makeSession(scenario: scenario, config: config, auth: claudeAuth, costTable: costTable, history: [])
+        Self.makeSession(
+            scenario: scenario,
+            config: config,
+            auth: claudeAuth,
+            costTable: costTable,
+            simulatesAppleCloud: simulatesAppleCloud,
+            history: []
+        )
     }
 
     func makeCoordinator(for scenario: any Scenario) -> TurnCoordinator {
@@ -99,7 +113,16 @@ final class AppModel {
 
     private func reloadClaude() {
         claudeAuth = Self.resolveAuth(config: config, secrets: secrets, skipAppAttest: appAttestFailure != nil)
+        rebuildSessions()
+        let mode = claudeAuth.mode.displayName
+        logger.info("Claude auth is now \(mode, privacy: .public)")
+    }
+
+    /// Rebuilds every scenario's session with the current providers, keeping each conversation
+    /// and its private turns.
+    private func rebuildSessions() {
         let auth = claudeAuth
+        let simulates = simulatesAppleCloud
         for scenario in scenarios {
             chats[scenario.id]?.replaceSession { [config, costTable] history, privatePromptIDs in
                 Self.makeSession(
@@ -107,12 +130,37 @@ final class AppModel {
                     config: config,
                     auth: auth,
                     costTable: costTable,
+                    simulatesAppleCloud: simulates,
                     history: history,
                     privatePromptIDs: privatePromptIDs
                 )
             }
         }
-        logger.info("Claude auth is now \(auth.mode.displayName, privacy: .public)")
+    }
+
+    // MARK: Simulated Apple Cloud (Debug builds only)
+
+    private static let simulatesAppleCloudKey = "HRSimulateAppleCloud"
+
+    private static var storedSimulatesAppleCloud: Bool {
+        #if DEBUG
+        UserDefaults.standard.bool(forKey: simulatesAppleCloudKey)
+        #else
+        false
+        #endif
+    }
+
+    /// Serves Apple Cloud with the on-device model when the build lacks the real entitlement.
+    /// Replies show "Apple Cloud (simulated)". Always off in Release builds.
+    var simulatesAppleCloud: Bool = AppModel.storedSimulatesAppleCloud {
+        didSet {
+            #if DEBUG
+            UserDefaults.standard.set(simulatesAppleCloud, forKey: Self.simulatesAppleCloudKey)
+            rebuildSessions()
+            #else
+            simulatesAppleCloud = false
+            #endif
+        }
     }
 
     private func prewarmClaude() {
@@ -151,15 +199,20 @@ final class AppModel {
         config: AppConfig,
         auth: ClaudeAuth,
         costTable: CostTable,
+        simulatesAppleCloud: Bool,
         history: [Transcript.Entry],
         privatePromptIDs: Set<String> = []
     ) -> RoutedSession {
-        RoutedSession(
+        // The real entitlement always wins over the stand-in.
+        let appleCloud: any ModelProvider = !config.isAppleCloudEnabled && simulatesAppleCloud
+            ? SimulatedAppleCloudProvider()
+            : AppleCloudProvider(isEnabled: config.isAppleCloudEnabled)
+        return RoutedSession(
             instructions: scenario.instructions,
             tools: scenario.tools,
             appleOnlyTools: scenario.appleOnlyTools,
             onDevice: OnDeviceProvider(),
-            appleCloud: AppleCloudProvider(isEnabled: config.isAppleCloudEnabled),
+            appleCloud: appleCloud,
             claude: ClaudeProvider(auth: auth),
             costTable: costTable,
             history: history,
