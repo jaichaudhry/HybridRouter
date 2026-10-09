@@ -95,8 +95,15 @@ final class AppModel {
         claudeAuth = Self.resolveAuth(config: config, secrets: secrets, skipAppAttest: appAttestFailure != nil)
         let auth = claudeAuth
         for scenario in scenarios {
-            chats[scenario.id]?.replaceSession { [config, costTable] history in
-                Self.makeSession(scenario: scenario, config: config, auth: auth, costTable: costTable, history: history)
+            chats[scenario.id]?.replaceSession { [config, costTable] history, privatePromptIDs in
+                Self.makeSession(
+                    scenario: scenario,
+                    config: config,
+                    auth: auth,
+                    costTable: costTable,
+                    history: history,
+                    privatePromptIDs: privatePromptIDs
+                )
             }
         }
         logger.info("Claude auth is now \(auth.mode.displayName, privacy: .public)")
@@ -130,7 +137,8 @@ final class AppModel {
         config: AppConfig,
         auth: ClaudeAuth,
         costTable: CostTable,
-        history: [Transcript.Entry]
+        history: [Transcript.Entry],
+        privatePromptIDs: Set<String> = []
     ) -> RoutedSession {
         RoutedSession(
             instructions: scenario.instructions,
@@ -140,7 +148,8 @@ final class AppModel {
             appleCloud: AppleCloudProvider(isEnabled: config.isAppleCloudEnabled),
             claude: ClaudeProvider(auth: auth),
             costTable: costTable,
-            history: history
+            history: history,
+            privatePromptIDs: privatePromptIDs
         )
     }
 }

@@ -35,7 +35,7 @@ public final class RoutedSession {
     @ObservationIgnored private let session: LanguageModelSession
     @ObservationIgnored private let providers: [Route: any ModelProvider]
     @ObservationIgnored private let costTable: CostTable
-    @ObservationIgnored private let privacy = PrivacyLedger()
+    @ObservationIgnored private let privacy: PrivacyLedger
 
     public init(
         instructions: String,
@@ -45,8 +45,11 @@ public final class RoutedSession {
         appleCloud: any ModelProvider,
         claude: any ModelProvider,
         costTable: CostTable,
-        history: [Transcript.Entry] = []
+        history: [Transcript.Entry] = [],
+        privatePromptIDs: Set<String> = []
     ) {
+        // Rebuilt sessions (e.g. after a Claude key change) must keep withholding earlier private turns.
+        self.privacy = PrivacyLedger(privatePromptIDs: privatePromptIDs)
         precondition(onDevice.route == .onDevice && appleCloud.route == .appleCloud && claude.route == .claude,
                      "Each provider must match its route")
         self.providers = [.onDevice: onDevice, .appleCloud: appleCloud, .claude: claude]
@@ -66,6 +69,9 @@ public final class RoutedSession {
     }
 
     public var transcript: Transcript { session.transcript }
+
+    /// Prompt IDs of turns Claude must only see as placeholders. Pass them to a rebuilt session.
+    public var privatePromptIDs: Set<String> { privacy.privatePromptIDs }
 
     /// The text of the most recent user message in the history, if any.
     public var lastPromptText: String? {
@@ -160,7 +166,11 @@ public final class RoutedSession {
             throw StepFailure(underlying: error, metrics: metrics())
         }
         lastRoute = decision.route
-        if isPrivate, case .prompt(let entry) = session.transcript.last(where: \.isPrompt) {
+        // Once a conversation has a private turn, later turns on Apple routes saw it and may
+        // repeat or re-read it (e.g. "list the items again" re-runs OCR on a private scan), so
+        // they're withheld from Claude too. Claude's own turns never saw private content.
+        let derivesFromPrivate = !privacy.privatePromptIDs.isEmpty && decision.route != .claude
+        if isPrivate || derivesFromPrivate, case .prompt(let entry) = session.transcript.last(where: \.isPrompt) {
             privacy.markPrivate(promptID: entry.id)
         }
         return TurnResult(content: content, metrics: metrics())

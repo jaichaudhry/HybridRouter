@@ -82,4 +82,38 @@ struct PrivateHistoryTests {
         #expect(withheld.count == 3)
         #expect(!withheld.contains { if case .toolCalls = $0 { true } else { false } })
     }
+
+    @Test func turnsAfterAPrivateOneOnAppleRoutesAreWithheldToo() async throws {
+        let onDevice = FakeProvider(route: .onDevice, reply: "Your number is 206-555-0143")
+        let claude = FakeProvider(route: .claude, reply: "plan")
+        let routed = session(onDevice: onDevice, claude: claude)
+
+        _ = try await routed.respond(to: "My number is 206-555-0143", decision: .forced(.onDevice), isPrivate: true)
+        _ = try await routed.respond(to: "Why?", decision: .forced(.onDevice))  // repeats the number
+        _ = try await routed.respond(to: "Plan Kyoto", decision: .forced(.claude))
+        _ = try await routed.respond(to: "And Osaka?", decision: .forced(.claude))
+
+        let claudeSaw = try #require(claude.requests.last)
+        #expect(!texts(claudeSaw).joined().contains("555"))
+        // Claude's own earlier turn is kept.
+        #expect(texts(claudeSaw).contains("Plan Kyoto"))
+        #expect(texts(claudeSaw).contains("plan"))
+    }
+
+    @Test func aRebuiltSessionKeepsItsPrivateTurns() async throws {
+        let first = session(onDevice: FakeProvider(route: .onDevice, reply: "ok"), claude: FakeProvider(route: .claude, reply: "x"))
+        _ = try await first.respond(to: "SSN 123-45-6789", decision: .forced(.onDevice), isPrivate: true)
+        let claude = FakeProvider(route: .claude, reply: "y")
+        let rebuilt = RoutedSession(
+            instructions: "Be brief.",
+            onDevice: FakeProvider(route: .onDevice, reply: "ok"),
+            appleCloud: FakeProvider(route: .appleCloud, reply: "cloud"),
+            claude: claude,
+            costTable: CostTable(updated: "", source: "", models: [:]),
+            history: Array(first.transcript),
+            privatePromptIDs: first.privatePromptIDs
+        )
+        _ = try await rebuilt.respond(to: "Plan Kyoto", decision: .forced(.claude))
+        #expect(!texts(try #require(claude.requests.last)).joined().contains("123-45-6789"))
+    }
 }

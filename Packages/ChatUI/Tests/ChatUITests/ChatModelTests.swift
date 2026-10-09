@@ -141,14 +141,15 @@ extension ChatModelTests {
         await model.send("Remember me")
 
         let newClaude = FakeProvider(route: .claude, reply: "I remember")
-        model.replaceSession { history in
+        model.replaceSession { history, privatePromptIDs in
             RoutedSession(
                 instructions: "Be brief.",
                 onDevice: FakeProvider(route: .onDevice, reply: "x"),
                 appleCloud: FakeProvider(route: .appleCloud, reply: "x"),
                 claude: newClaude,
                 costTable: costTable,
-                history: history
+                history: history,
+                privatePromptIDs: privatePromptIDs
             )
         }
         model.routeOverride = .claude
@@ -170,14 +171,15 @@ extension ChatModelTests {
         while !model.isSending { await Task.yield() }
 
         let newClaude = FakeProvider(route: .claude, reply: "new key works")
-        model.replaceSession { history in
+        model.replaceSession { history, privatePromptIDs in
             RoutedSession(
                 instructions: "Be brief.",
                 onDevice: FakeProvider(route: .onDevice, reply: "x"),
                 appleCloud: FakeProvider(route: .appleCloud, reply: "x"),
                 claude: newClaude,
                 costTable: costTable,
-                history: history
+                history: history,
+                privatePromptIDs: privatePromptIDs
             )
         }
         await sending.value
@@ -279,5 +281,33 @@ extension ChatModelTests {
         CGImageDestinationAddImage(destination, image(), nil)
         CGImageDestinationFinalize(destination)
         return data as Data
+    }
+}
+
+extension ChatModelTests {
+    /// The leak the M3 review reproduced: a private turn, a key change, then a Claude turn.
+    @Test func privateTurnsStayWithheldAfterTheSessionIsRebuilt() async throws {
+        let model = makeModel()
+        model.isPrivate = true
+        await model.send("My SSN is 123-45-6789")
+
+        let newClaude = FakeProvider(route: .claude, reply: "ok")
+        model.replaceSession { history, privatePromptIDs in
+            RoutedSession(
+                instructions: "Be brief.",
+                onDevice: FakeProvider(route: .onDevice, reply: "x"),
+                appleCloud: FakeProvider(route: .appleCloud, reply: "x"),
+                claude: newClaude,
+                costTable: costTable,
+                history: history,
+                privatePromptIDs: privatePromptIDs
+            )
+        }
+        model.routeOverride = .claude
+        await model.send("Plan Kyoto")
+
+        let claudeSaw = String(describing: try #require(newClaude.requests.last))
+        #expect(!claudeSaw.contains("123-45-6789"))
+        #expect(claudeSaw.contains("[Private message withheld]"))
     }
 }

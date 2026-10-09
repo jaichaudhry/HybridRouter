@@ -73,7 +73,10 @@ public final class ChatModel {
     @ObservationIgnored private let costTable: CostTable
     @ObservationIgnored private let privacyGuard = PrivacyGuard()
     /// A session swap requested mid-reply, applied when the reply finishes.
-    @ObservationIgnored private var pendingSession: (([Transcript.Entry]) -> RoutedSession)?
+    @ObservationIgnored private var pendingSession: SessionFactory?
+
+    /// Builds a session from the previous one's history and private turns.
+    public typealias SessionFactory = (_ history: [Transcript.Entry], _ privatePromptIDs: Set<String>) -> RoutedSession
 
     public init(
         session: RoutedSession,
@@ -170,7 +173,7 @@ public final class ChatModel {
 
     /// Swaps in a new session (e.g. after Claude credentials change) that continues the same
     /// conversation. If a reply is in progress, the swap happens as soon as it finishes.
-    public func replaceSession(_ makeSession: @escaping ([Transcript.Entry]) -> RoutedSession) {
+    public func replaceSession(_ makeSession: @escaping SessionFactory) {
         pendingSession = makeSession
         if !isSending { applyPendingSession() }
     }
@@ -178,7 +181,7 @@ public final class ChatModel {
     private func applyPendingSession() {
         guard let makeSession = pendingSession else { return }
         pendingSession = nil
-        session = makeSession(Array(session.transcript))
+        session = makeSession(Array(session.transcript), session.privatePromptIDs)
     }
 
     /// Exports every step's metrics as JSON (SPEC §9).

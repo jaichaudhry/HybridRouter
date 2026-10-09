@@ -8,7 +8,11 @@ final class PrivacyLedger: Sendable {
         var route: Route = .onDevice
     }
 
-    private let state = Mutex(State())
+    private let state: Mutex<State>
+
+    init(privatePromptIDs: Set<String> = []) {
+        state = Mutex(State(privatePromptIDs: privatePromptIDs))
+    }
 
     var route: Route {
         get { state.withLock { $0.route } }
