@@ -27,7 +27,8 @@ let package = Package(
         ),
         .testTarget(
             name: "RouterKitTests",
-            dependencies: ["RouterKit", "RouterKitTesting"]
+            dependencies: ["RouterKit", "RouterKitTesting"],
+            resources: [.copy("Fixtures")]
         ),
     ],
     swiftLanguageModes: [.v6]

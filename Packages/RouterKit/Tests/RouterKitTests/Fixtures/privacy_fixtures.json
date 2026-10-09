@@ -1,0 +1,23 @@
+[
+  { "text": "Call me at (206) 555-0143 after five", "reason": "phoneNumber" },
+  { "text": "My number is +44 20 7946 0958", "reason": "phoneNumber" },
+  { "text": "Send it to jai.example@gmail.com please", "reason": "email" },
+  { "text": "Ship to 1600 Amphitheatre Parkway, Mountain View, CA 94043", "reason": "address" },
+  { "text": "Card 4111 1111 1111 1111 exp 12/29", "reason": "cardNumber" },
+  { "text": "Use 5500-0000-0000-0004 for the deposit", "reason": "cardNumber" },
+  { "text": "My SSN is 123-45-6789", "reason": "governmentID" },
+  { "text": "Passport number X1234567, add it to the booking", "reason": "governmentID" },
+  { "text": "Driver's license: D1234-56789", "reason": "governmentID" },
+  { "text": "The doctor said the biopsy came back clear", "reason": "health" },
+  { "text": "What dosage of insulin should I take?", "reason": "health" },
+  { "text": "I was diagnosed with depression last year", "reason": "health" },
+
+  { "text": "Give me 5 weekend trip ideas from Seattle", "reason": null },
+  { "text": "Make a 3-day Kyoto itinerary for a family with two kids", "reason": null },
+  { "text": "The train leaves at 10:45 from platform 12", "reason": null },
+  { "text": "Order #1234567890123 shipped yesterday", "reason": null },
+  { "text": "We spent 1,250 dollars over 3 days", "reason": null },
+  { "text": "Is the Kyoto Railway Museum good for kids?", "reason": null },
+  { "text": "Rewrite this paragraph to sound more professional", "reason": null },
+  { "text": "The patio needs a new coat of paint", "reason": null }
+]
