@@ -1,5 +1,6 @@
 import Foundation
 import FoundationModels
+import ImageIO
 import RouterKit
 import RouterKitTesting
 import Testing
@@ -196,4 +197,87 @@ extension ChatModelTests {
 @Generable
 struct Stop {
     var name: String
+}
+
+import CoreGraphics
+
+extension ChatModelTests {
+    static func image() -> CGImage {
+        let context = CGContext(data: nil, width: 4, height: 4, bitsPerComponent: 8, bytesPerRow: 16,
+                                space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        return context.makeImage()!
+    }
+
+    @Test func detectedPrivacyKeepsTheTurnOffClaude() async {
+        let claude = FakeProvider(route: .claude, reply: "should not run")
+        let model = makeModel(claude: claude, classifier: .always("complex"))
+        await model.send("My card is 4111 1111 1111 1111, which plan should I pick?")
+        #expect(model.messages[0].privacyReason == "card number")
+        #expect(model.messages[1].decision?.route == .onDevice)
+        #expect(model.messages[1].decision?.reason == "Kept private: card number")
+        #expect(claude.requests.isEmpty)
+    }
+
+    @Test func privateToggleAppliesToOneMessage() async {
+        let model = makeModel(classifier: .always("complex"))
+        model.isPrivate = true
+        await model.send("Which offer should I take?")
+        #expect(model.messages[1].decision?.route == .onDevice)
+        #expect(model.isPrivate == false)
+        await model.send("Which offer should I take?")
+        #expect(model.messages[3].decision?.route == .claude)
+    }
+
+    @Test func forcingClaudeOnAPrivateMessageIsBlocked() async {
+        let model = makeModel()
+        model.isPrivate = true
+        model.routeOverride = .claude
+        await model.send("Hello")
+        #expect(model.messages[1].errorMessage == "Kept private (marked private), so this can't go to Claude.")
+    }
+
+    @Test func scansArePrivateAndAttachmentsClearAfterSending() async {
+        let model = makeModel()
+        model.attachments = [.scan(Self.image(), name: "Scan 1")]
+        #expect(model.canSend)
+        await model.send()
+        #expect(model.messages[0].privacyReason == "scanned document")
+        #expect(model.messages[0].attachmentNames == ["Scan 1"])
+        #expect(model.attachments.isEmpty)
+    }
+
+    @Test func scenariosCanMakeEveryImagePrivate() async throws {
+        let model = makeModel()
+        model.imagesArePrivate = true
+        let photo = try #require(ChatAttachment.image(data: Self.pngData(), name: "Photo 1"))
+        model.attachments = [photo]
+        await model.send("What is this?")
+        #expect(model.messages[0].privacyReason == "scanned document")
+    }
+
+    @Test func documentsAreAddedToThePrompt() async throws {
+        let onDevice = FakeProvider(route: .onDevice, reply: "ok")
+        let model = makeModel(onDevice: onDevice)
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("notes-\(UUID().uuidString).txt")
+        try "Meeting at noon".write(to: url, atomically: true, encoding: .utf8)
+        model.attachments = [try ChatAttachment.document(url: url)]
+        await model.send("Summarize")
+        let lastRequest = try #require(onDevice.requests.last)
+        let saw = String(describing: lastRequest)
+        #expect(saw.contains("Meeting at noon"))
+        #expect(model.messages[0].content == .text("Summarize"))
+    }
+
+    @Test func imageLabelsDontRepeat() {
+        #expect(ChatAttachment.uniqueLabel("Scan 1") != ChatAttachment.uniqueLabel("Scan 1"))
+        #expect(ChatAttachment.uniqueLabel("Scan 1").hasPrefix("scan-1-"))
+    }
+
+    static func pngData() -> Data {
+        let data = NSMutableData()
+        let destination = CGImageDestinationCreateWithData(data, "public.png" as CFString, 1, nil)!
+        CGImageDestinationAddImage(destination, image(), nil)
+        CGImageDestinationFinalize(destination)
+        return data as Data
+    }
 }

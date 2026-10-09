@@ -16,6 +16,10 @@ public struct ChatMessage: Identifiable, Equatable, Sendable {
     public var steps: [StepMetrics]
     public var isStreaming: Bool
     public var errorMessage: String?
+    /// Why the turn was kept off Claude, if it was private.
+    public var privacyReason: String?
+    /// Names of the files and images attached to a user message.
+    public var attachmentNames: [String]
 
     public init(
         id: UUID = UUID(),
@@ -24,7 +28,9 @@ public struct ChatMessage: Identifiable, Equatable, Sendable {
         decision: RouteDecision? = nil,
         steps: [StepMetrics] = [],
         isStreaming: Bool = false,
-        errorMessage: String? = nil
+        errorMessage: String? = nil,
+        privacyReason: String? = nil,
+        attachmentNames: [String] = []
     ) {
         self.id = id
         self.role = role
@@ -33,6 +39,8 @@ public struct ChatMessage: Identifiable, Equatable, Sendable {
         self.steps = steps
         self.isStreaming = isStreaming
         self.errorMessage = errorMessage
+        self.privacyReason = privacyReason
+        self.attachmentNames = attachmentNames
     }
 
     /// Metrics for the step that produced the reply.
@@ -48,6 +56,12 @@ public final class ChatModel {
     /// True from the moment a message is sent until its reply finishes, including routing.
     public private(set) var isSending = false
     public var draft = ""
+    /// The composer's Private toggle: the next message stays off Claude.
+    public var isPrivate = false
+    /// Attachments for the next message.
+    public var attachments: [ChatAttachment] = []
+    /// Whether every attached image is private (Document Helper's scans and photos).
+    public var imagesArePrivate = false
     /// Nil means Auto. Picking a route starts loading its model right away.
     public var routeOverride: Route? {
         didSet { prewarm() }
@@ -57,6 +71,7 @@ public final class ChatModel {
     public var coordinator: TurnCoordinator
     public var structuredOutputs: [StructuredOutput]
     @ObservationIgnored private let costTable: CostTable
+    @ObservationIgnored private let privacyGuard = PrivacyGuard()
     /// A session swap requested mid-reply, applied when the reply finishes.
     @ObservationIgnored private var pendingSession: (([Transcript.Entry]) -> RoutedSession)?
 
@@ -73,7 +88,7 @@ public final class ChatModel {
     }
 
     public var canSend: Bool {
-        !isSending && !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !isSending && (!draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attachments.isEmpty)
     }
 
     public var steps: [StepMetrics] { messages.flatMap(\.steps) }
@@ -84,20 +99,47 @@ public final class ChatModel {
 
     /// Sends the draft, or `text` if given (e.g. a sample-prompt chip).
     public func send(_ text: String? = nil) async {
-        let prompt = (text ?? draft).trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !prompt.isEmpty, !isSending else { return }
+        var prompt = (text ?? draft).trimmingCharacters(in: .whitespacesAndNewlines)
+        let attachments = attachments
+        guard !isSending, !prompt.isEmpty || !attachments.isEmpty else { return }
         isSending = true
         defer {
             isSending = false
             applyPendingSession()
         }
         if text == nil { draft = "" }
+        self.attachments = []
+        let markedPrivate = isPrivate
+        isPrivate = false
+        if prompt.isEmpty { prompt = "Describe the attachment." }
 
-        messages.append(ChatMessage(role: .user, content: .text(prompt)))
-        messages.append(ChatMessage(role: .assistant, content: .text(""), isStreaming: true))
+        let images = attachments.compactMap(\.image)
+        let documents = attachments.filter { $0.documentText != nil }
+        let fullPrompt = documents.reduce(prompt) { text, document in
+            text + "\n\nDocument \"\(document.name)\":\n\(document.documentText ?? "")"
+        }
+        let reason = privacyGuard.assess(
+            fullPrompt,
+            markedPrivate: markedPrivate,
+            fromScan: attachments.contains(where: \.isScan) || (imagesArePrivate && !images.isEmpty)
+        )
+
+        messages.append(ChatMessage(
+            role: .user,
+            content: .text(prompt),
+            privacyReason: reason?.label,
+            attachmentNames: attachments.map(\.name)
+        ))
+        messages.append(ChatMessage(role: .assistant, content: .text(""), isStreaming: true, privacyReason: reason?.label))
         let index = messages.count - 1
 
-        let request = TurnCoordinator.Request(prompt: prompt, override: routeOverride, structuredOutputs: structuredOutputs)
+        let request = TurnCoordinator.Request(
+            prompt: fullPrompt,
+            images: images,
+            override: routeOverride,
+            privacyReason: reason?.label,
+            structuredOutputs: structuredOutputs
+        )
         let outcome = await coordinator.run(request, in: session) { [weak self] event in
             guard let self else { return }
             switch event {

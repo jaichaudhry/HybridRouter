@@ -11,18 +11,32 @@ struct MessageRow: View {
     var body: some View {
         switch message.role {
         case .user:
-            HStack {
-                Spacer(minLength: 48)
-                Text(message.content.text)
-                    .textSelection(.enabled)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .foregroundStyle(.white)
-                    .background(.tint, in: .rect(cornerRadius: 18))
+            VStack(alignment: .trailing, spacing: 4) {
+                HStack(alignment: .bottom, spacing: 6) {
+                    Spacer(minLength: 48)
+                    if message.privacyReason != nil {
+                        Image(systemName: "lock.fill")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel("Private")
+                    }
+                    Text(message.content.text)
+                        .textSelection(.enabled)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .foregroundStyle(.white)
+                        .background(.tint, in: .rect(cornerRadius: 18))
+                }
+                if !message.attachmentNames.isEmpty {
+                    Label(message.attachmentNames.joined(separator: ", "), systemImage: "paperclip")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
         case .assistant:
             VStack(alignment: .leading, spacing: 6) {
-                RouteBadge(decision: message.decision, steps: message.steps)
+                RouteBadge(decision: message.decision, steps: message.steps, isPrivate: message.privacyReason != nil)
                 if message.content.isEmpty {
                     if message.isStreaming {
                         ProgressView()
