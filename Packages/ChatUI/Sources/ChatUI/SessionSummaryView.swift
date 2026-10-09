@@ -16,8 +16,7 @@ public struct SessionSummaryView: View {
                     LabeledContent {
                         Text((summary.routeShare[route] ?? 0).formatted(.percent.precision(.fractionLength(0))))
                     } label: {
-                        Label(route.displayName, systemImage: route.symbolName)
-                            .foregroundStyle(route.tint)
+                        RouteLabel(route)
                     }
                 }
             }

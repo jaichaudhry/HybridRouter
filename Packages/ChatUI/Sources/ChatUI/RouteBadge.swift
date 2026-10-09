@@ -12,6 +12,25 @@ extension Route {
     }
 }
 
+/// A route's name with its icon in the route color. The text stays in the primary color:
+/// system green and orange text on a light background is too low-contrast to read.
+public struct RouteLabel: View {
+    let route: Route
+
+    public init(_ route: Route) {
+        self.route = route
+    }
+
+    public var body: some View {
+        Label {
+            Text(route.displayName)
+        } icon: {
+            Image(systemName: route.symbolName)
+                .foregroundStyle(route.tint)
+        }
+    }
+}
+
 /// Shows where a reply ran and why. Tapping it opens the metrics of every step behind it.
 public struct RouteBadge: View {
     /// Nil while the router is still choosing.
@@ -51,19 +70,23 @@ private struct DecidedRouteBadge: View {
         Button {
             showsMetrics = true
         } label: {
-            HStack(spacing: 4) {
-                Image(systemName: decision.route.symbolName)
-                if let marker {
-                    Image(systemName: marker)
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Group {
+                    Image(systemName: decision.route.symbolName)
+                    if let marker {
+                        Image(systemName: marker)
+                    }
                 }
+                .foregroundStyle(decision.route.tint)
+                // Wraps rather than cutting off the reason or the privacy note.
                 Text(label)
-                    .lineLimit(1)
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .font(.caption)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .foregroundStyle(decision.route.tint)
-            .background(decision.route.tint.opacity(0.12), in: .capsule)
+            .background(decision.route.tint.opacity(0.12), in: .rect(cornerRadius: 10))
         }
         .buttonStyle(.plain)
         .disabled(steps.isEmpty)

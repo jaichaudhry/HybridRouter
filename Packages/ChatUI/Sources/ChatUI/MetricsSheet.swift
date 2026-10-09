@@ -40,8 +40,7 @@ private struct StepSections: View {
     var body: some View {
         Section {
             LabeledContent("Ran on") {
-                Label(metrics.route.displayName, systemImage: metrics.route.symbolName)
-                    .foregroundStyle(metrics.route.tint)
+                RouteLabel(metrics.route)
             }
             LabeledContent("Model", value: metrics.modelID)
             LabeledContent("Why", value: metrics.reason)

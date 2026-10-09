@@ -59,8 +59,13 @@ public final class CompareModel {
                 await answer(text, on: route, at: index, in: session, isPrivate: privacy != nil)
             })
         }
-        for answer in answers {
-            await answer.value
+        // Closing compare mode cancels the run, so in-flight (and paid) replies stop too.
+        await withTaskCancellationHandler {
+            for answer in answers {
+                await answer.value
+            }
+        } onCancel: {
+            answers.forEach { $0.cancel() }
         }
     }
 

@@ -4,7 +4,8 @@ import SwiftUI
 /// One prompt, every route, side by side.
 public struct CompareView: View {
     @Bindable var model: CompareModel
-    @Environment(\.horizontalSizeClass) private var sizeClass
+    /// Starting a run sets a new token; `.task(id:)` cancels the run if the view goes away.
+    @State private var runToken: UUID?
 
     public init(model: CompareModel) {
         self.model = model
@@ -13,17 +14,16 @@ public struct CompareView: View {
     public var body: some View {
         VStack(spacing: 0) {
             ScrollView {
-                if sizeClass == .regular {
+                // Side by side when there's room for three readable columns, stacked otherwise.
+                ViewThatFits(in: .horizontal) {
                     HStack(alignment: .top, spacing: 12) {
-                        ForEach(model.columns) { CompareCard(column: $0) }
+                        ForEach(model.columns) { CompareCard(column: $0).frame(minWidth: 260) }
                     }
-                    .padding()
-                } else {
                     VStack(spacing: 12) {
                         ForEach(model.columns) { CompareCard(column: $0) }
                     }
-                    .padding()
                 }
+                .padding()
             }
             HStack(spacing: 8) {
                 TextField("Prompt to compare", text: $model.prompt, axis: .vertical)
@@ -32,11 +32,16 @@ public struct CompareView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
                     .background(.fill.tertiary, in: .rect(cornerRadius: 18))
-                    .onSubmit { Task { await model.run() } }
-                Button {
-                    Task { await model.run() }
-                } label: {
-                    Image(systemName: "play.circle.fill").font(.title)
+                    .onKeyPress(.return, phases: .down) { press in
+                        guard !press.modifiers.contains(.shift) else { return .ignored }
+                        start()
+                        return .handled
+                    }
+                Button(action: start) {
+                    Image(systemName: "play.circle.fill")
+                        .font(.title)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(.rect)
                 }
                 .disabled(!model.canRun)
                 .accessibilityLabel("Compare")
@@ -45,6 +50,15 @@ public struct CompareView: View {
             .background(.bar)
         }
         .navigationTitle("Compare routes")
+        .task(id: runToken) {
+            guard runToken != nil else { return }
+            await model.run()
+        }
+    }
+
+    private func start() {
+        guard model.canRun else { return }
+        runToken = UUID()
     }
 }
 
@@ -54,9 +68,8 @@ private struct CompareCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label(column.route.displayName, systemImage: column.route.symbolName)
+                RouteLabel(column.route)
                     .font(.headline)
-                    .foregroundStyle(column.route.tint)
                 Spacer()
                 if column.isRunning {
                     ProgressView().controlSize(.small)
@@ -67,7 +80,7 @@ private struct CompareCard: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else if !column.content.isEmpty {
-                Text(MessageRow.markdown(column.content.text))
+                Text(column.isRunning ? AttributedString(column.content.text) : MessageRow.markdown(column.content.text))
                     .font(.subheadline)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
