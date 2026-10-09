@@ -5,12 +5,15 @@ import SwiftUI
 public struct ChatView: View {
     @Bindable var model: ChatModel
     let samplePrompts: [String]
+    /// Chips fill the text field instead of sending, e.g. when an attachment should come first.
+    let samplePromptsFillDraft: Bool
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    public init(model: ChatModel, samplePrompts: [String] = []) {
+    public init(model: ChatModel, samplePrompts: [String] = [], samplePromptsFillDraft: Bool = false) {
         self.model = model
         self.samplePrompts = samplePrompts
+        self.samplePromptsFillDraft = samplePromptsFillDraft
     }
 
     public var body: some View {
@@ -30,7 +33,11 @@ public struct ChatView: View {
             VStack(spacing: 0) {
                 if !samplePrompts.isEmpty {
                     SamplePromptChips(prompts: samplePrompts) { prompt in
-                        Task { await model.send(prompt) }
+                        if samplePromptsFillDraft {
+                            model.draft = prompt
+                        } else {
+                            Task { await model.send(prompt) }
+                        }
                     }
                     .disabled(model.isSending)
                 }
