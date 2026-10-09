@@ -53,6 +53,7 @@ private struct ResultRow: View {
             HStack(alignment: .firstTextBaseline) {
                 Image(systemName: result.isMatch ? "checkmark.circle.fill" : "xmark.circle.fill")
                     .foregroundStyle(result.isMatch ? .green : .red)
+                    .accessibilityLabel(result.isMatch ? "Match" : "Mismatch")
                 Text("#\(result.case.id) \(result.case.prompt)")
                     .font(.subheadline)
             }

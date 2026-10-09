@@ -99,8 +99,7 @@ private struct RouteStatusRow: View {
                     .multilineTextAlignment(.trailing)
             }
         } label: {
-            Label(route.displayName, systemImage: route.symbolName)
-                .foregroundStyle(route.tint)
+            RouteLabel(route)
         }
         .accessibilityElement(children: .combine)
     }

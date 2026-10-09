@@ -8,13 +8,15 @@ import SwiftUI
 struct MeasureRoutesView: View {
     let app: AppModel
     @State private var measurement = RouteMeasurement()
+    /// `.task(id:)` cancels a run when the screen closes, so paid requests stop too.
+    @State private var runToken: UUID?
 
     var body: some View {
         List {
             Section {
                 LabeledContent("Device", value: BenchmarkModel.deviceName)
                 Button(measurement.isRunning ? measurement.status : "Measure") {
-                    Task { await measurement.run(app: app) }
+                    runToken = UUID()
                 }
                 .disabled(measurement.isRunning)
             } footer: {
@@ -25,8 +27,7 @@ struct MeasureRoutesView: View {
                 Section("Speed and cost per route") {
                     ForEach(measurement.speed, id: \.route) { row in
                         VStack(alignment: .leading, spacing: 4) {
-                            Label(row.route.displayName, systemImage: row.route.symbolName)
-                                .foregroundStyle(row.route.tint)
+                            RouteLabel(row.route)
                             if let unavailable = row.unavailableReason {
                                 Text(unavailable).font(.caption).foregroundStyle(.secondary)
                             } else {
@@ -58,6 +59,10 @@ struct MeasureRoutesView: View {
                     ShareLink("Share as Markdown", item: measurement.markdown)
                 }
             }
+        }
+        .task(id: runToken) {
+            guard runToken != nil else { return }
+            await measurement.run(app: app)
         }
         .navigationTitle("Measure routes")
         .navigationBarTitleDisplayMode(.inline)
@@ -127,6 +132,7 @@ final class RouteMeasurement {
             }
             var steps: [StepMetrics] = []
             for (index, prompt) in Self.speedPrompts.enumerated() {
+                if Task.isCancelled { return }
                 status = "\(route.displayName) \(index + 1)/\(Self.speedPrompts.count)…"
                 // A fresh session per prompt, so earlier replies don't grow the input.
                 let session = app.makeFreshSession(for: general)
@@ -144,6 +150,7 @@ final class RouteMeasurement {
             var steps: [StepMetrics] = []
             var failures = 0
             for (index, prompt) in scenario.samplePrompts.enumerated() {
+                if Task.isCancelled { return }
                 status = "\(scenario.title) \(index + 1)/\(scenario.samplePrompts.count)…"
                 let outcome = await coordinator.run(
                     .init(prompt: prompt, structuredOutputs: scenario.structuredOutputs),

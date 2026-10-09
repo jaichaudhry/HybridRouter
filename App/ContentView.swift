@@ -43,6 +43,7 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showsCompare) {
             CompareSheet(app: model)
+                .presentationSizing(.page)
         }
         .sheet(isPresented: $showsSettings) {
             SettingsView(model: model)
