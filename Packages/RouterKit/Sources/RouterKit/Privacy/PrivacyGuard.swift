@@ -49,11 +49,25 @@ public struct PrivacyGuard: Sendable {
     // MARK: Detectors
 
     /// 13–19 digits, optionally grouped with spaces or dashes, passing the Luhn check.
+    ///
+    /// A run of digits can include more than the card ("4111 1111 1111 1111 12" when an expiry
+    /// follows, "2 5500 …" for a quantity), so whole groups are tried from the start and from
+    /// the end of the run. Only whole groups: windows inside an unbroken run would flag long
+    /// order or tracking numbers by chance.
     static func containsCardNumber(_ text: String) -> Bool {
         matches(cardPattern, in: text).contains { candidate in
-            let digits = candidate.compactMap(\.wholeNumberValue)
-            return (13...19).contains(digits.count) && luhn(digits)
+            let groups = candidate.split(whereSeparator: { $0 == " " || $0 == "-" })
+                .map { $0.compactMap(\.wholeNumberValue) }
+            return (1...groups.count).contains { count in
+                let prefix = Array(groups.prefix(count).joined())
+                let suffix = Array(groups.suffix(count).joined())
+                return isCard(prefix) || isCard(suffix)
+            }
         }
+    }
+
+    private static func isCard(_ digits: [Int]) -> Bool {
+        (13...19).contains(digits.count) && luhn(digits)
     }
 
     /// US Social Security numbers, and numbers introduced as a passport, licence or national ID.
@@ -82,10 +96,10 @@ public struct PrivacyGuard: Sendable {
 
     // MARK: Helpers
 
-    private static let cardPattern = #"\b(?:\d[ -]?){12,18}\d\b"#
+    private static let cardPattern = #"\b(?:\d[ -]?){12,24}\d\b"#
     private static let ssnPattern = #"\b\d{3}-\d{2}-\d{4}\b"#
     private static let labeledIDPattern =
-        #"(?i)\b(passport|driver'?s? licen[cs]e|national id|id number|social security)(?: number| no\.?| #)?[:\s#]*[A-Z0-9][A-Z0-9-]{5,}"#
+        #"(?i)\b(passport|driver'?s? licen[cs]e|national id|id number|social security)(?: number| no\.?| #)?[:\s#]*(?=[A-Z0-9-]*\d)[A-Z0-9][A-Z0-9-]{5,}"#
     private static let emailPattern = #"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}"#
 
     /// A small list on purpose: common enough to catch real health details, specific enough
@@ -93,9 +107,10 @@ public struct PrivacyGuard: Sendable {
     static let healthTerms = [
         "diagnosis", "diagnosed", "prescription", "prescribed", "medication", "dosage", "symptoms",
         "lab results", "blood test", "biopsy", "mri", "ct scan", "x-ray", "chemotherapy", "insulin",
-        "diabetes", "cancer", "tumor", "hiv", "pregnant", "pregnancy", "miscarriage", "therapy session",
+        "diabetes", "have cancer", "had cancer", "cancer diagnosis", "cancer treatment", "breast cancer",
+        "lung cancer", "skin cancer", "tumor", "hiv", "pregnant", "pregnancy", "miscarriage", "therapy session",
         "therapist", "psychiatrist", "depression", "anxiety disorder", "antidepressant", "surgery",
-        "medical record", "patient",
+        "medical record", "the patient", "patient id", "patient portal",
     ]
 
     private static func matches(_ pattern: String, in text: String) -> [String] {
