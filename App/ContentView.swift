@@ -8,6 +8,7 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var showsSettings = false
     @State private var showsSummary = false
+    @State private var showsCompare = false
 
     var body: some View {
         NavigationStack {
@@ -30,12 +31,18 @@ struct ContentView: View {
                             .disabled(model.chat.steps.isEmpty)
                     }
                     ToolbarItem(placement: .topBarTrailing) {
+                        Button("Compare routes", systemImage: "rectangle.split.3x1") { showsCompare = true }
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
                         Button("Settings", systemImage: "gearshape") { showsSettings = true }
                     }
                 }
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .active { model.chat.prewarm() }
+        }
+        .sheet(isPresented: $showsCompare) {
+            CompareSheet(app: model)
         }
         .sheet(isPresented: $showsSettings) {
             SettingsView(model: model)
@@ -76,5 +83,28 @@ private struct ScenarioPicker: View {
             .foregroundStyle(.primary)
         }
         .accessibilityLabel("Scenario: \(model.scenario.title)")
+    }
+}
+
+/// Compare mode: one prompt on every route, using the general chat's setup.
+private struct CompareSheet: View {
+    @State private var compare: CompareModel
+    @Environment(\.dismiss) private var dismiss
+
+    init(app: AppModel) {
+        let general = app.scenarios.first { $0.id == GeneralScenario().id } ?? app.scenarios[0]
+        _compare = State(initialValue: CompareModel { app.makeFreshSession(for: general) })
+    }
+
+    var body: some View {
+        NavigationStack {
+            CompareView(model: compare)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { dismiss() }
+                    }
+                }
+        }
     }
 }
