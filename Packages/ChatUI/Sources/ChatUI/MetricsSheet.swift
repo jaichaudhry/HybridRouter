@@ -43,6 +43,9 @@ private struct StepSections: View {
                 RouteLabel(metrics.route)
             }
             LabeledContent("Model", value: metrics.modelID)
+            if metrics.isSimulated {
+                LabeledContent("Simulated", value: "On-device model standing in")
+            }
             LabeledContent("Why", value: metrics.reason)
             if let cause = metrics.escalationCause {
                 LabeledContent("Escalated after", value: cause)

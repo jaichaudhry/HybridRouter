@@ -97,10 +97,16 @@ private struct DecidedRouteBadge: View {
         }
     }
 
+    /// The reply came from a stand-in model (e.g. Apple Cloud simulated on-device).
+    private var isSimulated: Bool {
+        steps.last.map { $0.isSimulated && $0.route == decision.route } ?? false
+    }
+
     private var label: String {
+        let simulated = isSimulated ? " (simulated)" : ""
         let base = switch decision.source {
-        case .userOverride: decision.reason
-        default: "\(decision.route.displayName) · \(decision.reason)"
+        case .userOverride: decision.reason + simulated
+        default: "\(decision.route.displayName)\(simulated) · \(decision.reason)"
         }
         // Rule decisions already say "Kept private: …"; forced and escalated ones don't.
         guard let privacyReason, !decision.reason.hasPrefix("Kept private") else { return base }

@@ -70,6 +70,11 @@ private struct CompareCard: View {
             HStack {
                 RouteLabel(column.route)
                     .font(.headline)
+                if column.metrics?.isSimulated == true {
+                    Text("simulated")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 Spacer()
                 if column.isRunning {
                     ProgressView().controlSize(.small)
