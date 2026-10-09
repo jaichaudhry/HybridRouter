@@ -36,10 +36,15 @@ public struct OnDeviceClassifier: RouteClassifier {
     /// Longer ones stand alone, which keeps the prompt, and the latency, small.
     static let contextWordLimit = 8
 
+    /// The opening of a long message (e.g. one with a pasted document) is enough to label it,
+    /// and keeps the classifier within the on-device context window.
+    static let promptCharacterLimit = 600
+
     static func classifierPrompt(_ prompt: String, previous: String?) -> String {
+        let message = String(prompt.prefix(promptCharacterLimit))
         let words = prompt.split(whereSeparator: \.isWhitespace).count
-        guard let previous, words <= contextWordLimit else { return prompt }
-        return "Previous message: \(previous.prefix(240))\nMessage to label: \(prompt)"
+        guard let previous, words <= contextWordLimit else { return message }
+        return "Previous message: \(previous.prefix(240))\nMessage to label: \(message)"
     }
 
     private let model: SystemLanguageModel

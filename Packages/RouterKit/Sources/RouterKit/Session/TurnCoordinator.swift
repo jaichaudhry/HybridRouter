@@ -8,17 +8,25 @@ public struct StructuredOutput: Sendable {
     public var tasks: Set<String>
     /// Classifier complexities that get the schema; simple turns usually want plain text.
     public var complexities: Set<String>
+    /// Only for turns with an attached image, e.g. a receipt.
+    public var requiresImage: Bool
 
-    public init(schema: GenerationSchema, tasks: Set<String>, complexities: Set<String> = ["moderate", "complex"]) {
+    public init(
+        schema: GenerationSchema,
+        tasks: Set<String>,
+        complexities: Set<String> = ["moderate", "complex"],
+        requiresImage: Bool = false
+    ) {
         self.schema = schema
         self.tasks = tasks
         self.complexities = complexities
+        self.requiresImage = requiresImage
     }
 
-    /// Whether a turn with this classification should be structured. Turns the classifier
-    /// didn't see (overrides, rule decisions) stay plain text.
-    public func applies(to classification: RouteClassification?) -> Bool {
-        guard let classification else { return false }
+    /// Whether a turn with this classification should be structured. If the classifier
+    /// couldn't label the turn, it stays plain text.
+    public func applies(to classification: RouteClassification?, hasImage: Bool = false) -> Bool {
+        guard let classification, hasImage || !requiresImage else { return false }
         return tasks.contains(classification.task) && complexities.contains(classification.complexity)
     }
 }
@@ -98,7 +106,10 @@ public struct TurnCoordinator {
         let input = await routingInput(for: request, in: session)
         var decision: RouteDecision
         let classifier: ClassifierRun?
-        switch await router.route(request.prompt, input: input) {
+        // With structured outputs on offer, rule-decided turns (images, privacy) are still
+        // classified on-device so a scan can get its receipt card.
+        let classifyDecided = !request.structuredOutputs.isEmpty
+        switch await router.route(request.prompt, input: input, classifyDecidedTurns: classifyDecided) {
         case .blocked(let reason):
             return Outcome(content: nil, decision: nil, steps: [], classifier: nil, failure: reason)
         case .routed(let routed, let run):
@@ -106,7 +117,9 @@ public struct TurnCoordinator {
             classifier = run
         }
 
-        let structured = request.structuredOutputs.first { $0.applies(to: classifier?.classification) }
+        let structured = request.structuredOutputs.first {
+            $0.applies(to: classifier?.classification, hasImage: !request.images.isEmpty)
+        }
         var steps: [StepMetrics] = []
         var escalationCause: FailureCause?
         while true {

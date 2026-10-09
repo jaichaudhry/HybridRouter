@@ -96,4 +96,35 @@ struct AttachmentsAndToolsTests {
         }
         #expect((try? Receipt(content))?.total == "$42")
     }
+
+    @Test func scannedImagesGetTheirSchemaEvenWhenARuleRoutes() async {
+        let receipt = StructuredOutput(schema: Receipt.generationSchema, tasks: ["extract"],
+                                       complexities: ["simple", "moderate"], requiresImage: true)
+        let routed = session(onDevice: FakeProvider(route: .onDevice, reply: #"{"total": "$42"}"#))
+        let coordinator = TurnCoordinator(router: Router(classifier: FakeClassifier.always("simple", task: "extract")),
+                                          estimator: FixedTokenEstimator(100), isOnline: { true })
+        let outcome = await coordinator.run(
+            .init(prompt: "Extract the total", images: [ImageInput(Self.image(), label: "scan-1")],
+                  privacyReason: "scanned document", structuredOutputs: [receipt]),
+            in: routed
+        )
+        #expect(outcome.decision?.source == .rule)
+        guard case .structured(let content) = outcome.content else {
+            Issue.record("Expected a structured receipt")
+            return
+        }
+        #expect((try? Receipt(content))?.total == "$42")
+    }
+
+    @Test func imageOnlySchemasSkipTextTurns() {
+        let receipt = StructuredOutput(schema: Receipt.generationSchema, tasks: ["extract"], requiresImage: true)
+        let label = RouteClassification(complexity: "moderate", task: "extract")
+        #expect(!receipt.applies(to: label, hasImage: false))
+        #expect(receipt.applies(to: label, hasImage: true))
+    }
+
+    @Test func classifierSeesOnlyTheOpeningOfALongMessage() {
+        let long = String(repeating: "clause ", count: 2_000)
+        #expect(OnDeviceClassifier.classifierPrompt(long, previous: nil).count == OnDeviceClassifier.promptCharacterLimit)
+    }
 }

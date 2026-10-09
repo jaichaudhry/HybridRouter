@@ -27,22 +27,29 @@ public struct Router: Sendable {
         self.mapping = mapping
     }
 
-    public func route(_ prompt: String, input: RoutingInput) async -> RoutingResult {
+    /// - Parameter classifyDecidedTurns: also classify turns a rule settled, to choose a
+    ///   structured output (e.g. a receipt for a scanned image). It never changes the route.
+    public func route(_ prompt: String, input: RoutingInput, classifyDecidedTurns: Bool = false) async -> RoutingResult {
         let allowed: [Route]
         switch RoutingRules.evaluate(input) {
         case .decided(let decision):
-            return .routed(decision, classifier: nil)
+            guard classifyDecidedTurns else { return .routed(decision, classifier: nil) }
+            return .routed(decision, classifier: await classify(prompt, previous: input.previousPrompt))
         case .blocked(let reason):
             return .blocked(reason: reason)
         case .open(let routes):
             allowed = routes
         }
 
+        let run = await classify(prompt, previous: input.previousPrompt)
+        return .routed(Self.decide(run.classification, mapping: mapping, allowed: allowed, input: input), classifier: run)
+    }
+
+    private func classify(_ prompt: String, previous: String?) async -> ClassifierRun {
         let clock = ContinuousClock()
         let start = clock.now
-        let classification = try? await classifier.classify(prompt, previous: input.previousPrompt)
-        let run = ClassifierRun(classification: classification, latency: start.duration(to: clock.now).seconds)
-        return .routed(Self.decide(classification, mapping: mapping, allowed: allowed, input: input), classifier: run)
+        let classification = try? await classifier.classify(prompt, previous: previous)
+        return ClassifierRun(classification: classification, latency: start.duration(to: clock.now).seconds)
     }
 
     /// The classifier step as a pure function: map the complexity to a route and fit it to

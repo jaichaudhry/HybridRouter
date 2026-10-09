@@ -39,7 +39,12 @@ struct DocumentHelperScenario: Scenario {
 
     var structuredOutputs: [StructuredOutput] {
         [
-            StructuredOutput(schema: Receipt.generationSchema, tasks: ["extract"], complexities: ["simple", "moderate"]),
+            StructuredOutput(
+                schema: Receipt.generationSchema,
+                tasks: ["extract"],
+                complexities: ["simple", "moderate"],
+                requiresImage: true
+            ),
             StructuredOutput(schema: DocSummary.generationSchema, tasks: ["summarize"]),
         ]
     }
