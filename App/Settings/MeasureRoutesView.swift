@@ -94,6 +94,8 @@ final class RouteMeasurement {
         let scenario: String
         let summary: SessionSummary
         let failures: Int
+        /// Each sample prompt with the route its reply came from and why.
+        let turns: [(prompt: String, route: String, reason: String)]
 
         var shareText: String {
             Route.allCases.map { route in
@@ -149,6 +151,7 @@ final class RouteMeasurement {
             let coordinator = app.makeCoordinator(for: scenario)
             var steps: [StepMetrics] = []
             var failures = 0
+            var turns: [(prompt: String, route: String, reason: String)] = []
             for (index, prompt) in scenario.samplePrompts.enumerated() {
                 if Task.isCancelled { return }
                 status = "\(scenario.title) \(index + 1)/\(scenario.samplePrompts.count)…"
@@ -158,12 +161,18 @@ final class RouteMeasurement {
                 )
                 steps += outcome.steps
                 if outcome.content == nil { failures += 1 }
+                turns.append((
+                    prompt,
+                    outcome.decision?.route.displayName ?? "none",
+                    outcome.failure ?? outcome.decision?.reason ?? "-"
+                ))
             }
             let claudeID = session.provider(for: .claude).modelID
             mixes.append(Mix(
                 scenario: scenario.title,
                 summary: SessionSummary(steps: steps, costTable: app.prices, claudeModelID: claudeID),
-                failures: failures
+                failures: failures,
+                turns: turns
             ))
         }
         status = ""
@@ -187,6 +196,11 @@ final class RouteMeasurement {
         lines += ["", "| Scenario (sample prompts on Auto) | Route mix | Cost | All on Claude | Saved |", "|---|---|---|---|---|"]
         for mix in mixes {
             lines.append("| \(mix.scenario) | \(mix.shareText) | \(ResultsFormat.money(mix.summary.totalCost)) | \(ResultsFormat.money(mix.summary.allClaudeCost)) | \(ResultsFormat.money(mix.summary.saved)) |")
+        }
+        lines += ["", "Instructions: \(OnDeviceClassifier.InstructionSet.tuned(for: SystemLanguageModel.default.variant).id)"]
+        for mix in mixes {
+            lines += ["", "\(mix.scenario) turns:"]
+            lines += mix.turns.map { "- \($0.prompt) → \($0.route) (\($0.reason))" }
         }
         return lines.joined(separator: "\n")
     }
