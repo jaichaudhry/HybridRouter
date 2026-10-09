@@ -35,7 +35,7 @@ Each badge says why its reply went where it did ("Multi-step planning", "Kept pr
 
 ## Results
 
-Classifier, on an M1 Max (macOS 27.0), against 50 hand-labeled prompts in `Evals/classifier_benchmark.json`: **48/50 routed as labeled**, median **~900 ms** to classify. Both misses go one route higher than labeled.
+Classifier, on an M1 Max (macOS 27.0), against 50 hand-labeled prompts in `Evals/classifier_benchmark.json`: **48/50 routed as labeled**, median **~900 ms** to classify. Both misses go one route higher than labeled. The same set also runs as an Apple [Evaluations](https://developer.apple.com/documentation/evaluations) framework evaluation (`Evals/AppleEvaluationTests.swift`), which scores 0.96 and writes an `.xcevalresult` you can open in Xcode.
 
 <!-- Device results: run Settings › Developer › Measure routes and Routing benchmark on an iPhone and paste the Markdown tables here. -->
 

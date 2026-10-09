@@ -17,7 +17,7 @@ let package = Package(
             ],
             path: ".",
             exclude: ["Package.swift"],
-            sources: ["RoutingEvalTests.swift"],
+            sources: ["RoutingEvalTests.swift", "AppleEvaluationTests.swift"],
             resources: [.copy("routing_cases.json"), .copy("classifier_benchmark.json")]
         ),
     ],
