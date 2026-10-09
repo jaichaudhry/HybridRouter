@@ -55,7 +55,7 @@ public final class ChatModel {
 
     public private(set) var session: RoutedSession
     public var coordinator: TurnCoordinator
-    public var structuredOutput: StructuredOutput?
+    public var structuredOutputs: [StructuredOutput]
     @ObservationIgnored private let costTable: CostTable
     /// A session swap requested mid-reply, applied when the reply finishes.
     @ObservationIgnored private var pendingSession: (([Transcript.Entry]) -> RoutedSession)?
@@ -64,12 +64,12 @@ public final class ChatModel {
         session: RoutedSession,
         coordinator: TurnCoordinator,
         costTable: CostTable,
-        structuredOutput: StructuredOutput? = nil
+        structuredOutputs: [StructuredOutput] = []
     ) {
         self.session = session
         self.coordinator = coordinator
         self.costTable = costTable
-        self.structuredOutput = structuredOutput
+        self.structuredOutputs = structuredOutputs
     }
 
     public var canSend: Bool {
@@ -97,7 +97,7 @@ public final class ChatModel {
         messages.append(ChatMessage(role: .assistant, content: .text(""), isStreaming: true))
         let index = messages.count - 1
 
-        let request = TurnCoordinator.Request(prompt: prompt, override: routeOverride, structuredOutput: structuredOutput)
+        let request = TurnCoordinator.Request(prompt: prompt, override: routeOverride, structuredOutputs: structuredOutputs)
         let outcome = await coordinator.run(request, in: session) { [weak self] event in
             guard let self else { return }
             switch event {

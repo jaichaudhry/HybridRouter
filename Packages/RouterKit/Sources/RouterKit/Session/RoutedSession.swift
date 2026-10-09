@@ -40,6 +40,7 @@ public final class RoutedSession {
     public init(
         instructions: String,
         tools: [any Tool] = [],
+        appleOnlyTools: [any Tool] = [],
         onDevice: any ModelProvider,
         appleCloud: any ModelProvider,
         claude: any ModelProvider,
@@ -52,7 +53,13 @@ public final class RoutedSession {
         self.costTable = costTable
         let models = RouteModels(onDevice: onDevice, appleCloud: appleCloud, claude: claude)
         self.session = LanguageModelSession(
-            profile: RoutingProfile(instructions: instructions, tools: tools, models: models, privacy: privacy),
+            profile: RoutingProfile(
+                instructions: instructions,
+                tools: tools,
+                appleOnlyTools: appleOnlyTools,
+                models: models,
+                privacy: privacy
+            ),
             history: history
         )
         session.transcriptErrorHandlingPolicy = .revertTranscript
@@ -89,10 +96,12 @@ public final class RoutedSession {
 
     /// Runs one turn on the decided route, reporting the cumulative reply as it streams.
     /// - Parameters:
+    ///   - images: attached to the prompt with their labels.
     ///   - schema: if set, the reply is structured content matching it.
     ///   - isPrivate: the turn is private, so Claude only ever sees placeholders for it.
     public func respond(
         to prompt: String,
+        images: [ImageInput] = [],
         decision: RouteDecision,
         schema: GenerationSchema? = nil,
         isPrivate: Bool = false,
@@ -136,13 +145,14 @@ public final class RoutedSession {
             )
         }
 
+        let fullPrompt = Self.prompt(prompt, images: images)
         do {
             if let schema {
-                for try await snapshot in session.streamResponse(to: prompt, schema: schema) {
+                for try await snapshot in session.streamResponse(to: fullPrompt, schema: schema) {
                     receive(.structured(snapshot.rawContent))
                 }
             } else {
-                for try await snapshot in session.streamResponse(to: prompt) {
+                for try await snapshot in session.streamResponse(to: fullPrompt) {
                     receive(.text(snapshot.content))
                 }
             }
@@ -154,6 +164,19 @@ public final class RoutedSession {
             privacy.markPrivate(promptID: entry.id)
         }
         return TurnResult(content: content, metrics: metrics())
+    }
+
+    /// The text plus labeled image attachments. Labels are also named in the text: the model
+    /// has to pass them to image tools such as OCRTool.
+    static func prompt(_ text: String, images: [ImageInput]) -> Prompt {
+        guard !images.isEmpty else { return Prompt(text) }
+        let labels = images.map(\.label).joined(separator: ", ")
+        return Prompt {
+            "\(text)\n(Attached image: \(labels))"
+            for image in images {
+                Attachment(image.cgImage, orientation: image.orientation).label(image.label)
+            }
+        }
     }
 
     /// Removes the most recent turn (its prompt and everything after it) from the history,

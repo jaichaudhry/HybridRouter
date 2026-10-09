@@ -24,8 +24,8 @@ struct TripPlannerScenario: Scenario {
 
     var tools: [any Tool] { [PlacesTool()] }
 
-    var structuredOutput: StructuredOutput? {
-        StructuredOutput(schema: Itinerary.generationSchema, tasks: ["plan"])
+    var structuredOutputs: [StructuredOutput] {
+        [StructuredOutput(schema: Itinerary.generationSchema, tasks: ["plan"])]
     }
 
     func card(for content: GeneratedContent) -> AnyView {

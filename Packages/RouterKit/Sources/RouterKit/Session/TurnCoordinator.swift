@@ -31,22 +31,22 @@ public struct TurnCoordinator {
         public var override: Route?
         /// Why the turn must stay off Claude, or nil.
         public var privacyReason: String?
-        public var hasImage: Bool
-        /// Structured output the scenario wants for some turns.
-        public var structuredOutput: StructuredOutput?
+        public var images: [ImageInput]
+        /// Structured outputs the scenario wants for some turns; the first that applies is used.
+        public var structuredOutputs: [StructuredOutput]
 
         public init(
             prompt: String,
+            images: [ImageInput] = [],
             override: Route? = nil,
             privacyReason: String? = nil,
-            hasImage: Bool = false,
-            structuredOutput: StructuredOutput? = nil
+            structuredOutputs: [StructuredOutput] = []
         ) {
             self.prompt = prompt
+            self.images = images
             self.override = override
             self.privacyReason = privacyReason
-            self.hasImage = hasImage
-            self.structuredOutput = structuredOutput
+            self.structuredOutputs = structuredOutputs
         }
     }
 
@@ -106,7 +106,7 @@ public struct TurnCoordinator {
             classifier = run
         }
 
-        let structured = request.structuredOutput.flatMap { $0.applies(to: classifier?.classification) ? $0 : nil }
+        let structured = request.structuredOutputs.first { $0.applies(to: classifier?.classification) }
         var steps: [StepMetrics] = []
         var escalationCause: FailureCause?
         while true {
@@ -120,9 +120,13 @@ public struct TurnCoordinator {
                 steps.append(metrics)
             }
             do {
-                let result = try await session.respond(to: request.prompt, decision: decision, schema: structured?.schema, isPrivate: request.privacyReason != nil) {
-                    onEvent(.partial($0))
-                }
+                let result = try await session.respond(
+                    to: request.prompt,
+                    images: request.images,
+                    decision: decision,
+                    schema: structured?.schema,
+                    isPrivate: request.privacyReason != nil
+                ) { onEvent(.partial($0)) }
                 guard result.content.isEmpty else {
                     record(result.metrics, failure: nil)
                     // A reply that reached the length cap stopped early. Keep it, but say so.
@@ -180,7 +184,7 @@ public struct TurnCoordinator {
             availability: availability,
             estimatedTokens: await estimator.estimate(history: Array(session.transcript), prompt: request.prompt),
             contextBudgets: budgets,
-            hasImage: request.hasImage,
+            hasImage: !request.images.isEmpty,
             visionRoutes: vision,
             followsUpOn: FollowUp.isBare(request.prompt) ? session.lastRoute : nil,
             previousPrompt: session.lastPromptText

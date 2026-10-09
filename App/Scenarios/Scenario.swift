@@ -13,7 +13,8 @@ protocol Scenario {
     var samplePrompts: [String] { get }
     var mapping: ComplexityMapping { get }
     var tools: [any Tool] { get }
-    var structuredOutput: StructuredOutput? { get }
+    /// Schemas for chosen kinds of turns; the first that applies is used.
+    var structuredOutputs: [StructuredOutput] { get }
     /// Renders this scenario's structured replies, called with partial content as it streams.
     func card(for content: GeneratedContent) -> AnyView
 }
@@ -21,7 +22,7 @@ protocol Scenario {
 extension Scenario {
     var mapping: ComplexityMapping { .standard }
     var tools: [any Tool] { [] }
-    var structuredOutput: StructuredOutput? { nil }
+    var structuredOutputs: [StructuredOutput] { [] }
 
     func card(for content: GeneratedContent) -> AnyView {
         AnyView(Text(content.jsonString).font(.caption.monospaced()))

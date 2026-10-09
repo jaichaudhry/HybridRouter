@@ -40,7 +40,7 @@ public struct FakeLanguageModel: LanguageModel {
         self.behavior = behavior
     }
 
-    public var capabilities: LanguageModelCapabilities { LanguageModelCapabilities([.toolCalling, .guidedGeneration]) }
+    public var capabilities: LanguageModelCapabilities { LanguageModelCapabilities([.toolCalling, .guidedGeneration, .vision]) }
 
     public var executorConfiguration: FakeExecutor.Configuration {
         FakeExecutor.Configuration(name: name, reply: reply, usage: usage, delay: delay, behavior: behavior)

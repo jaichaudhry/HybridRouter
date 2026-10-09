@@ -52,7 +52,7 @@ final class AppModel {
                 session: session,
                 coordinator: coordinator,
                 costTable: costTable,
-                structuredOutput: scenario.structuredOutput
+                structuredOutputs: scenario.structuredOutputs
             )
         }
         self.chats = chats

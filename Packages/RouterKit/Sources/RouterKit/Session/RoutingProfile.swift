@@ -10,15 +10,19 @@ extension SessionPropertyValues {
 struct RoutingProfile: LanguageModelSession.DynamicProfile {
     let instructions: String
     let tools: [any Tool]
+    /// Tools for Apple routes only, e.g. OCRTool, which finds images by attachment label;
+    /// the Claude bridge doesn't forward labels (API_NOTES §7, §9).
+    let appleOnlyTools: [any Tool]
     let models: RouteModels
     let privacy: PrivacyLedger
 
     @SessionProperty(\.activeRoute) var route
 
     var body: some DynamicProfile {
+        let activeTools = route == .claude ? tools : tools + appleOnlyTools
         Profile {
             Instructions(instructions)
-            tools
+            activeTools
         }
             .model(models[route])
             .maximumResponseTokens(models.maximumResponseTokens(route))

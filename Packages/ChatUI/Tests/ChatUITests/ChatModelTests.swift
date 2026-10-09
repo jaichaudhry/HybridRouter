@@ -92,7 +92,7 @@ struct ChatModelTests {
             appleCloud: FakeProvider(route: .appleCloud, reply: #"{"name": "Kyoto"}"#),
             classifier: .always("moderate", task: "plan")
         )
-        model.structuredOutput = StructuredOutput(schema: Stop.generationSchema, tasks: ["plan"])
+        model.structuredOutputs = [StructuredOutput(schema: Stop.generationSchema, tasks: ["plan"])]
         await model.send("Plan Kyoto")
         guard case .structured(let content) = model.messages[1].content else {
             Issue.record("Expected structured content")
