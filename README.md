@@ -1,5 +1,10 @@
 # HybridRouter
 
+[![CI](https://github.com/jaichaudhry/HybridRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/jaichaudhry/HybridRouter/actions/workflows/ci.yml)
+![Swift 6](https://img.shields.io/badge/Swift-6-orange)
+![iOS 27](https://img.shields.io/badge/iOS-27-blue)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-lightgrey)](LICENSE)
+
 **Every turn of a conversation goes to the right model: Apple's on-device model, Apple's Private Cloud Compute, or Claude.**
 One shared conversation moves between them without losing history. Private messages never leave Apple's models, and every reply shows where it ran, why, and what it cost.
 
@@ -11,20 +16,45 @@ One shared conversation moves between them without losing history. Private messa
 | Apple Cloud | Apple Private Cloud Compute | Longer context, multi-step plans |
 | Claude | Claude Sonnet 5.5 / Opus 5.5 via [`ClaudeForFoundationModels`](https://github.com/anthropics/ClaudeForFoundationModels) | Judgment calls, trade-offs, code |
 
-The core is a reusable Swift package, **RouterKit**, with no UI. The app shows it in three scenarios: a **Trip Planner** (brainstorm on-device, itineraries on Apple Cloud, trade-offs on Claude), a **Document Helper** (scan receipts and notes privately, summarize long documents, get negotiation advice), and plain **Chat**. **Compare mode** runs one prompt on all three routes side by side.
+## What this demonstrates
+
+- **Three model providers behind one conversation.** All three implement Apple's `LanguageModel` protocol, so a single `LanguageModelSession` with a Dynamic Profile switches models per turn and keeps one transcript.
+- **A router you can read and test.** Hard rules (privacy, offline, context size, images) run first; an on-device classifier labels everything else; failures escalate one route up. The rules are pure functions, and the routing, session and privacy code has 98% line coverage.
+- **Privacy enforced in code, not policy.** An on-device PrivacyGuard flags sensitive turns, and Claude only ever sees placeholders for them, even after escalations, follow-ups or a session rebuild. Tests check the request Claude actually receives.
+- **Evaluation-driven prompt tuning.** 50 hand-labeled prompts, measured on a Mac and an iPhone, plus an Apple Evaluations framework run. The device numbers showed the classifier needs different instructions per on-device model variant.
+- **Cost and latency on every reply.** Each badge shows the route and reason; tapping it shows first-token time, tokens per second, tokens and cost. A session summary compares the cost with sending everything to Claude.
+- **Production details.** Swift 6 strict concurrency with zero warnings, Keychain storage, App Attest for shipped builds, gitleaks in a pre-commit hook and CI, Dynamic Type, VoiceOver and iPad layouts.
+
+## Tour
+
+The app has three scenarios, picked from the title bar. Sample prompts appear as chips above the composer.
+
+| Scenario | Try | Where it goes |
+|---|---|---|
+| **Trip Planner** | "Give me 5 weekend trip ideas from Seattle" | On-device (or Apple Cloud on newer iPhones) |
+| | "Make that a 3-day Kyoto itinerary for a family with two kids" | Apple Cloud, rendered as day cards |
+| | "Is this plan realistic with jet lag and a 4-year-old? What would you cut?" | Claude |
+| | "Rewrite day 2 as a short text to my partner" | On-device |
+| **Document Helper** | Scan a receipt, then "Extract the total and merchant" | On-device, kept private, rendered as a receipt card |
+| | Import a contract, then "Summarize the key risks" | Claude, or Apple Cloud if it's private |
+| **Chat** | Anything | Wherever the router decides |
+
+- **The composer** has a route menu (Auto, On-device, Apple Cloud, Claude), a Private toggle, and attachments: photos, the document scanner, and text or PDF files.
+- **Compare mode** (toolbar) runs one prompt on all three routes side by side, with each route's speed and cost.
+- **Settings › Developer** has the tools that produced the results below: a routing benchmark, per-route measurements, Apple Cloud checks, and (in Debug builds) a simulated Apple Cloud for developing without Apple's entitlement.
 
 ![Architecture](docs/architecture.svg)
 
 ## How routing works
 
-All three models implement Apple's `LanguageModel` protocol, so one `LanguageModelSession` with a Dynamic Profile switches models per turn while keeping one transcript. For each turn:
+For each turn:
 
 1. **PrivacyGuard** checks the message on-device: the Private toggle, scanned documents, card numbers (Luhn-checked), ID numbers, phone numbers, emails, addresses and health terms.
 2. **Hard rules** settle the obvious cases, in order: your route override, privacy (never Claude), offline (on-device only), context fit (only models big enough for the conversation), images (a model that can see them), and bare follow-ups like "Why?" (stay with the model that answered).
-3. **The on-device classifier** labels everything else as simple, moderate or complex, which maps to on-device, Apple Cloud or Claude. Each scenario can change the mapping.
+3. **The on-device classifier** labels everything else as simple, moderate or complex, which maps to on-device, Apple Cloud or Claude. Each scenario can change the mapping, and each on-device model variant gets its own tuned instructions.
 4. **Escalation** retries a failed reply one route up: context too long, timeout, rate limit, decode failure, or an empty or cut-off reply. A private turn never escalates to Claude.
 
-Each badge says why its reply went where it did ("Multi-step planning", "Kept private: scanned document", "Escalated: timed out"). Tap it for first-token time, tokens per second, tokens and cost.
+Each badge says why its reply went where it did ("Multi-step planning", "Kept private: scanned document", "Escalated: timed out").
 
 ## Privacy and security
 
@@ -61,9 +91,41 @@ Route mix for each scenario's sample conversation on Auto, same iPhone, with App
 
 Without Apple Cloud at all, its turns move up to Claude: the Trip Planner then ran 86% on Claude for $0.092. The same set also runs as an Apple [Evaluations](https://developer.apple.com/documentation/evaluations) framework evaluation (`Evals/AppleEvaluationTests.swift`), which scores 0.96 and writes an `.xcevalresult` you can open in Xcode.
 
-<!-- Device results: run Settings › Developer › Measure routes and Routing benchmark on an iPhone and paste the Markdown tables here. -->
 
-## Run it
+## APIs and frameworks used
+
+| API | What it does here | Where |
+|---|---|---|
+| `LanguageModel`, `LanguageModelSession` | One session and transcript shared by all three models | `RouterKit/Session/RoutedSession.swift` |
+| Dynamic Profiles (`DynamicProfile`, `@SessionProperty`, `.model`, `.historyTransform`) | Switch the model per turn; withhold private turns from Claude | `RouterKit/Session/RoutingProfile.swift` |
+| `SystemLanguageModel` (`availability`, `contextSize`, `tokenCount(for:)`, `variant`) | On-device route, token estimates for context fit, per-variant tuning | `RouterKit/Providers/OnDeviceProvider.swift`, `Routing/TokenEstimator.swift` |
+| `PrivateCloudComputeLanguageModel` (`availability`, `quotaUsage`, `contextSize`) | Apple Cloud route, quota-aware | `RouterKit/Providers/AppleCloudProvider.swift` |
+| `@Generable`, `@Guide`, streaming partial results | The routing classifier; itinerary, receipt and summary cards that fill in while streaming | `Routing/RouteClassification.swift`, `App/Scenarios/` |
+| `Tool` | Trip Planner's `findPlaces` | `App/Scenarios/TripPlanner/PlacesTool.swift` |
+| `Attachment` (images), `OCRTool`, `BarcodeReaderTool` | Reading scanned receipts and notes on Apple routes only | `RoutedSession.swift`, `App/Scenarios/DocumentHelper/` |
+| `LanguageModelSession.Usage`, `LanguageModelError` | Per-step tokens and cost; failure causes for escalation | `Telemetry/`, `Routing/EscalationPolicy.swift` |
+| Evaluations framework | The classifier benchmark as an Apple evaluation | `Evals/AppleEvaluationTests.swift` |
+| `ClaudeLanguageModel`, `ClaudeModel`, `AuthMode`, App Attest | Claude route; API key or App Attest auth | `RouterKit/Providers/ClaudeProvider.swift`, `Auth/` |
+| `NSDataDetector`, regular expressions | On-device PII detection | `RouterKit/Privacy/PrivacyGuard.swift` |
+| VisionKit, PDFKit, PhotosUI | Document scanner, PDF import, photo picker | `ChatUI/DocumentScanner.swift`, `ChatAttachment.swift`, `Composer.swift` |
+| Keychain, DeviceCheck, Network | Key storage, App Attest support check, offline detection | `Auth/KeychainStore.swift`, `App/AppConfig.swift`, `Routing/NetworkMonitor.swift` |
+| Observation, `Synchronization.Mutex`, Swift Testing | Swift 6 concurrency without locks; tests | throughout |
+
+## Engineering notes
+
+Things found by testing on real hardware, and what the app does about them:
+
+- **Prompts don't transfer between on-device model variants.** The routing instructions tuned on a Mac's AFM 3 Core (4K context) scored 48/50; on an iPhone 17 Pro Max's AFM 3 Core Advanced (8K) they scored 42/50, every miss one level too high. The classifier now picks instructions per variant (46/50 on the iPhone).
+- **The on-device model can loop on tool calls.** Given a tool and an output schema, it called `findPlaces` over and over until the context overflowed. Asking it to call the tool once, and saying so in the tool's output, fixed it.
+- **An overflow mid-generation doesn't throw the documented error.** It throws a non-public `GenerativeError`, not `LanguageModelError.contextSizeExceeded`, so escalation also matches it by message.
+- **Claude refusals and length cut-offs don't throw** through the bridge; the reply just comes back empty or short. The router treats an empty reply as a failure and flags cut-off replies.
+- **The iOS Simulator has no `OCRTool` or `BarcodeReaderTool`.** Its SDK doesn't include their overlay, so Document Helper's image tools are compiled in for devices only.
+- **Context can mislead the classifier.** Showing it the previous message for every short turn made "Make a packing list for the kids" inherit "complex" from a trade-offs question before it. Context is now added only when a message refers back ("do the same for Osaka").
+- **Generating a reason is expensive.** A free-text reason added about 600 ms per classification on an M1 Max, so the badge's reason is derived from the labels instead.
+
+## Setup
+
+### Run it
 
 ```sh
 git clone https://github.com/jaichaudhry/HybridRouter.git
@@ -72,14 +134,14 @@ open HybridRouter/HybridRouter.xcodeproj
 
 Pick an iOS 27 simulator or device and run: no keys or accounts needed for the on-device model. Document Helper's OCR tools need a device; Apple doesn't include them in the Simulator. To run on your own iPhone, copy `Config/Secrets.example.xcconfig` to `Config/Secrets.xcconfig` and set `DEVELOPMENT_TEAM` and `HR_BUNDLE_ID`.
 
-## Adding Claude in 30 seconds
+### Adding Claude in 30 seconds
 
 Either:
 
 - **In the app:** open Settings and paste an Anthropic API key. It's stored in the device's Keychain.
 - **For development:** set `ANTHROPIC_API_KEY` in `Config/Secrets.xcconfig`, which is gitignored. Debug builds only; Release builds ignore it. Don't put keys in the scheme's environment variables: the scheme is shared and committed.
 
-## Shipping with App Attest
+### Shipping with App Attest
 
 For builds that run on other people's devices, don't embed a key. App Attest lets each install prove it's your genuine app and get short-lived Claude tokens:
 
@@ -90,7 +152,7 @@ For builds that run on other people's devices, don't embed a key. App Attest let
 
 App Attest only works on physical devices. In the Simulator, or if attestation fails, the app falls back to a key from Settings or `Secrets.xcconfig`. See Anthropic's [Apple Foundation Models guide](https://platform.claude.com/docs/en/cli-sdks-libraries/libraries/apple-foundation-models).
 
-## Enabling Apple Cloud
+### Enabling Apple Cloud
 
 Apple Cloud uses Apple's Private Cloud Compute. Apple grants its entitlement to developers in the App Store Small Business Program; see [Accessing Private Cloud Compute](https://developer.apple.com/private-cloud-compute/). Once your team has it, add to `Config/Secrets.xcconfig`:
 
@@ -105,13 +167,13 @@ Without it, the app runs normally and shows Apple Cloud as unavailable. There's 
 
 While you wait for the entitlement, Debug builds have **Settings › Developer › Simulate Apple Cloud**, which serves the Apple Cloud route with the on-device model so you can try the three-route flow. Those replies are labeled "Apple Cloud (simulated)" and say nothing about Apple Cloud's real speed or quality. The option doesn't exist in Release builds.
 
-## Layout
+## Project layout and tests
 
 ```
 Packages/RouterKit   Router, privacy, providers, routed session, Claude auth, telemetry. No UI.
 Packages/ChatUI      Streaming chat, route badge, metrics, composer, compare mode.
-App/                 The iOS app: scenarios, Settings, on-device benchmarks.
-Evals/               Routing cases and the 50-prompt classifier benchmark.
+App/                 The iOS app: scenarios, Settings, on-device benchmarks and checks.
+Evals/               Routing cases, the 50-prompt classifier benchmark, the Apple evaluation.
 Config/              Build settings; Secrets.xcconfig is yours and gitignored.
 ```
 
@@ -123,9 +185,14 @@ swift test --package-path Packages/ChatUI
 swift test --package-path Evals
 ```
 
-The router, privacy rules and shared session are tested with fake `LanguageModel`s running through Apple's real `LanguageModelSession`, so no device or network is needed. The evals check `Evals/routing_cases.json` against the router everywhere, and run the real on-device classifier wherever Apple Intelligence is available. To measure on a device, use **Settings › Developer**.
+The router, privacy rules and shared session are tested with fake `LanguageModel`s running through Apple's real `LanguageModelSession`, so no device or network is needed. The evals run the real on-device classifier wherever Apple Intelligence is available and are skipped elsewhere, including CI.
 
 The project file is generated from `project.yml` with [XcodeGen](https://github.com/yonaskolb/XcodeGen). After changing `project.yml`, run `xcodegen generate`.
+
+## Status
+
+- On-device and Claude routes: complete and measured on device.
+- Apple Cloud: built and tested with fakes and a simulated stand-in; real measurements are waiting on Apple's Private Cloud Compute entitlement. **Settings › Developer › Apple Cloud checks** will verify it in one tap.
 
 ## Contributing
 
