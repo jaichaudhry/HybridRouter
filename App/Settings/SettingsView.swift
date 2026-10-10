@@ -65,6 +65,9 @@ struct SettingsView: View {
                     NavigationLink("Measure routes") {
                         MeasureRoutesView(app: model)
                     }
+                    NavigationLink("Apple Cloud checks") {
+                        AppleCloudChecksView(app: model)
+                    }
                     #if DEBUG
                     if !model.isAppleCloudEnabled {
                         Toggle("Simulate Apple Cloud", isOn: Binding(
