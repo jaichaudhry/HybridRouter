@@ -24,3 +24,4 @@ notes/
 
 # Library packages don't pin dependencies; the app project does
 Packages/*/Package.resolved
+/Package.resolved

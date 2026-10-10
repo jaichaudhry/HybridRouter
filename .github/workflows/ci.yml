@@ -35,6 +35,9 @@ jobs:
         run: xcodebuild -version && swift --version
       - name: Test RouterKit
         run: swift test --package-path Packages/RouterKit
+      - name: Build the published package
+        # The root Package.swift is what other apps depend on; keep it building.
+        run: swift build
       - name: Test ChatUI
         run: swift test --package-path Packages/ChatUI
       - name: Routing evals
