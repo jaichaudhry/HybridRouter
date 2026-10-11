@@ -1,6 +1,6 @@
 import Foundation
 
-/// Decides on-device whether a turn must stay off Claude (SPEC §8). Nothing it inspects
+/// Decides on-device whether a turn must stay off Claude. Nothing it inspects
 /// leaves the device.
 public struct PrivacyGuard: Sendable {
     public enum Reason: String, Codable, Equatable, Sendable, CaseIterable {

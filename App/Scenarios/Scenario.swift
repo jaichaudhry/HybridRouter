@@ -2,7 +2,7 @@ import FoundationModels
 import RouterKit
 import SwiftUI
 
-/// A use case for the shared chat: configuration, not a fork of it (SPEC §5).
+/// A use case for the shared chat: configuration, not a fork of it.
 @MainActor
 protocol Scenario {
     var id: String { get }

@@ -6,7 +6,7 @@ public protocol TokenEstimator: Sendable {
 }
 
 /// Counts with the on-device tokenizer, the only token-counting API Foundation Models has
-/// (API_NOTES §4). Apple Cloud and Claude tokenize differently, so routing applies a margin.
+///. Apple Cloud and Claude tokenize differently, so routing applies a margin.
 public struct OnDeviceTokenEstimator: TokenEstimator {
     /// Tokens kept free for the reply.
     public var reservedOutput: Int

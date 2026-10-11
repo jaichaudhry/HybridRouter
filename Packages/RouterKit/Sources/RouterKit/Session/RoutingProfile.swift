@@ -6,12 +6,12 @@ extension SessionPropertyValues {
 }
 
 /// One profile for the whole conversation. Its model follows `activeRoute`, so switching
-/// routes keeps the shared transcript (SPEC §6, Dynamic Profiles).
+/// routes keeps the shared transcript (Foundation Models Dynamic Profiles).
 struct RoutingProfile: LanguageModelSession.DynamicProfile {
     let instructions: String
     let tools: [any Tool]
     /// Tools for Apple routes only, e.g. OCRTool, which finds images by attachment label;
-    /// the Claude bridge doesn't forward labels (API_NOTES §7, §9).
+    /// the Claude bridge doesn't forward labels.
     let appleOnlyTools: [any Tool]
     let models: RouteModels
     let privacy: PrivacyLedger

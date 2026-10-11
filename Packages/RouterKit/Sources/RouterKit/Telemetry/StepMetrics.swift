@@ -1,6 +1,6 @@
 import Foundation
 
-/// What one model step cost and how fast it ran, shown in the MetricsSheet (SPEC §9).
+/// What one model step cost and how fast it ran, shown in the MetricsSheet.
 public struct StepMetrics: Codable, Equatable, Sendable, Identifiable {
     public var id: UUID
     public var route: Route

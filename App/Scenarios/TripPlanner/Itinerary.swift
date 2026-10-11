@@ -1,6 +1,6 @@
 import FoundationModels
 
-/// A day-by-day trip plan, rendered as cards that fill in while it streams (SPEC §10.1).
+/// A day-by-day trip plan, rendered as cards that fill in while it streams.
 @Generable(description: "A day-by-day trip itinerary")
 struct Itinerary {
     @Guide(description: "Short title, e.g. 3 days in Kyoto with kids")

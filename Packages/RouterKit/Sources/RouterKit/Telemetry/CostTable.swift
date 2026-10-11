@@ -17,7 +17,7 @@ public struct TokenUsage: Codable, Hashable, Sendable {
     }
 }
 
-/// Per-model prices loaded from `prices.json`, never hardcoded (SPEC §9).
+/// Per-model prices loaded from `prices.json`, never hardcoded.
 public struct CostTable: Codable, Equatable, Sendable {
     public struct Price: Codable, Equatable, Sendable {
         /// USD per million tokens.

@@ -27,7 +27,7 @@ struct DocumentHelperScenario: Scenario {
     let imagesArePrivate = true
 
     /// OCRTool and BarcodeReaderTool find images by attachment label, which the Claude bridge
-    /// doesn't forward, so they're only offered on Apple routes (API_NOTES §9). The iOS 27
+    /// doesn't forward, so they're only offered on Apple routes. The iOS 27
     /// Simulator SDK doesn't ship their overlay, so there the model reads images itself.
     var appleOnlyTools: [any Tool] {
         #if canImport(_Vision_FoundationModels)

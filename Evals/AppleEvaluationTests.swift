@@ -53,7 +53,7 @@ struct AppleEvaluationTests {
         print("EVALUATIONS routeMatch mean \(String(format: "%.2f", mean))")
         let saved = try result.saveJSON(to: FileManager.default.temporaryDirectory)
         print("EVALUATIONS result saved to \(saved.path)")
-        // Failing metrics don't fail a test by themselves (API_NOTES §10), so assert the bar.
+        // Failing metrics don't fail a test by themselves, so assert the bar.
         #expect(mean >= ClassifierBenchmarkTests.minimumAccuracy)
     }
 }

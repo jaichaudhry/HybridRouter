@@ -1,7 +1,7 @@
 import RouterKit
 import SwiftUI
 
-/// Route mix and cost for the conversation so far (SPEC §9).
+/// Route mix and cost for the conversation so far.
 public struct SessionSummaryView: View {
     let summary: SessionSummary
 

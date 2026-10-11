@@ -25,7 +25,7 @@ public enum RoutingResult: Equatable, Sendable {
     }
 }
 
-/// Picks a route for each turn: hard rules first, then the on-device classifier (SPEC §6).
+/// Picks a route for each turn: hard rules first, then the on-device classifier.
 public struct Router: Sendable {
     public var mapping: ComplexityMapping
     private let classifier: any RouteClassifier

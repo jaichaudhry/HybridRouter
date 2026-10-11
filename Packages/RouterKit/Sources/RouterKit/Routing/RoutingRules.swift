@@ -79,12 +79,12 @@ public enum RuleOutcome: Equatable, Sendable {
     case blocked(reason: String)
 }
 
-/// Layer 0 and Layer A of the router (SPEC §6): deterministic, run before the classifier.
+/// The router's first stage: the user's override and deterministic rules, run before the classifier.
 public enum RoutingRules {
     public static func evaluate(_ input: RoutingInput) -> RuleOutcome {
         // Layer 0: the user's choice.
         if let override = input.override {
-            // Privacy wins over a forced route (Jai, 2026-10-09).
+            // Privacy wins over a forced route: forcing Claude on a private turn is blocked.
             if let reason = input.privacyReason, override == .claude {
                 return .blocked(reason: "Kept private (\(reason)), so this can't go to Claude.")
             }

@@ -202,7 +202,7 @@
       "context": {
         "tokens": 20000
       },
-      "reason": "Long contract, not private: judging risk is complex (label review)"
+      "reason": "Long contract, not private: judging risk is complex (labels reviewed by hand)"
     },
     {
       "scenario": "document-helper",

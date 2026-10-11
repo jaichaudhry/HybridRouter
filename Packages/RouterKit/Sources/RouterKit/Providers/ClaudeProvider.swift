@@ -3,7 +3,7 @@ import FoundationModels
 
 /// Anthropic Claude through ClaudeForFoundationModels.
 public struct ClaudeProvider: ModelProvider {
-    /// Sonnet for normal complex turns; Opus for the hardest ones (SPEC §13 Q3).
+    /// Sonnet for normal complex turns; Opus for the hardest ones.
     public enum Tier: String, Sendable, CaseIterable {
         case standard
         case deep

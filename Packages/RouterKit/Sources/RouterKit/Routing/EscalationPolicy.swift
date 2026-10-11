@@ -32,7 +32,7 @@ public enum FailureCause: Equatable, Sendable {
         }
     }
 
-    /// Maps the iOS 27 Foundation Models, Private Cloud Compute and Claude errors (API_NOTES §6).
+    /// Maps the iOS 27 Foundation Models, Private Cloud Compute and Claude errors.
     public init(_ error: any Error) {
         if let failure = error as? RoutedSession.StepFailure {
             self.init(failure.underlying)
@@ -82,7 +82,7 @@ public enum EscalationOutcome: Equatable, Sendable {
     case stop(reason: String)
 }
 
-/// Layer C: retry a failed step one route up (SPEC §6).
+/// Escalation: retries a failed step one route up.
 public struct EscalationPolicy: Equatable, Sendable {
     /// Whether a guardrail or refusal on a smaller model should be retried on a larger one.
     public var escalatesOnGuardrail: Bool

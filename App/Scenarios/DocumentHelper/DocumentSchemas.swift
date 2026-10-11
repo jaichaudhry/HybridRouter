@@ -1,6 +1,6 @@
 import FoundationModels
 
-/// Fields read from a receipt (SPEC §10.2).
+/// Fields read from a receipt.
 @Generable(description: "Details read from a receipt")
 struct Receipt {
     @Guide(description: "Store or business name")
@@ -23,7 +23,7 @@ struct Receipt {
     }
 }
 
-/// A structured summary of a longer document (SPEC §10.2).
+/// A structured summary of a longer document.
 @Generable(description: "A summary of a document")
 struct DocSummary {
     @Guide(description: "The main points, one short sentence each")

@@ -1,6 +1,6 @@
 import FoundationModels
 
-/// The on-device classifier's read of a turn (SPEC §6 Layer B).
+/// The on-device classifier's read of a turn.
 ///
 /// The reason shown to the user is derived from these labels rather than generated: on an
 /// M1 Max, generating it added about 600 ms per turn.

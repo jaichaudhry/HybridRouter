@@ -1,7 +1,7 @@
 // swift-tools-version: 6.2
 import PackageDescription
 
-// Routing evals (SPEC §12): routing_cases.json run through the real router.
+// Routing evals: routing_cases.json run through the real router.
 let package = Package(
     name: "Evals",
     platforms: [.iOS("27.0"), .macOS("27.0")],

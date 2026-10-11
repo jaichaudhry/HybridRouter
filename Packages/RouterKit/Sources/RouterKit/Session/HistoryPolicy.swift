@@ -6,7 +6,7 @@ enum HistoryPolicy {
     static let withheldReply = "[Reply withheld]"
 
     /// What the next request's model may see: earlier reasoning is always dropped, and Claude
-    /// gets placeholders instead of private turns (SPEC §8).
+    /// gets placeholders instead of private turns.
     static func prepare(_ entries: [Transcript.Entry], for route: Route, privatePromptIDs: Set<String>) -> [Transcript.Entry] {
         let history = dropEarlierReasoning(entries)
         guard route == .claude, !privatePromptIDs.isEmpty else { return history }

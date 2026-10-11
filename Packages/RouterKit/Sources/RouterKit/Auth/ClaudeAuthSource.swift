@@ -57,7 +57,7 @@ public struct ClaudeAuth: Sendable, CustomStringConvertible {
     public var description: String { "ClaudeAuth(\(mode.displayName))" }
 }
 
-/// Picks Claude credentials in priority order (SPEC §7):
+/// Picks Claude credentials in priority order:
 /// App Attest on a real device, then the user's Keychain key, then a developer key, then off.
 public enum ClaudeAuthSource {
     public static func resolve(environment: ClaudeAuthEnvironment, userKey: String?) -> ClaudeAuth {

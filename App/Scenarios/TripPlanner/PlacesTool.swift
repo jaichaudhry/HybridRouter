@@ -1,6 +1,6 @@
 import FoundationModels
 
-/// Looks up places in a city from canned sample data. No external APIs in v1 (SPEC §10.1).
+/// Looks up places in a city from canned sample data. No external APIs in v1.
 struct PlacesTool: Tool {
     let name = "findPlaces"
     let description = "Finds notable, family-friendly places in a city. Use it when building an itinerary."

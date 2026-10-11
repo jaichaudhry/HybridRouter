@@ -31,7 +31,7 @@ public struct StructuredOutput: Sendable {
     }
 }
 
-/// Runs one user turn end to end: route it, answer it, and escalate on failure (SPEC §6).
+/// Runs one user turn end to end: route it, answer it, and escalate on failure.
 @MainActor
 public struct TurnCoordinator {
     public struct Request: Sendable {

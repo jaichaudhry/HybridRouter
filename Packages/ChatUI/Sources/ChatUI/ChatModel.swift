@@ -194,7 +194,7 @@ public final class ChatModel {
         session = makeSession(Array(session.transcript), session.privatePromptIDs)
     }
 
-    /// Exports every step's metrics as JSON (SPEC §9).
+    /// Exports every step's metrics as JSON.
     public func exportMetrics() throws -> Data {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]

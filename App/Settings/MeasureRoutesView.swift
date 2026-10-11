@@ -3,7 +3,7 @@ import FoundationModels
 import RouterKit
 import SwiftUI
 
-/// Measures each route on this device for the README results table (SPEC §12 M4): speed and
+/// Measures each route on this device for the README results table: speed and
 /// cost per route, and the route mix of each scenario's sample prompts on Auto.
 struct MeasureRoutesView: View {
     let app: AppModel

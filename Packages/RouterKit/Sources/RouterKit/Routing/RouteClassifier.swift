@@ -1,6 +1,6 @@
 import FoundationModels
 
-/// Classifies a turn's complexity and task (SPEC §6 Layer B).
+/// Classifies a turn's complexity and task.
 public protocol RouteClassifier: Sendable {
     /// - Parameter previous: the previous user message, for short follow-ups; nil otherwise.
     func classify(_ prompt: String, previous: String?) async throws -> RouteClassification
