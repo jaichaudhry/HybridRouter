@@ -18,6 +18,8 @@ public struct ChatMessage: Identifiable, Equatable, Sendable {
     public var errorMessage: String?
     /// Why the turn was kept off Claude, if it was private.
     public var privacyReason: String?
+    /// The chosen route is served by a stand-in model (e.g. Apple Cloud simulated on-device).
+    public var routeIsSimulated = false
     /// Names of the files and images attached to a user message.
     public var attachmentNames: [String]
 
@@ -167,6 +169,7 @@ public final class ChatModel {
             case .routed(let decision):
                 // A new route (first pick or escalation) starts the reply over.
                 messages[index].decision = decision
+                messages[index].routeIsSimulated = session.provider(for: decision.route).isSimulated
                 messages[index].content = .text("")
             case .partial(let content):
                 if throttle.shouldUpdate() {

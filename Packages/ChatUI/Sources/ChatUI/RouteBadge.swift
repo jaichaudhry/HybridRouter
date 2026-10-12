@@ -38,16 +38,20 @@ public struct RouteBadge: View {
     let steps: [StepMetrics]
     /// Why the turn was kept off Claude, if it was private.
     let privacyReason: String?
+    /// The route is served by a stand-in model. Known from the moment the route is chosen, so
+    /// the badge never shows a simulated route as the real one while a reply streams.
+    let isSimulated: Bool
 
-    public init(decision: RouteDecision?, steps: [StepMetrics], privacyReason: String? = nil) {
+    public init(decision: RouteDecision?, steps: [StepMetrics], privacyReason: String? = nil, isSimulated: Bool = false) {
         self.decision = decision
         self.steps = steps
         self.privacyReason = privacyReason
+        self.isSimulated = isSimulated
     }
 
     public var body: some View {
         if let decision {
-            DecidedRouteBadge(decision: decision, steps: steps, privacyReason: privacyReason)
+            DecidedRouteBadge(decision: decision, steps: steps, privacyReason: privacyReason, isSimulated: isSimulated)
         } else {
             Label("Routing…", systemImage: "arrow.triangle.branch")
                 .font(.caption)
@@ -63,6 +67,7 @@ private struct DecidedRouteBadge: View {
     let decision: RouteDecision
     let steps: [StepMetrics]
     let privacyReason: String?
+    let isSimulated: Bool
 
     @State private var showsMetrics = false
 
@@ -95,11 +100,6 @@ private struct DecidedRouteBadge: View {
         .sheet(isPresented: $showsMetrics) {
             MetricsSheet(steps: steps)
         }
-    }
-
-    /// The reply came from a stand-in model (e.g. Apple Cloud simulated on-device).
-    private var isSimulated: Bool {
-        steps.last.map { $0.isSimulated && $0.route == decision.route } ?? false
     }
 
     private var label: String {

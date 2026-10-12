@@ -36,7 +36,12 @@ struct MessageRow: View {
             .accessibilityLabel(userAccessibilityLabel)
         case .assistant:
             VStack(alignment: .leading, spacing: 6) {
-                RouteBadge(decision: message.decision, steps: message.steps, privacyReason: message.privacyReason)
+                RouteBadge(
+                    decision: message.decision,
+                    steps: message.steps,
+                    privacyReason: message.privacyReason,
+                    isSimulated: message.routeIsSimulated
+                )
                 if message.content.isEmpty {
                     if message.isStreaming {
                         ProgressView()

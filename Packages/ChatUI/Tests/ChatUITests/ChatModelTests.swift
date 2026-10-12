@@ -340,3 +340,17 @@ extension ChatModelTests {
         #expect(!immediatelyAfter)
     }
 }
+
+extension ChatModelTests {
+    @Test func simulatedRoutesAreMarkedFromTheStart() async {
+        var standIn = FakeProvider(route: .appleCloud, reply: "cloud")
+        standIn.isSimulated = true
+        let model = makeModel(appleCloud: standIn)
+        model.routeOverride = .appleCloud
+        await model.send("Plan")
+        #expect(model.messages[1].routeIsSimulated)
+        model.routeOverride = .onDevice
+        await model.send("Hi")
+        #expect(!model.messages[3].routeIsSimulated)
+    }
+}
