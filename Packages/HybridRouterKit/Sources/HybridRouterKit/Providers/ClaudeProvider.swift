@@ -22,8 +22,11 @@ public struct ClaudeProvider: ModelProvider {
     private let configuredContextSize: Int
     private let claudeModel: ClaudeLanguageModel
 
-    /// - Parameter contextSize: ClaudeForFoundationModels doesn't expose it. Anthropic's pricing
-    ///   page lists a 1M-token window for Claude 4.6 and later models.
+    /// - Parameters:
+    ///   - auth: how to authenticate; with ``ClaudeAuth/off`` the route reports itself unavailable.
+    ///   - tier: Sonnet for normal complex turns, Opus for the hardest.
+    ///   - contextSize: ClaudeForFoundationModels doesn't expose it. Anthropic's pricing page lists
+    ///     a 1M-token window for Claude 4.6 and later models.
     public init(auth: ClaudeAuth, tier: Tier = .standard, contextSize: Int = 1_000_000) {
         self.auth = auth
         self.tier = tier

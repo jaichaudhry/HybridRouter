@@ -2,7 +2,9 @@ import FoundationModels
 
 /// Classifies a turn's complexity and task.
 public protocol RouteClassifier: Sendable {
-    /// - Parameter previous: the previous user message, for short follow-ups; nil otherwise.
+    /// - Parameters:
+    ///   - prompt: the user's message.
+    ///   - previous: the previous user message, for short follow-ups; nil otherwise.
     func classify(_ prompt: String, previous: String?) async throws -> RouteClassification
 }
 
@@ -97,7 +99,9 @@ public struct OnDeviceClassifier: RouteClassifier {
     private let model: SystemLanguageModel
     public let instructionSet: InstructionSet
 
-    /// - Parameter instructionSet: defaults to the set tuned for the model's variant.
+    /// - Parameters:
+    ///   - model: the on-device model that does the classifying.
+    ///   - instructionSet: defaults to the set tuned for the model's variant.
     public init(model: SystemLanguageModel = .default, instructionSet: InstructionSet? = nil) {
         self.model = model
         self.instructionSet = instructionSet ?? InstructionSet.tuned(for: model.variant)

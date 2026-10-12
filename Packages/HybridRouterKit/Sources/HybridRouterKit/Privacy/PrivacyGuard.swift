@@ -32,6 +32,7 @@ public struct PrivacyGuard: Sendable {
 
     /// The first reason the turn is private, or nil if it may leave the device.
     /// - Parameters:
+    ///   - text: the message, including any document text attached to it.
     ///   - markedPrivate: the user turned on Private for this message.
     ///   - fromScan: the content came from the Document Helper scan flow.
     public func assess(_ text: String, markedPrivate: Bool = false, fromScan: Bool = false) -> Reason? {

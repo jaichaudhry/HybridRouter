@@ -102,9 +102,12 @@ public final class RoutedSession {
 
     /// Runs one turn on the decided route, reporting the cumulative reply as it streams.
     /// - Parameters:
+    ///   - prompt: the user's message.
     ///   - images: attached to the prompt with their labels.
+    ///   - decision: the route to run on, and why.
     ///   - schema: if set, the reply is structured content matching it.
     ///   - isPrivate: the turn is private, so Claude only ever sees placeholders for it.
+    ///   - onPartial: called with the reply so far as it streams.
     public func respond(
         to prompt: String,
         images: [ImageInput] = [],

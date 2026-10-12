@@ -35,8 +35,11 @@ public struct Router: Sendable {
         self.mapping = mapping
     }
 
-    /// - Parameter classifyDecidedTurns: also classify turns a rule settled, to choose a
-    ///   structured output (e.g. a receipt for a scanned image). It never changes the route.
+    /// - Parameters:
+    ///   - prompt: the user's message.
+    ///   - input: everything the hard rules look at for this turn.
+    ///   - classifyDecidedTurns: also classify turns a rule settled, to choose a structured
+    ///     output (e.g. a receipt for a scanned image). It never changes the route.
     public func route(_ prompt: String, input: RoutingInput, classifyDecidedTurns: Bool = false) async -> RoutingResult {
         let allowed: [Route]
         switch RoutingRules.evaluate(input) {
