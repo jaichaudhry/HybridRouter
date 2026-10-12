@@ -25,7 +25,16 @@ struct TripPlannerScenario: Scenario {
     var tools: [any Tool] { [PlacesTool()] }
 
     var structuredOutputs: [StructuredOutput] {
-        [StructuredOutput(schema: Itinerary.generationSchema, tasks: ["plan"])]
+        [StructuredOutput(schema: Itinerary.generationSchema, tasks: ["plan"], matchesPrompt: Self.asksForItinerary)]
+    }
+
+    /// Day cards only when the message asks for days or an itinerary. On newer iPhones "Give me
+    /// 5 weekend trip ideas" is labeled planning too, and forcing it into an itinerary lost
+    /// the list of ideas.
+    nonisolated static func asksForItinerary(_ prompt: String) -> Bool {
+        prompt.range(of: #"\b(itinerary|day-by-day|schedule|\d+[- ]?days?|weekend|day trip)\b"#,
+                     options: [.regularExpression, .caseInsensitive]) != nil
+            && prompt.range(of: #"\bideas?\b"#, options: [.regularExpression, .caseInsensitive]) == nil
     }
 
     func card(for content: GeneratedContent) -> AnyView {
