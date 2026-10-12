@@ -8,7 +8,11 @@
 **Every turn of a conversation goes to the right model: Apple's on-device model, Apple's Private Cloud Compute, or Claude.**
 One shared conversation moves between them without losing history. Private messages never leave Apple's models, and every reply shows where it ran, why, and what it cost.
 
-<!-- Hero GIF: docs/gifs/hero.gif (recorded on device) -->
+<p align="center">
+  <img src="docs/gifs/hero.gif" width="300" alt="Trip Planner on an iPhone 17 Pro Max: a Kyoto itinerary is built on Apple Cloud (simulated) as day cards, Claude critiques the plan, and a short rewrite runs on-device. Each reply's badge shows its route and why.">
+  <br>
+  <sub>iPhone 17 Pro Max · itinerary on Apple Cloud (simulated while the entitlement is pending) → critique on Claude → rewrite on-device. Waits are sped up.</sub>
+</p>
 
 | Route | Model | Used for |
 |---|---|---|
