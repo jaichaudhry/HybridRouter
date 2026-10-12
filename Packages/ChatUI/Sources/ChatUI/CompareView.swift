@@ -17,43 +17,54 @@ public struct CompareView: View {
                 // Side by side when there's room for three readable columns, stacked otherwise.
                 ViewThatFits(in: .horizontal) {
                     HStack(alignment: .top, spacing: 12) {
-                        ForEach(model.columns) { CompareCard(column: $0).frame(minWidth: 260) }
+                        ForEach(model.columns) { card(for: $0).frame(minWidth: 260) }
                     }
                     VStack(spacing: 12) {
-                        ForEach(model.columns) { CompareCard(column: $0) }
+                        ForEach(model.columns) { card(for: $0) }
                     }
                 }
                 .padding()
+                .animation(Motion.card, value: model.finishOrder)
             }
-            HStack(spacing: 8) {
-                TextField("Prompt to compare", text: $model.prompt, axis: .vertical)
-                    .lineLimit(1...4)
-                    .textFieldStyle(.plain)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(.fill.tertiary, in: .rect(cornerRadius: 18))
-                    .onKeyPress(.return, phases: .down) { press in
-                        guard !press.modifiers.contains(.shift) else { return .ignored }
-                        start()
-                        return .handled
+            .background(Theme.canvas)
+            GlassEffectContainer(spacing: 8) {
+                HStack(alignment: .bottom, spacing: 8) {
+                    TextField("Prompt to compare", text: $model.prompt, axis: .vertical)
+                        .lineLimit(1...4)
+                        .textFieldStyle(.plain)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 22))
+                        .onKeyPress(.return, phases: .down) { press in
+                            guard !press.modifiers.contains(.shift) else { return .ignored }
+                            start()
+                            return .handled
+                        }
+                    Button(action: start) {
+                        Image(systemName: "play.fill")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(Theme.labelOnFill)
+                            .frame(width: 30, height: 30)
                     }
-                Button(action: start) {
-                    Image(systemName: "play.circle.fill")
-                        .font(.title)
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(.rect)
+                    .buttonStyle(.glassProminent)
+                    .buttonBorderShape(.circle)
+                    .tint(Theme.ink)
+                    .disabled(!model.canRun)
+                    .accessibilityLabel("Compare")
                 }
-                .disabled(!model.canRun)
-                .accessibilityLabel("Compare")
             }
             .padding()
-            .background(.bar)
+            .background(Theme.canvas)
         }
         .navigationTitle("Compare routes")
         .task(id: runToken) {
             guard runToken != nil else { return }
             await model.run()
         }
+    }
+
+    private func card(for column: CompareModel.Column) -> some View {
+        CompareCard(column: column, isFirst: model.finishOrder.count > 1 && model.finishOrder.first == column.route)
     }
 
     private func start() {
@@ -64,12 +75,18 @@ public struct CompareView: View {
 
 private struct CompareCard: View {
     let column: CompareModel.Column
+    /// Finished before the other routes.
+    let isFirst: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                RouteLabel(column.route)
-                    .font(.headline)
+                Label(column.route.displayName, systemImage: column.route.symbolName)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(column.route.ink)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
+                    .routeCapsule(column.route)
                 if column.metrics?.isSimulated == true {
                     Text("simulated")
                         .font(.caption)
@@ -77,7 +94,15 @@ private struct CompareCard: View {
                 }
                 Spacer()
                 if column.isRunning {
-                    ProgressView().controlSize(.small)
+                    Image(systemName: column.route.symbolName)
+                        .foregroundStyle(column.route.ink)
+                        .symbolEffect(.breathe.pulse.byLayer, options: .repeating)
+                        .accessibilityLabel("Answering")
+                } else if isFirst {
+                    Label("Finished first", systemImage: "flag.checkered")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(column.route.ink)
+                        .transition(.scale(scale: 0.8).combined(with: .opacity))
                 }
             }
             if let note = column.note {
@@ -85,19 +110,21 @@ private struct CompareCard: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else if !column.content.isEmpty {
-                Text(MessageRow.markdown(column.content.text))
+                StreamingText(text: MessageRow.markdown(column.content.text), isStreaming: column.isRunning)
                     .font(.subheadline)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             if let metrics = column.metrics {
                 Text("First token \(Format.seconds(metrics.timeToFirstToken)) · \(metrics.tokensPerSecond.map { String(format: "%.0f", $0) } ?? "—") tok/s · \(Format.cost(metrics.estimatedCost))")
-                    .font(.caption.monospacedDigit())
+                    .font(.caption)
+                    .fontDesign(.rounded)
+                    .monospacedDigit()
                     .foregroundStyle(.secondary)
             }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(column.route.tint.opacity(0.06), in: .rect(cornerRadius: 14))
+        .background(Theme.card, in: .rect(cornerRadius: 20, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 }

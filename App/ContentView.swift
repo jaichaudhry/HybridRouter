@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var showsSettings = false
     @State private var showsSummary = false
     @State private var showsCompare = false
+    @Namespace private var transitions
 
     var body: some View {
         NavigationStack {
@@ -30,13 +31,17 @@ struct ContentView: View {
                         Button("Session summary", systemImage: "chart.pie") { showsSummary = true }
                             .disabled(model.chat.steps.isEmpty)
                     }
+                    .matchedTransitionSource(id: "summary", in: transitions)
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Compare routes", systemImage: "rectangle.split.3x1") { showsCompare = true }
                     }
+                    .matchedTransitionSource(id: "compare", in: transitions)
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Settings", systemImage: "gearshape") { showsSettings = true }
                     }
                 }
+                // Toolbars stay monochrome; route colors are for content.
+                .tint(Theme.ink)
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .active { model.chat.prewarm() }
@@ -44,6 +49,7 @@ struct ContentView: View {
         .sheet(isPresented: $showsCompare) {
             CompareSheet(app: model)
                 .presentationSizing(.page)
+                .zoomTransition(from: "compare", in: transitions)
         }
         .sheet(isPresented: $showsSettings) {
             SettingsView(model: model)
@@ -57,6 +63,7 @@ struct ContentView: View {
                         }
                     }
             }
+            .zoomTransition(from: "summary", in: transitions)
         }
     }
 }
@@ -106,6 +113,29 @@ private struct CompareSheet: View {
                         Button("Done") { dismiss() }
                     }
                 }
+        }
+    }
+}
+
+private extension View {
+    /// Sheets zoom out of the toolbar button that opened them. With Reduce Motion they use
+    /// the standard presentation.
+    func zoomTransition(from sourceID: String, in namespace: Namespace.ID) -> some View {
+        modifier(ZoomTransition(sourceID: sourceID, namespace: namespace))
+    }
+}
+
+private struct ZoomTransition: ViewModifier {
+    let sourceID: String
+    let namespace: Namespace.ID
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        if reduceMotion {
+            content
+        } else {
+            content.navigationTransition(.zoom(sourceID: sourceID, in: namespace))
         }
     }
 }

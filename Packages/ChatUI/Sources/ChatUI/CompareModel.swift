@@ -20,6 +20,8 @@ public final class CompareModel {
     public var prompt = ""
     public private(set) var columns: [Column] = Route.allCases.map { Column(route: $0) }
     public private(set) var isRunning = false
+    /// Routes in the order they finished answering, for the "Finished first" marker.
+    public private(set) var finishOrder: [Route] = []
 
     @ObservationIgnored private let makeSession: @MainActor () -> RoutedSession
     @ObservationIgnored private let privacyGuard = PrivacyGuard()
@@ -39,6 +41,7 @@ public final class CompareModel {
         isRunning = true
         defer { isRunning = false }
         columns = Route.allCases.map { Column(route: $0) }
+        finishOrder = []
         let privacy = privacyGuard.assess(text)
 
         // Each route answers concurrently. (A task group here trips a Swift 6.4 isolation
@@ -79,6 +82,7 @@ public final class CompareModel {
             }
             columns[index].content = result.content
             columns[index].metrics = result.metrics
+            finishOrder.append(route)
         } catch {
             columns[index].note = "Couldn't answer (\(FailureCause(error).label))"
         }

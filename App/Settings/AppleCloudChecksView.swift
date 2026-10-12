@@ -82,7 +82,8 @@ final class AppleCloudChecks {
                 switch self {
                 case .pass: .green
                 case .fail: .red
-                case .info: .blue
+                // Not blue: blue would read as the Apple Cloud route.
+                case .info: .secondary
                 }
             }
         }

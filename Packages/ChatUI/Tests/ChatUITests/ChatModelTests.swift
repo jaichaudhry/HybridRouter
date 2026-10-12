@@ -77,6 +77,46 @@ struct ChatModelTests {
         #expect(reply.content == .text("from cloud"))
         #expect(reply.metrics?.escalationCause == "timed out")
         #expect(reply.steps.map(\.route) == [.onDevice, .appleCloud])
+        #expect(reply.previousRoutes == [.onDevice])
+        #expect(reply.routedAt != nil)
+    }
+
+    @Test func answeringOnDeviceInsteadSwitchesTheWaitingReply() async throws {
+        let claude = FakeProvider(route: .claude, reply: "slow claude", delay: .seconds(5))
+        let model = makeModel(claude: claude)
+        model.routeOverride = .claude
+        let sending = Task { await model.send("Plan a week in Kyoto") }
+        while !model.canAnswerOnDevice {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        model.answerOnDeviceInstead()
+        await sending.value
+
+        let reply = model.messages[1]
+        #expect(reply.content == .text("from device"))
+        #expect(reply.decision?.route == .onDevice)
+        #expect(reply.previousRoutes == [.claude])
+        #expect(reply.errorMessage == nil)
+        #expect(reply.steps.last?.route == .onDevice)
+        #expect(model.messages.count == 2)
+        #expect(!model.canAnswerOnDevice)
+    }
+
+    @Test func onDeviceRepliesDontOfferTheSwitch() async throws {
+        let onDevice = FakeProvider(route: .onDevice, reply: "slow device", delay: .seconds(1))
+        let model = makeModel(onDevice: onDevice)
+        let sending = Task { await model.send("Hi") }
+        while model.messages.last?.decision == nil {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(!model.canAnswerOnDevice)
+        await sending.value
+    }
+
+    @Test func aDirectReplyHasNoRouteTrail() async {
+        let model = makeModel()
+        await model.send("Hi")
+        #expect(model.messages[1].previousRoutes.isEmpty)
     }
 
     @Test func failedTurnsClearPartialText() async {
@@ -204,8 +244,8 @@ struct Stop {
 import CoreGraphics
 
 extension ChatModelTests {
-    static func image() -> CGImage {
-        let context = CGContext(data: nil, width: 4, height: 4, bitsPerComponent: 8, bytesPerRow: 16,
+    static func image(width: Int = 4, height: Int = 4) -> CGImage {
+        let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
                                 space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
         return context.makeImage()!
     }
@@ -270,15 +310,38 @@ extension ChatModelTests {
         #expect(model.messages[0].content == .text("Summarize"))
     }
 
+    @Test func sentPhotosKeepAThumbnailForTheBubble() async throws {
+        let photo = try #require(ChatAttachment.image(data: Self.pngData(width: 1200, height: 800), name: "Photo 1"))
+        let thumbnail = try #require(photo.thumbnail)
+        #expect(max(thumbnail.width, thumbnail.height) == ChatAttachment.thumbnailSize)
+        #expect(thumbnail.width > thumbnail.height)
+
+        let model = makeModel()
+        model.attachments = [photo]
+        await model.send("What is this?")
+        #expect(model.messages[0].attachments.map(\.name) == ["Photo 1"])
+        #expect(model.messages[0].attachments.first?.thumbnail != nil)
+    }
+
+    @Test func scansAndDocumentsHaveTheRightPreviews() throws {
+        let scan = ChatAttachment.scan(Self.image(width: 2000, height: 3000), name: "Scan 1")
+        #expect(scan.thumbnail?.height == ChatAttachment.thumbnailSize)
+        #expect(scan.preview.isScan)
+
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("notes-\(UUID().uuidString).txt")
+        try "Meeting at noon".write(to: url, atomically: true, encoding: .utf8)
+        #expect(try ChatAttachment.document(url: url).thumbnail == nil)
+    }
+
     @Test func imageLabelsDontRepeat() {
         #expect(ChatAttachment.uniqueLabel("Scan 1") != ChatAttachment.uniqueLabel("Scan 1"))
         #expect(ChatAttachment.uniqueLabel("Scan 1").hasPrefix("scan-1-"))
     }
 
-    static func pngData() -> Data {
+    static func pngData(width: Int = 4, height: Int = 4) -> Data {
         let data = NSMutableData()
         let destination = CGImageDestinationCreateWithData(data, "public.png" as CFString, 1, nil)!
-        CGImageDestinationAddImage(destination, image(), nil)
+        CGImageDestinationAddImage(destination, image(width: width, height: height), nil)
         CGImageDestinationFinalize(destination)
         return data as Data
     }

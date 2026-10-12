@@ -25,6 +25,14 @@ struct CompareModelTests {
         #expect(compare.columns.map(\.content) == [.text("from device"), .text("from cloud"), .text("from claude")])
         #expect(compare.columns.allSatisfy { $0.metrics != nil && !$0.isRunning })
         #expect(!compare.isRunning)
+        #expect(Set(compare.finishOrder) == Set(Route.allCases))
+    }
+
+    @Test func failedAndSkippedRoutesDontFinish() async {
+        let compare = model(claude: FakeProvider(route: .claude, reply: "x", behavior: .timeout))
+        compare.prompt = "Hi"
+        await compare.run()
+        #expect(Set(compare.finishOrder) == [.onDevice, .appleCloud])
     }
 
     @Test func privatePromptsSkipClaude() async {

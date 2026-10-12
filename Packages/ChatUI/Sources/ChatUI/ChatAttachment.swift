@@ -16,11 +16,28 @@ public struct ChatAttachment: Identifiable, Sendable {
     public let id = UUID()
     public let name: String
     public let kind: Kind
+    /// A small, upright copy of an image for previews. Nil for documents.
+    public let thumbnail: CGImage?
 
-    public init(name: String, kind: Kind) {
+    public init(name: String, kind: Kind, thumbnail: CGImage? = nil) {
         self.name = name
         self.kind = kind
+        if let thumbnail {
+            self.thumbnail = thumbnail
+        } else if case .image(let image, _) = kind {
+            self.thumbnail = Self.downscaled(image.cgImage)
+        } else {
+            self.thumbnail = nil
+        }
     }
+
+    /// What a sent message keeps of this attachment for display.
+    public var preview: AttachmentPreview {
+        AttachmentPreview(name: name, thumbnail: thumbnail, isScan: isScan)
+    }
+
+    /// Longest side of preview thumbnails, in pixels: sharp at 3x for a ~120pt tile.
+    static let thumbnailSize = 360
 
     public var image: ImageInput? {
         if case .image(let image, _) = kind { image } else { nil }
@@ -40,12 +57,36 @@ public struct ChatAttachment: Identifiable, Sendable {
               let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return nil }
         let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
         let orientation = (properties?[kCGImagePropertyOrientation] as? UInt32).flatMap(CGImagePropertyOrientation.init)
-        return ChatAttachment(name: name, kind: .image(ImageInput(cgImage, label: uniqueLabel(name), orientation: orientation), fromScan: fromScan))
+        // The thumbnail applies the EXIF orientation, so previews are upright.
+        let thumbnail = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: thumbnailSize,
+        ] as CFDictionary)
+        return ChatAttachment(
+            name: name,
+            kind: .image(ImageInput(cgImage, label: uniqueLabel(name), orientation: orientation), fromScan: fromScan),
+            thumbnail: thumbnail
+        )
     }
 
     /// A scanned page.
     public static func scan(_ page: CGImage, name: String) -> ChatAttachment {
         ChatAttachment(name: name, kind: .image(ImageInput(page, label: uniqueLabel(name)), fromScan: true))
+    }
+
+    /// A copy whose longest side is at most `thumbnailSize` pixels.
+    static func downscaled(_ image: CGImage) -> CGImage? {
+        let scale = min(1, Double(thumbnailSize) / Double(max(image.width, image.height)))
+        let width = max(1, Int(Double(image.width) * scale))
+        let height = max(1, Int(Double(image.height) * scale))
+        guard let context = CGContext(
+            data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+        context.interpolationQuality = .high
+        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return context.makeImage()
     }
 
     /// Image tools find attachments by label across the whole conversation, so labels must
@@ -77,4 +118,13 @@ public struct ChatAttachment: Identifiable, Sendable {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw DocumentError.noText }
         return ChatAttachment(name: url.lastPathComponent, kind: .document(text: text))
     }
+}
+
+/// How a sent message shows one of its attachments.
+public struct AttachmentPreview: Identifiable, Equatable, Sendable {
+    public let id = UUID()
+    public let name: String
+    /// Nil for documents.
+    public let thumbnail: CGImage?
+    public let isScan: Bool
 }

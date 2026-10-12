@@ -1,18 +1,26 @@
+import ChatUI
 import FoundationModels
+import HybridRouterKit
 import SwiftUI
 
 /// A receipt as it streams in.
 struct ReceiptCard: View {
     let receipt: Receipt.PartiallyGenerated
 
+    @Environment(\.replyRoute) private var route
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline) {
                 Text(receipt.merchant ?? "Receipt")
                     .font(.headline)
+                    .foregroundStyle(route?.ink ?? .primary)
                 Spacer()
                 Text(receipt.total ?? "")
-                    .font(.headline.monospacedDigit())
+                    .font(.headline)
+                    .fontDesign(.rounded)
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
             }
             if let date = receipt.date {
                 Text(date)
@@ -32,7 +40,7 @@ struct ReceiptCard: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.fill.quaternary, in: .rect(cornerRadius: 14))
+        .background(Theme.card, in: .rect(cornerRadius: 20, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 }
@@ -68,7 +76,7 @@ private struct SummarySection: View {
             }
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.fill.quaternary, in: .rect(cornerRadius: 14))
+            .background(Theme.card, in: .rect(cornerRadius: 20, style: .continuous))
         }
     }
 }

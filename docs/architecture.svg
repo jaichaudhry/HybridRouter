@@ -10,9 +10,9 @@
     .note { fill: #59636e; font-size: 12px; }
     .arrow { stroke: #59636e; stroke-width: 1.5; fill: none; marker-end: url(#head); }
     .head { fill: #59636e; }
-    .device { fill: #e8f5ec; stroke: #2da44e; }
-    .cloud { fill: #e7f0fb; stroke: #0969da; }
-    .claude { fill: #fdf1e7; stroke: #d1712c; }
+    .device { fill: #e3f2f1; stroke: #007c80; }
+    .cloud { fill: #ecedfc; stroke: #5157e0; }
+    .claude { fill: #f8eae4; stroke: #b04e2c; }
     .private { fill: #fff8e1; stroke: #bf8700; }
     @media (prefers-color-scheme: dark) {
       .bg { fill: #0d1117; }
@@ -22,9 +22,9 @@
       .note { fill: #9198a1; }
       .arrow { stroke: #9198a1; }
       .head { fill: #9198a1; }
-      .device { fill: #12261a; stroke: #3fb950; }
-      .cloud { fill: #0f1d2e; stroke: #4493f8; }
-      .claude { fill: #2a1a0e; stroke: #e0823d; }
+      .device { fill: #0e2526; stroke: #3fd0c8; }
+      .cloud { fill: #1a1b33; stroke: #7880ff; }
+      .claude { fill: #2b1a13; stroke: #e07b56; }
       .private { fill: #2a2210; stroke: #d29922; }
     }
   </style>

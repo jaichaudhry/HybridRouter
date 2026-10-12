@@ -26,7 +26,8 @@ One shared conversation moves between them without losing history. Private messa
 - **A router you can read and test.** Hard rules (privacy, offline, context size, images) run first; an on-device classifier labels everything else; failures escalate one route up. The rules are pure functions, and the routing, session and privacy code has 98% line coverage.
 - **Privacy enforced in code, not policy.** An on-device PrivacyGuard flags sensitive turns, and Claude only ever sees placeholders for them, even after escalations, follow-ups or a session rebuild. Tests check the request Claude actually receives.
 - **Evaluation-driven prompt tuning.** 50 hand-labeled prompts, measured on a Mac and an iPhone, plus an Apple Evaluations framework run. The device numbers showed the classifier needs different instructions per on-device model variant.
-- **Cost and latency on every reply.** Each badge shows the route and reason; tapping it shows first-token time, tokens per second, tokens and cost. A session summary compares the cost with sending everything to Claude.
+- **Cost and latency on every reply.** Each badge shows the route and reason, and a line under each finished reply shows first-token time, tokens per second and cost; tapping either shows the full metrics. A session summary compares the cost with sending everything to Claude.
+- **Routing you can see.** Each route has its own color and symbol (teal On-device, indigo Apple Cloud, terracotta Claude, chosen for contrast and color blindness). The badge shows the router deciding, escalations stay visible as a struck-through trail, and a reply still waiting on a slower route can switch to on-device with one tap.
 - **Production details.** Swift 6 strict concurrency with zero warnings, Keychain storage, App Attest for shipped builds, gitleaks in a pre-commit hook and CI, Dynamic Type, VoiceOver and iPad layouts.
 
 ## Tour
@@ -43,7 +44,7 @@ The app has three scenarios, picked from the title bar. Sample prompts appear as
 | | Import a contract, then "Summarize the key risks" | Claude, or Apple Cloud if it's private |
 | **Chat** | Anything | Wherever the router decides |
 
-- **The composer** has a route menu (Auto, On-device, Apple Cloud, Claude), a Private toggle, and attachments: photos, the document scanner, and text or PDF files.
+- **The composer** has a "+" menu for attachments (photos, the document scanner, text or PDF files) and the route (Auto, On-device, Apple Cloud, Claude), and a Private lock in the message field.
 - **Compare mode** (toolbar) runs one prompt on all three routes side by side, with each route's speed and cost.
 - **Settings › Developer** has the tools that produced the results below: a routing benchmark, per-route measurements, Apple Cloud checks, and (in Debug builds) a simulated Apple Cloud for developing without Apple's entitlement.
 

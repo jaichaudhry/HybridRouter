@@ -22,6 +22,12 @@ public struct ChatMessage: Identifiable, Equatable, Sendable {
     public var routeIsSimulated = false
     /// Names of the files and images attached to a user message.
     public var attachmentNames: [String]
+    /// Thumbnails and names of a user message's attachments, for display.
+    public var attachments: [AttachmentPreview] = []
+    /// Routes this reply tried before the current one, oldest first (escalation).
+    public var previousRoutes: [Route] = []
+    /// When the current route was chosen, for the "waiting for the first token" timer.
+    public var routedAt: Date?
 
     public init(
         id: UUID = UUID(),
@@ -32,7 +38,8 @@ public struct ChatMessage: Identifiable, Equatable, Sendable {
         isStreaming: Bool = false,
         errorMessage: String? = nil,
         privacyReason: String? = nil,
-        attachmentNames: [String] = []
+        attachmentNames: [String] = [],
+        attachments: [AttachmentPreview] = []
     ) {
         self.id = id
         self.role = role
@@ -43,6 +50,7 @@ public struct ChatMessage: Identifiable, Equatable, Sendable {
         self.errorMessage = errorMessage
         self.privacyReason = privacyReason
         self.attachmentNames = attachmentNames
+        self.attachments = attachments
     }
 
     /// Metrics for the step that produced the reply.
@@ -89,6 +97,9 @@ public final class ChatModel {
     public var structuredOutputs: [StructuredOutput]
     @ObservationIgnored private let costTable: CostTable
     @ObservationIgnored private let privacyGuard = PrivacyGuard()
+    /// The attempt in progress, so "Answer on-device instead" can stop it.
+    @ObservationIgnored private var currentTurn: Task<TurnCoordinator.Outcome, Never>?
+    @ObservationIgnored private var switchesToOnDevice = false
     /// A session swap requested mid-reply, applied when the reply finishes.
     @ObservationIgnored private var pendingSession: SessionFactory?
 
@@ -149,34 +160,30 @@ public final class ChatModel {
             role: .user,
             content: .text(prompt),
             privacyReason: reason?.label,
-            attachmentNames: attachments.map(\.name)
+            attachmentNames: attachments.map(\.name),
+            attachments: attachments.map(\.preview)
         ))
         messages.append(ChatMessage(role: .assistant, content: .text(""), isStreaming: true, privacyReason: reason?.label))
         let index = messages.count - 1
 
-        // At most about ten screen updates a second while streaming; the final text always lands.
-        var throttle = StreamThrottle()
-        let request = TurnCoordinator.Request(
+        var request = TurnCoordinator.Request(
             prompt: fullPrompt,
             images: images,
             override: routeOverride,
             privacyReason: reason?.label,
             structuredOutputs: structuredOutputs
         )
-        let outcome = await coordinator.run(request, in: session) { [weak self] event in
-            guard let self else { return }
-            switch event {
-            case .routed(let decision):
-                // A new route (first pick or escalation) starts the reply over.
-                messages[index].decision = decision
-                messages[index].routeIsSimulated = session.provider(for: decision.route).isSimulated
-                messages[index].content = .text("")
-            case .partial(let content):
-                if throttle.shouldUpdate() {
-                    messages[index].content = content
-                }
-            }
+        var outcome = await runTurn(request, into: index)
+        // "Answer on-device instead" stops the turn while it waits for its first token, then
+        // asks again on-device. The abandoned attempt's steps stay in the metrics.
+        var earlierSteps: [StepMetrics] = []
+        while switchesToOnDevice {
+            switchesToOnDevice = false
+            earlierSteps += outcome.steps
+            request.override = .onDevice
+            outcome = await runTurn(request, into: index)
         }
+        outcome.steps = earlierSteps + outcome.steps
 
         messages[index].steps = outcome.steps
         messages[index].decision = outcome.decision ?? messages[index].decision
@@ -193,6 +200,55 @@ public final class ChatModel {
             if text == nil { draft = originalDraft }
             self.attachments = attachments
             isPrivate = markedPrivate
+        }
+    }
+
+    /// Whether the reply in progress can be switched to on-device: it's still waiting for its
+    /// first token on another route, and the on-device model is available.
+    public var canAnswerOnDevice: Bool {
+        guard isSending, currentTurn != nil, let reply = messages.last, reply.role == .assistant,
+              let route = reply.decision?.route, route != .onDevice, reply.content.isEmpty else { return false }
+        return session.availability(of: .onDevice).isAvailable
+    }
+
+    /// Stops waiting for the current route and answers on-device instead, like "Answer now".
+    public func answerOnDeviceInstead() {
+        guard canAnswerOnDevice else { return }
+        switchesToOnDevice = true
+        currentTurn?.cancel()
+    }
+
+    /// Runs one attempt at the turn, streaming into the message at `index`. Cancellable through
+    /// `currentTurn`, and cancelled with the caller.
+    private func runTurn(_ request: TurnCoordinator.Request, into index: Int) async -> TurnCoordinator.Outcome {
+        let turn = Task { [coordinator, session] in
+            // At most about ten screen updates a second while streaming; the final text always lands.
+            var throttle = StreamThrottle()
+            return await coordinator.run(request, in: session) { [weak self] event in
+                guard let self else { return }
+                switch event {
+                case .routed(let decision):
+                    // A new route (first pick, escalation or a switch) starts the reply over.
+                    if let previous = messages[index].decision?.route, previous != decision.route {
+                        messages[index].previousRoutes.append(previous)
+                    }
+                    messages[index].decision = decision
+                    messages[index].routedAt = .now
+                    messages[index].routeIsSimulated = session.provider(for: decision.route).isSimulated
+                    messages[index].content = .text("")
+                case .partial(let content):
+                    if throttle.shouldUpdate() {
+                        messages[index].content = content
+                    }
+                }
+            }
+        }
+        currentTurn = turn
+        defer { currentTurn = nil }
+        return await withTaskCancellationHandler {
+            await turn.value
+        } onCancel: {
+            turn.cancel()
         }
     }
 

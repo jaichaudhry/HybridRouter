@@ -15,9 +15,9 @@ public enum Route: String, CaseIterable, Codable, Sendable, Hashable {
     /// SF Symbol name. Kept here so every UI shows the same icon for a route.
     public var symbolName: String {
         switch self {
-        case .onDevice: "iphone"
-        case .appleCloud: "cloud"
-        case .claude: "sparkles"
+        case .onDevice: "lock.iphone"
+        case .appleCloud: "lock.icloud"
+        case .claude: "sparkle"
         }
     }
 
