@@ -59,6 +59,7 @@ struct AppleCloudChecksView: View {
             guard runToken != nil else { return }
             await checks.run(app: app)
         }
+        .onAppear { checks.restoreAfterCrash() }
     }
 }
 
@@ -95,23 +96,66 @@ final class AppleCloudChecks {
     private(set) var results: [Result] = []
     private(set) var isRunning = false
 
+    // Some Apple Cloud calls can crash the app inside FoundationModels instead of throwing (seen
+    // without the entitlement), so progress is saved before each check and shown after a relaunch.
+    // A file written before each check, not UserDefaults, which may not reach disk before a crash.
+    private static let progressURL = URL.cachesDirectory.appending(path: "apple-cloud-checks-progress.json")
+
+    private struct Progress: Codable {
+        var running: String
+        var finished: [[String]]
+    }
+
     func run(app: AppModel) async {
         guard !isRunning else { return }
         isRunning = true
-        defer { isRunning = false }
+        defer {
+            isRunning = false
+            try? FileManager.default.removeItem(at: Self.progressURL)
+        }
         results = []
 
         let cloud = PrivateCloudComputeLanguageModel()
-        checkAvailability(cloud)
-        checkCapabilities(cloud)
-        await checkContextSize(cloud)
-        await checkSimpleReply(cloud)
+        step("Availability and quota") { checkAvailability(cloud) }
+        step("Capabilities") { checkCapabilities(cloud) }
+        await step("Context size") { await checkContextSize(cloud) }
+        await step("Simple reply") { await checkSimpleReply(cloud) }
         if Task.isCancelled { return }
-        await checkHop(app: app)
+        await step("Three-route hop") { await checkHop(app: app) }
         if Task.isCancelled { return }
-        await checkImage(app: app)
+        await step("Image + OCR") { await checkImage(app: app) }
         if Task.isCancelled { return }
-        await checkStructuredOutput(cloud)
+        await step("Structured output") { await checkStructuredOutput(cloud) }
+    }
+
+    /// Shows what a crashed run got through, and where it stopped.
+    func restoreAfterCrash() {
+        guard !isRunning,
+              let data = try? Data(contentsOf: Self.progressURL),
+              let progress = try? JSONDecoder().decode(Progress.self, from: data) else { return }
+        try? FileManager.default.removeItem(at: Self.progressURL)
+        results = progress.finished.compactMap { saved in
+            guard saved.count == 3, let outcome = Result.Outcome(rawValue: saved[1]) else { return nil }
+            return Result(name: saved[0], outcome: outcome, detail: saved[2])
+        }
+        add(progress.running, .fail, "The app crashed during this check, inside FoundationModels. The checks above finished.")
+    }
+
+    private func step(_ name: String, _ check: () -> Void) {
+        saveProgress(running: name)
+        check()
+    }
+
+    private func step(_ name: String, _ check: () async -> Void) async {
+        saveProgress(running: name)
+        await check()
+    }
+
+    private func saveProgress(running: String) {
+        let progress = Progress(running: running, finished: results.map { [$0.name, $0.outcome.rawValue, $0.detail] })
+        if let data = try? JSONEncoder().encode(progress) {
+            try? data.write(to: Self.progressURL, options: .atomic)
+        }
     }
 
     // MARK: Checks
