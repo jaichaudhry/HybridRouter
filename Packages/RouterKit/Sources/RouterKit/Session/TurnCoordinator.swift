@@ -10,23 +10,29 @@ public struct StructuredOutput: Sendable {
     public var complexities: Set<String>
     /// Only for turns with an attached image, e.g. a receipt.
     public var requiresImage: Bool
+    /// An extra check on the message, for formats a label alone can't pick: "5 weekend trip
+    /// ideas" can be labeled planning without asking for a day-by-day itinerary.
+    public var matchesPrompt: (@Sendable (String) -> Bool)?
 
     public init(
         schema: GenerationSchema,
         tasks: Set<String>,
         complexities: Set<String> = ["moderate", "complex"],
-        requiresImage: Bool = false
+        requiresImage: Bool = false,
+        matchesPrompt: (@Sendable (String) -> Bool)? = nil
     ) {
         self.schema = schema
         self.tasks = tasks
         self.complexities = complexities
         self.requiresImage = requiresImage
+        self.matchesPrompt = matchesPrompt
     }
 
     /// Whether a turn with this classification should be structured. If the classifier
     /// couldn't label the turn, it stays plain text.
-    public func applies(to classification: RouteClassification?, hasImage: Bool = false) -> Bool {
+    public func applies(to classification: RouteClassification?, hasImage: Bool = false, prompt: String = "") -> Bool {
         guard let classification, hasImage || !requiresImage else { return false }
+        guard matchesPrompt?(prompt) ?? true else { return false }
         return tasks.contains(classification.task) && complexities.contains(classification.complexity)
     }
 }
@@ -118,7 +124,7 @@ public struct TurnCoordinator {
         }
 
         let structured = request.structuredOutputs.first {
-            $0.applies(to: classifier?.classification, hasImage: !request.images.isEmpty)
+            $0.applies(to: classifier?.classification, hasImage: !request.images.isEmpty, prompt: request.prompt)
         }
         var steps: [StepMetrics] = []
         var escalationCause: FailureCause?

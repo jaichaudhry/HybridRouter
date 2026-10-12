@@ -127,4 +127,11 @@ struct AttachmentsAndToolsTests {
         let long = String(repeating: "clause ", count: 2_000)
         #expect(OnDeviceClassifier.classifierPrompt(long, previous: nil).count == OnDeviceClassifier.promptCharacterLimit)
     }
+
+    @Test func promptChecksNarrowAStructuredOutput() {
+        let itinerary = StructuredOutput(schema: Summary.generationSchema, tasks: ["plan"]) { $0.contains("itinerary") }
+        let planning = RouteClassification(complexity: "moderate", task: "plan")
+        #expect(itinerary.applies(to: planning, prompt: "Make a 3-day Kyoto itinerary"))
+        #expect(!itinerary.applies(to: planning, prompt: "Give me 5 weekend trip ideas"))
+    }
 }
