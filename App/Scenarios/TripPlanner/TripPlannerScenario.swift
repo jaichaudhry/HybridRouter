@@ -14,7 +14,7 @@ struct TripPlannerScenario: Scenario {
         """
     let samplePrompts = [
         "Give me 5 weekend trip ideas from Seattle",
-        "Make that a 3-day Kyoto itinerary for a family with two kids",
+        "Make a 3-day Kyoto itinerary for a family with two kids",
         "Is this plan realistic with jet lag and a 4-year-old? What would you cut?",
         "Rewrite day 2 as a short text to my partner",
         "Plan a 2-day Seattle weekend with a museum and a ferry ride",

@@ -32,7 +32,7 @@ The app has three scenarios, picked from the title bar. Sample prompts appear as
 | Scenario | Try | Where it goes |
 |---|---|---|
 | **Trip Planner** | "Give me 5 weekend trip ideas from Seattle" | On-device (or Apple Cloud on newer iPhones) |
-| | "Make that a 3-day Kyoto itinerary for a family with two kids" | Apple Cloud, rendered as day cards |
+| | "Make a 3-day Kyoto itinerary for a family with two kids" | Apple Cloud, rendered as day cards |
 | | "Is this plan realistic with jet lag and a 4-year-old? What would you cut?" | Claude |
 | | "Rewrite day 2 as a short text to my partner" | On-device |
 | **Document Helper** | Scan a receipt, then "Extract the total and merchant" | On-device, kept private, rendered as a receipt card |

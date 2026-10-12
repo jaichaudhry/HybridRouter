@@ -13,7 +13,7 @@
     },
     {
       "scenario": "trip-planner",
-      "prompt": "Make that a 3-day Kyoto itinerary for a family with two kids",
+      "prompt": "Make a 3-day Kyoto itinerary for a family with two kids",
       "label": {
         "complexity": "moderate",
         "task": "plan"
