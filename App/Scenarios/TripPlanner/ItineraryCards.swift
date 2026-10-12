@@ -28,9 +28,14 @@ private struct DayCard: View {
     let number: Int
     let day: Itinerary.Day.PartiallyGenerated
 
+    /// Models often start the title with "Day 1:" themselves; the card already numbers days.
+    static func withoutDayPrefix(_ title: String) -> String {
+        title.replacingOccurrences(of: #"^\s*Day\s*\d+\s*[:\-–—]\s*"#, with: "", options: [.regularExpression, .caseInsensitive])
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Day \(number)\(day.title.map { ": \($0)" } ?? "")")
+            Text("Day \(number)\(day.title.map { ": \(Self.withoutDayPrefix($0))" } ?? "")")
                 .font(.subheadline.weight(.semibold))
             ForEach(Array((day.items ?? []).enumerated()), id: \.offset) { _, item in
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
