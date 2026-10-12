@@ -330,3 +330,13 @@ extension ChatModelTests {
         #expect(throws: ChatAttachment.DocumentError.self) { try ChatAttachment.document(url: url) }
     }
 }
+
+extension ChatModelTests {
+    @Test func throttleLetsTheFirstUpdateThroughThenWaits() {
+        var throttle = StreamThrottle()
+        let first = throttle.shouldUpdate()
+        let immediatelyAfter = throttle.shouldUpdate()
+        #expect(first)
+        #expect(!immediatelyAfter)
+    }
+}

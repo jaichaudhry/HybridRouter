@@ -47,6 +47,21 @@ public struct ChatMessage: Identifiable, Equatable, Sendable {
     public var metrics: StepMetrics? { steps.last }
 }
 
+/// Limits how often streamed text reaches the screen. Each update re-renders the reply and
+/// re-parses its Markdown, and snapshots can arrive many times a second.
+struct StreamThrottle {
+    static let interval: Duration = .milliseconds(100)
+    private let clock = ContinuousClock()
+    private var lastUpdate: ContinuousClock.Instant?
+
+    mutating func shouldUpdate() -> Bool {
+        let now = clock.now
+        if let lastUpdate, lastUpdate.duration(to: now) < Self.interval { return false }
+        lastUpdate = now
+        return true
+    }
+}
+
 /// Chat state for one conversation. Scenario-agnostic: the app supplies the router setup,
 /// tools and structured output through the session and coordinator.
 @MainActor
@@ -137,6 +152,8 @@ public final class ChatModel {
         messages.append(ChatMessage(role: .assistant, content: .text(""), isStreaming: true, privacyReason: reason?.label))
         let index = messages.count - 1
 
+        // At most about ten screen updates a second while streaming; the final text always lands.
+        var throttle = StreamThrottle()
         let request = TurnCoordinator.Request(
             prompt: fullPrompt,
             images: images,
@@ -152,7 +169,9 @@ public final class ChatModel {
                 messages[index].decision = decision
                 messages[index].content = .text("")
             case .partial(let content):
-                messages[index].content = content
+                if throttle.shouldUpdate() {
+                    messages[index].content = content
+                }
             }
         }
 

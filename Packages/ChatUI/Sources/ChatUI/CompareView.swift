@@ -85,7 +85,7 @@ private struct CompareCard: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else if !column.content.isEmpty {
-                Text(column.isRunning ? AttributedString(column.content.text) : MessageRow.markdown(column.content.text))
+                Text(MessageRow.markdown(column.content.text))
                     .font(.subheadline)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

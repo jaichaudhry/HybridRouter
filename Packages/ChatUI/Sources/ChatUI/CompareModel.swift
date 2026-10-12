@@ -71,8 +71,11 @@ public final class CompareModel {
 
     private func answer(_ text: String, on route: Route, at index: Int, in session: RoutedSession, isPrivate: Bool) async {
         do {
+            var throttle = StreamThrottle()
             let result = try await session.respond(to: text, decision: .forced(route), isPrivate: isPrivate) { [weak self] partial in
-                self?.columns[index].content = partial
+                if throttle.shouldUpdate() {
+                    self?.columns[index].content = partial
+                }
             }
             columns[index].content = result.content
             columns[index].metrics = result.metrics

@@ -57,9 +57,9 @@ struct MessageRow: View {
     @ViewBuilder private var reply: some View {
         switch message.content {
         case .text(let text):
-            // Parsing Markdown on every streamed snapshot is wasted main-thread work; render
-            // plain text while streaming and Markdown once the reply is complete.
-            Text(message.isStreaming ? AttributedString(text) : Self.markdown(text))
+            // ChatModel throttles streamed updates, so parsing Markdown here stays cheap and
+            // the reply doesn't flash raw "**bold**" while it streams.
+            Text(Self.markdown(text))
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
         case .structured(let content):
