@@ -1,5 +1,5 @@
 import FoundationModels
-import RouterKit
+import HybridRouterKit
 
 /// Reports a fixed token count, to drive the context-fit rule in tests.
 public struct FixedTokenEstimator: TokenEstimator {

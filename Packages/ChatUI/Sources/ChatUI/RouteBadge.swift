@@ -1,4 +1,4 @@
-import RouterKit
+import HybridRouterKit
 import SwiftUI
 
 extension Route {

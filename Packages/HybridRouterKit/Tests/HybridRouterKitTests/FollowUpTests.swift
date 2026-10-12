@@ -1,7 +1,7 @@
 import Synchronization
-import RouterKitTesting
+import HybridRouterKitTesting
 import Testing
-@testable import RouterKit
+@testable import HybridRouterKit
 
 struct FollowUpTests {
     @Test(arguments: ["Why?", "How come?", "  Really? ", "Such as?"])

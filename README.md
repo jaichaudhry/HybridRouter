@@ -100,31 +100,31 @@ Without Apple Cloud at all, its turns move up to Claude: the Trip Planner then r
 
 | API | What it does here | Where |
 |---|---|---|
-| `LanguageModel`, `LanguageModelSession` | One session and transcript shared by all three models | `RouterKit/Session/RoutedSession.swift` |
-| Dynamic Profiles (`DynamicProfile`, `@SessionProperty`, `.model`, `.historyTransform`) | Switch the model per turn; withhold private turns from Claude | `RouterKit/Session/RoutingProfile.swift` |
-| `SystemLanguageModel` (`availability`, `contextSize`, `tokenCount(for:)`, `variant`) | On-device route, token estimates for context fit, per-variant tuning | `RouterKit/Providers/OnDeviceProvider.swift`, `Routing/TokenEstimator.swift` |
-| `PrivateCloudComputeLanguageModel` (`availability`, `quotaUsage`, `contextSize`) | Apple Cloud route, quota-aware | `RouterKit/Providers/AppleCloudProvider.swift` |
+| `LanguageModel`, `LanguageModelSession` | One session and transcript shared by all three models | `HybridRouterKit/Session/RoutedSession.swift` |
+| Dynamic Profiles (`DynamicProfile`, `@SessionProperty`, `.model`, `.historyTransform`) | Switch the model per turn; withhold private turns from Claude | `HybridRouterKit/Session/RoutingProfile.swift` |
+| `SystemLanguageModel` (`availability`, `contextSize`, `tokenCount(for:)`, `variant`) | On-device route, token estimates for context fit, per-variant tuning | `HybridRouterKit/Providers/OnDeviceProvider.swift`, `Routing/TokenEstimator.swift` |
+| `PrivateCloudComputeLanguageModel` (`availability`, `quotaUsage`, `contextSize`) | Apple Cloud route, quota-aware | `HybridRouterKit/Providers/AppleCloudProvider.swift` |
 | `@Generable`, `@Guide`, streaming partial results | The routing classifier; itinerary, receipt and summary cards that fill in while streaming | `Routing/RouteClassification.swift`, `App/Scenarios/` |
 | `Tool` | Trip Planner's `findPlaces` | `App/Scenarios/TripPlanner/PlacesTool.swift` |
 | `Attachment` (images), `OCRTool`, `BarcodeReaderTool` | Reading scanned receipts and notes on Apple routes only | `RoutedSession.swift`, `App/Scenarios/DocumentHelper/` |
 | `LanguageModelSession.Usage`, `LanguageModelError` | Per-step tokens and cost; failure causes for escalation | `Telemetry/`, `Routing/EscalationPolicy.swift` |
 | Evaluations framework | The classifier benchmark as an Apple evaluation | `Evals/AppleEvaluationTests.swift` |
-| `ClaudeLanguageModel`, `ClaudeModel`, `AuthMode`, App Attest | Claude route; API key or App Attest auth | `RouterKit/Providers/ClaudeProvider.swift`, `Auth/` |
-| `NSDataDetector`, regular expressions | On-device PII detection | `RouterKit/Privacy/PrivacyGuard.swift` |
+| `ClaudeLanguageModel`, `ClaudeModel`, `AuthMode`, App Attest | Claude route; API key or App Attest auth | `HybridRouterKit/Providers/ClaudeProvider.swift`, `Auth/` |
+| `NSDataDetector`, regular expressions | On-device PII detection | `HybridRouterKit/Privacy/PrivacyGuard.swift` |
 | VisionKit, PDFKit, PhotosUI | Document scanner, PDF import, photo picker | `ChatUI/DocumentScanner.swift`, `ChatAttachment.swift`, `Composer.swift` |
 | Keychain, DeviceCheck, Network | Key storage, App Attest support check, offline detection | `Auth/KeychainStore.swift`, `App/AppConfig.swift`, `Routing/NetworkMonitor.swift` |
 | Observation, `Synchronization.Mutex`, Swift Testing | Swift 6 concurrency without locks; tests | throughout |
 
-## Using RouterKit in your app
+## Using HybridRouterKit in your app
 
-RouterKit is a Swift package (iOS 27, macOS 27) with no UI. Add this repository as a package dependency and pick the `RouterKit` library:
+HybridRouterKit is a Swift package (iOS 27, macOS 27) with no UI. Add this repository as a package dependency and pick the `HybridRouterKit` library:
 
 ```swift
 .package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.1.0")
 ```
 
 ```swift
-import RouterKit
+import HybridRouterKit
 
 /// One conversation that routes each turn between the on-device model, Apple Cloud and Claude.
 @MainActor
@@ -178,7 +178,7 @@ final class Assistant {
 }
 ```
 
-`RouterKitTesting` adds fake models and a fake classifier, so your routing and privacy rules can be unit-tested on a Mac without a device or network. RouterKit is pre-1.0: its API may change, and it depends on Anthropic's beta `ClaudeForFoundationModels`.
+`HybridRouterKitTesting` adds fake models and a fake classifier, so your routing and privacy rules can be unit-tested on a Mac without a device or network. HybridRouterKit is pre-1.0: its API may change, and it depends on Anthropic's beta `ClaudeForFoundationModels`.
 
 ## Engineering notes
 
@@ -239,7 +239,7 @@ While you wait for the entitlement, Debug builds have **Settings â€º Developer â
 ## Project layout and tests
 
 ```
-Packages/RouterKit   Router, privacy, providers, routed session, Claude auth, telemetry. No UI.
+Packages/HybridRouterKit   Router, privacy, providers, routed session, Claude auth, telemetry. No UI.
 Packages/ChatUI      Streaming chat, route badge, metrics, composer, compare mode.
 App/                 The iOS app: scenarios, Settings, on-device benchmarks and checks.
 Evals/               Routing cases, the 50-prompt classifier benchmark, the Apple evaluation.
@@ -249,7 +249,7 @@ Config/              Build settings; Secrets.xcconfig is yours and gitignored.
 Run the tests on a Mac with Xcode 27:
 
 ```sh
-swift test --package-path Packages/RouterKit
+swift test --package-path Packages/HybridRouterKit
 swift test --package-path Packages/ChatUI
 swift test --package-path Evals
 ```

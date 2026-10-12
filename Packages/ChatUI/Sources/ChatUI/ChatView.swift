@@ -1,4 +1,4 @@
-import RouterKit
+import HybridRouterKit
 import SwiftUI
 
 /// The streaming chat: messages, optional sample-prompt chips, and the composer.

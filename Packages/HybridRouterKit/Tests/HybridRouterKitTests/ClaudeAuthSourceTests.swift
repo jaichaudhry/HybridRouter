@@ -1,6 +1,6 @@
 import ClaudeForFoundationModels
 import Testing
-@testable import RouterKit
+@testable import HybridRouterKit
 
 struct ClaudeAuthSourceTests {
     private func environment(

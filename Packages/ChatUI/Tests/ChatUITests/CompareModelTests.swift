@@ -1,5 +1,5 @@
-import RouterKit
-import RouterKitTesting
+import HybridRouterKit
+import HybridRouterKitTesting
 import Testing
 @testable import ChatUI
 

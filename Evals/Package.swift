@@ -6,14 +6,14 @@ let package = Package(
     name: "Evals",
     platforms: [.iOS("27.0"), .macOS("27.0")],
     dependencies: [
-        .package(path: "../Packages/RouterKit"),
+        .package(path: "../Packages/HybridRouterKit"),
     ],
     targets: [
         .testTarget(
             name: "RoutingEvalTests",
             dependencies: [
-                .product(name: "RouterKit", package: "RouterKit"),
-                .product(name: "RouterKitTesting", package: "RouterKit"),
+                .product(name: "HybridRouterKit", package: "HybridRouterKit"),
+                .product(name: "HybridRouterKitTesting", package: "HybridRouterKit"),
             ],
             path: ".",
             exclude: ["Package.swift"],

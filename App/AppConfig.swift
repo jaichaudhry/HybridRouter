@@ -1,6 +1,6 @@
 import DeviceCheck
 import Foundation
-import RouterKit
+import HybridRouterKit
 
 /// Build-time configuration read from Info.plist (set through Config/*.xcconfig).
 struct AppConfig {

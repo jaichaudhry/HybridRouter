@@ -1,5 +1,5 @@
 import FoundationModels
-import RouterKit
+import HybridRouterKit
 import SwiftUI
 
 /// Brainstorm on-device, build itineraries on Apple Cloud, weigh hard trade-offs on Claude.

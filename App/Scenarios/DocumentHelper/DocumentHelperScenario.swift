@@ -1,5 +1,5 @@
 import FoundationModels
-import RouterKit
+import HybridRouterKit
 import SwiftUI
 import Vision
 

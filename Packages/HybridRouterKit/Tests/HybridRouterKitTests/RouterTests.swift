@@ -1,6 +1,6 @@
-import RouterKitTesting
+import HybridRouterKitTesting
 import Testing
-@testable import RouterKit
+@testable import HybridRouterKit
 
 struct RouterTests {
     private let everything = RoutingInput(availability: [.onDevice: .available, .appleCloud: .available, .claude: .available])

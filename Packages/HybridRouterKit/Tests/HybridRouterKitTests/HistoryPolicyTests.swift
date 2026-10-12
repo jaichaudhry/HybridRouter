@@ -1,7 +1,7 @@
 import Foundation
 import FoundationModels
 import Testing
-@testable import RouterKit
+@testable import HybridRouterKit
 
 struct HistoryPolicyTests {
     private func prompt(_ text: String) -> Transcript.Entry {

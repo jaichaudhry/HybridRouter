@@ -8,13 +8,13 @@ let package = Package(
         .library(name: "ChatUI", targets: ["ChatUI"]),
     ],
     dependencies: [
-        .package(path: "../RouterKit"),
+        .package(path: "../HybridRouterKit"),
     ],
     targets: [
-        .target(name: "ChatUI", dependencies: ["RouterKit"]),
+        .target(name: "ChatUI", dependencies: ["HybridRouterKit"]),
         .testTarget(
             name: "ChatUITests",
-            dependencies: ["ChatUI", .product(name: "RouterKitTesting", package: "RouterKit")]
+            dependencies: ["ChatUI", .product(name: "HybridRouterKitTesting", package: "HybridRouterKit")]
         ),
     ],
     swiftLanguageModes: [.v6]

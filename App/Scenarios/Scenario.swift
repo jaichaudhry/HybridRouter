@@ -1,5 +1,5 @@
 import FoundationModels
-import RouterKit
+import HybridRouterKit
 import SwiftUI
 
 /// A use case for the shared chat: configuration, not a fork of it.

@@ -1,6 +1,6 @@
 import Foundation
 import Observation
-import RouterKit
+import HybridRouterKit
 
 /// Runs one prompt on every route side by side, each in a fresh session.
 @MainActor

@@ -1,5 +1,5 @@
 import FoundationModels
-import RouterKit
+import HybridRouterKit
 import SwiftUI
 
 /// One chat bubble. Assistant replies render Markdown or structured cards and carry a route badge.

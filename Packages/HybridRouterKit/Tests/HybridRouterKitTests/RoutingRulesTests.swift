@@ -1,5 +1,5 @@
 import Testing
-@testable import RouterKit
+@testable import HybridRouterKit
 
 struct RoutingRulesTests {
     private static let allAvailable: [Route: ProviderAvailability] = [

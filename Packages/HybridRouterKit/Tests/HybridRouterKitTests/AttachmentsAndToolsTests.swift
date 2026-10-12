@@ -1,9 +1,9 @@
 import CoreGraphics
 import Foundation
 import FoundationModels
-import RouterKitTesting
+import HybridRouterKitTesting
 import Testing
-@testable import RouterKit
+@testable import HybridRouterKit
 
 @MainActor
 struct AttachmentsAndToolsTests {

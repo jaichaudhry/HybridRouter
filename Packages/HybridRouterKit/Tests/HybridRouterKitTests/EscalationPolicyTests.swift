@@ -2,7 +2,7 @@ import ClaudeForFoundationModels
 import Foundation
 import FoundationModels
 import Testing
-@testable import RouterKit
+@testable import HybridRouterKit
 
 struct EscalationPolicyTests {
     private let everything = RoutingInput(availability: [.onDevice: .available, .appleCloud: .available, .claude: .available])

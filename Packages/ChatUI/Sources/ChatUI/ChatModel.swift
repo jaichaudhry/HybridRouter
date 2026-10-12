@@ -1,7 +1,7 @@
 import Foundation
 import FoundationModels
 import Observation
-import RouterKit
+import HybridRouterKit
 
 /// One message in the chat list.
 public struct ChatMessage: Identifiable, Equatable, Sendable {

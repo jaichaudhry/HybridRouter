@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import RouterKit
+@testable import HybridRouterKit
 
 struct PrivacyFixture: Decodable, Sendable, CustomTestStringConvertible {
     let text: String

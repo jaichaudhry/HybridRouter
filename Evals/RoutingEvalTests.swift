@@ -1,7 +1,7 @@
 import Foundation
 import FoundationModels
-import RouterKit
-import RouterKitTesting
+import HybridRouterKit
+import HybridRouterKitTesting
 import Testing
 
 /// One row of routing_cases.json.

@@ -1,10 +1,10 @@
 # Getting started
 
-Add RouterKit to an app and route a conversation.
+Add HybridRouterKit to an app and route a conversation.
 
 ## Add the package
 
-RouterKit needs iOS 27 or macOS 27. In Xcode, add the package `https://github.com/jaichaudhry/HybridRouter` and the `RouterKit` library, or in `Package.swift`:
+HybridRouterKit needs iOS 27 or macOS 27. In Xcode, add the package `https://github.com/jaichaudhry/HybridRouter` and the `HybridRouterKit` library, or in `Package.swift`:
 
 ```swift
 .package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.1.0")
@@ -15,7 +15,7 @@ RouterKit needs iOS 27 or macOS 27. In Xcode, add the package `https://github.co
 Create a RoutedSession with one provider per route, and a TurnCoordinator to run each turn:
 
 ```swift
-import RouterKit
+import HybridRouterKit
 
 /// One conversation that routes each turn between the on-device model, Apple Cloud and Claude.
 @MainActor
@@ -73,4 +73,4 @@ Without a Claude key the Claude route reports itself unavailable and the router 
 
 ## Test without a device
 
-The `RouterKitTesting` library has fake models and a fake classifier that run through Apple's real `LanguageModelSession`, so routing, escalation and privacy can be tested with `swift test` on a Mac.
+The `HybridRouterKitTesting` library has fake models and a fake classifier that run through Apple's real `LanguageModelSession`, so routing, escalation and privacy can be tested with `swift test` on a Mac.

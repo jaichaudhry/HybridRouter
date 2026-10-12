@@ -1,4 +1,4 @@
-# ``RouterKit``
+# ``HybridRouterKit``
 
 Route each turn of a conversation to Apple's on-device model, Apple's Private Cloud Compute, or Claude, in one shared conversation.
 

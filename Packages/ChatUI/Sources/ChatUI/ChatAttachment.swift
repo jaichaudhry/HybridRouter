@@ -2,7 +2,7 @@ import CoreGraphics
 import Foundation
 import ImageIO
 import PDFKit
-import RouterKit
+import HybridRouterKit
 
 /// Something attached to the next message.
 public struct ChatAttachment: Identifiable, Sendable {

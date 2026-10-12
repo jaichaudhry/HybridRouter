@@ -1,6 +1,6 @@
 import FoundationModels
 import Testing
-@testable import RouterKit
+@testable import HybridRouterKit
 
 struct RoutingSupportTests {
     @Test func everyRouteHasANameAndIcon() {

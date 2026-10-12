@@ -1,6 +1,6 @@
 import ChatUI
 import FoundationModels
-import RouterKit
+import HybridRouterKit
 import SwiftUI
 import UIKit
 #if canImport(_Vision_FoundationModels)

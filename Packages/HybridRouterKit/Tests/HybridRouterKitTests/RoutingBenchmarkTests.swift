@@ -1,7 +1,7 @@
 import Foundation
-import RouterKitTesting
+import HybridRouterKitTesting
 import Testing
-@testable import RouterKit
+@testable import HybridRouterKit
 
 struct RoutingBenchmarkTests {
     private let cases: [RoutingBenchmark.Case] = [

@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import RouterKit
+@testable import HybridRouterKit
 
 struct TelemetryTests {
     private let table = CostTable(

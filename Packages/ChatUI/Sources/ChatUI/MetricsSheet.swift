@@ -1,4 +1,4 @@
-import RouterKit
+import HybridRouterKit
 import SwiftUI
 
 /// Details for each model step behind a reply: where it ran, how fast, how many tokens,

@@ -1,9 +1,9 @@
 import Foundation
 import FoundationModels
 import Synchronization
-import RouterKit
+import HybridRouterKit
 
-/// Test doubles for RouterKit. Not for production use.
+/// Test doubles for HybridRouterKit. Not for production use.
 
 /// How a fake model responds.
 public enum FakeBehavior: Hashable, Sendable {

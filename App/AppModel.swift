@@ -2,7 +2,7 @@ import ChatUI
 import FoundationModels
 import Observation
 import OSLog
-import RouterKit
+import HybridRouterKit
 
 /// App-wide state: configuration, Claude credentials, and one chat per scenario.
 @MainActor
@@ -32,8 +32,8 @@ final class AppModel {
         do {
             costTable = try CostTable.bundled()
         } catch {
-            // The price table ships in RouterKit's bundle; missing it is a packaging bug.
-            preconditionFailure("prices.json is missing from RouterKit: \(error)")
+            // The price table ships in HybridRouterKit's bundle; missing it is a packaging bug.
+            preconditionFailure("prices.json is missing from HybridRouterKit: \(error)")
         }
         self.costTable = costTable
 

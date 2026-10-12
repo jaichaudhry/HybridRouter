@@ -25,7 +25,7 @@
 		D169671AD8291E5F8AFF8848 /* MeasureRoutesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2A77CA1F811B723F0F5882C /* MeasureRoutesView.swift */; };
 		DF2BFC2DF87DC5031C206F9E /* AppleCloudChecksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1270BE3E83D2B9E245B8ED1 /* AppleCloudChecksView.swift */; };
 		E513A3FEF9215BCE00EC66E8 /* classifier_benchmark.json in Resources */ = {isa = PBXBuildFile; fileRef = 2A0B5D7416B9B563BDAC2D6E /* classifier_benchmark.json */; };
-		F751E029F9FD712552A4E662 /* RouterKit in Frameworks */ = {isa = PBXBuildFile; productRef = 2D45F172E9133E014270FF74 /* RouterKit */; };
+		F751E029F9FD712552A4E662 /* HybridRouterKit in Frameworks */ = {isa = PBXBuildFile; productRef = 09724B000CD1208B71F52D0A /* HybridRouterKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,7 +37,6 @@
 		5C5A008662A9462F1B26DCD3 /* ChatUI */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ChatUI; path = Packages/ChatUI; sourceTree = SOURCE_ROOT; };
 		5C6582CFB6A85333C8FA9E84 /* DocumentCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentCards.swift; sourceTree = "<group>"; };
 		5EDA3B0B2C8A6931897A98E6 /* PlacesTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacesTool.swift; sourceTree = "<group>"; };
-		6252FCEEC31F47631727B1EA /* RouterKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = RouterKit; path = Packages/RouterKit; sourceTree = SOURCE_ROOT; };
 		749770A29283B53825397EEC /* DocumentHelperScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentHelperScenario.swift; sourceTree = "<group>"; };
 		85B747C17A70C0450B37AA8E /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		8DDD0D7C41E6B7C54D7A4C60 /* Scenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scenario.swift; sourceTree = "<group>"; };
@@ -47,6 +46,7 @@
 		DCF2EF4049958BD1AF58338A /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		E2A77CA1F811B723F0F5882C /* MeasureRoutesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeasureRoutesView.swift; sourceTree = "<group>"; };
 		E3D9E8BDCF8EEBF317AD45C7 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		EDBBF4A2C281E5F4F69565DD /* HybridRouterKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HybridRouterKit; path = Packages/HybridRouterKit; sourceTree = SOURCE_ROOT; };
 		EDBDECAC3AE3C5005D93777B /* DocumentSchemas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentSchemas.swift; sourceTree = "<group>"; };
 		F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		F403000424EB9780533C886E /* HybridRouterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HybridRouterApp.swift; sourceTree = "<group>"; };
@@ -59,7 +59,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F751E029F9FD712552A4E662 /* RouterKit in Frameworks */,
+				F751E029F9FD712552A4E662 /* HybridRouterKit in Frameworks */,
 				14036354A649CE383BEBB1BE /* ChatUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -144,7 +144,7 @@
 			isa = PBXGroup;
 			children = (
 				5C5A008662A9462F1B26DCD3 /* ChatUI */,
-				6252FCEEC31F47631727B1EA /* RouterKit */,
+				EDBBF4A2C281E5F4F69565DD /* HybridRouterKit */,
 			);
 			path = Packages;
 			sourceTree = "<group>";
@@ -185,7 +185,7 @@
 			);
 			name = HybridRouter;
 			packageProductDependencies = (
-				2D45F172E9133E014270FF74 /* RouterKit */,
+				09724B000CD1208B71F52D0A /* HybridRouterKit */,
 				26BB5A6C5BE7C9FEC71C1110 /* ChatUI */,
 			);
 			productName = HybridRouter;
@@ -218,7 +218,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				E238C8DD7D579C1528480EA0 /* XCLocalSwiftPackageReference "Packages/ChatUI" */,
-				A6DAA4B9C531198B7919929E /* XCLocalSwiftPackageReference "Packages/RouterKit" */,
+				3BA1B5EB95021FB6A9D343C3 /* XCLocalSwiftPackageReference "Packages/HybridRouterKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
@@ -450,9 +450,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		A6DAA4B9C531198B7919929E /* XCLocalSwiftPackageReference "Packages/RouterKit" */ = {
+		3BA1B5EB95021FB6A9D343C3 /* XCLocalSwiftPackageReference "Packages/HybridRouterKit" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = Packages/RouterKit;
+			relativePath = Packages/HybridRouterKit;
 		};
 		E238C8DD7D579C1528480EA0 /* XCLocalSwiftPackageReference "Packages/ChatUI" */ = {
 			isa = XCLocalSwiftPackageReference;
@@ -461,13 +461,13 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		09724B000CD1208B71F52D0A /* HybridRouterKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HybridRouterKit;
+		};
 		26BB5A6C5BE7C9FEC71C1110 /* ChatUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = ChatUI;
-		};
-		2D45F172E9133E014270FF74 /* RouterKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = RouterKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

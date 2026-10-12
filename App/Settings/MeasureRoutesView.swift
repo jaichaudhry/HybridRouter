@@ -1,6 +1,6 @@
 import ChatUI
 import FoundationModels
-import RouterKit
+import HybridRouterKit
 import SwiftUI
 
 /// Measures each route on this device for the README results table: speed and

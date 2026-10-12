@@ -2,32 +2,32 @@
 import PackageDescription
 
 let package = Package(
-    name: "RouterKit",
+    name: "HybridRouterKit",
     // macOS is here so tests and evals run with `swift test` on a Mac; there is no macOS app.
     platforms: [.iOS("27.0"), .macOS("27.0")],
     products: [
-        .library(name: "RouterKit", targets: ["RouterKit"]),
+        .library(name: "HybridRouterKit", targets: ["HybridRouterKit"]),
         // Fake models and providers for tests and previews.
-        .library(name: "RouterKitTesting", targets: ["RouterKitTesting"]),
+        .library(name: "HybridRouterKitTesting", targets: ["HybridRouterKitTesting"]),
     ],
     dependencies: [
         .package(url: "https://github.com/anthropics/ClaudeForFoundationModels", from: "0.2.2"),
     ],
     targets: [
         .target(
-            name: "RouterKit",
+            name: "HybridRouterKit",
             dependencies: [
                 .product(name: "ClaudeForFoundationModels", package: "ClaudeForFoundationModels"),
             ],
             resources: [.process("Resources")]
         ),
         .target(
-            name: "RouterKitTesting",
-            dependencies: ["RouterKit"]
+            name: "HybridRouterKitTesting",
+            dependencies: ["HybridRouterKit"]
         ),
         .testTarget(
-            name: "RouterKitTests",
-            dependencies: ["RouterKit", "RouterKitTesting"],
+            name: "HybridRouterKitTests",
+            dependencies: ["HybridRouterKit", "HybridRouterKitTesting"],
             resources: [.copy("Fixtures")]
         ),
     ],

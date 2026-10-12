@@ -1,5 +1,5 @@
 import ChatUI
-import RouterKit
+import HybridRouterKit
 import SwiftUI
 
 /// Route status and Claude credentials.

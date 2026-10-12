@@ -14,8 +14,8 @@ settings:
     SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
     TARGETED_DEVICE_FAMILY: "1,2"
 packages:
-  RouterKit:
-    path: Packages/RouterKit
+  HybridRouterKit:
+    path: Packages/HybridRouterKit
   ChatUI:
     path: Packages/ChatUI
 targets:
@@ -27,8 +27,8 @@ targets:
       - path: Evals/classifier_benchmark.json
         buildPhase: resources
     dependencies:
-      - package: RouterKit
-        product: RouterKit
+      - package: HybridRouterKit
+        product: HybridRouterKit
       - package: ChatUI
         product: ChatUI
     info:

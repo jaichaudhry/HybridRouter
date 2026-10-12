@@ -1,4 +1,4 @@
-import RouterKit
+import HybridRouterKit
 
 /// A classifier that returns canned classifications by prompt, or fails.
 public struct FakeClassifier: RouteClassifier {

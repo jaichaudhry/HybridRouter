@@ -1,6 +1,6 @@
 import Foundation
 import FoundationModels
-import RouterKit
+import HybridRouterKit
 import Testing
 #if canImport(Evaluations)
 import Evaluations
