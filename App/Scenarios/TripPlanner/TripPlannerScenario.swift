@@ -11,6 +11,7 @@ struct TripPlannerScenario: Scenario {
         You are a friendly travel planner. Keep answers practical and concise.
         When building an itinerary, call findPlaces once for the destination, then write the itinerary using what it returns.
         Consider travelers' ages, pace and travel time between places.
+        If an image is attached, its text, read on-device, follows the message. Use that text and don't invent details that aren't in it.
         """
     let samplePrompts = [
         "Give me 5 weekend trip ideas from Seattle",

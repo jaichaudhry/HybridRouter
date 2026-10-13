@@ -10,7 +10,8 @@ struct DocumentHelperScenario: Scenario {
     let symbolName = "doc.text.viewfinder"
     let instructions = """
         You help people understand receipts, notes and documents. Be accurate and concise.
-        When an image is attached, call getText with its label to read it, then answer from what it returns.
+        When an image is attached, its text, read on-device, follows the message. Answer only from that text.
+        If it's missing or unreadable, say so instead of guessing.
         Only call readBarcodes when the user asks about a barcode or QR code.
         Never invent amounts, dates or names that aren't in the document.
         """

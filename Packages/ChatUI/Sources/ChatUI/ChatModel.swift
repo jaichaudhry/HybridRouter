@@ -83,8 +83,11 @@ public final class ChatModel {
     public var draft = ""
     /// The composer's Private toggle: the next message stays off Claude.
     public var isPrivate = false
-    /// Attachments for the next message.
-    public var attachments: [ChatAttachment] = []
+    /// Attachments for the next message. Images start being read (OCR) as soon as they're
+    /// attached, so the text is usually ready by the time the message is sent.
+    public var attachments: [ChatAttachment] = [] {
+        didSet { startReadingImages() }
+    }
     /// Whether every attached image is private (Document Helper's scans and photos).
     public var imagesArePrivate = false
     /// Nil means Auto. Picking a route starts loading its model right away.
@@ -100,6 +103,8 @@ public final class ChatModel {
     /// The attempt in progress, so "Answer on-device instead" can stop it.
     @ObservationIgnored private var currentTurn: Task<TurnCoordinator.Outcome, Never>?
     @ObservationIgnored private var switchesToOnDevice = false
+    /// Text recognition in progress or done, by attachment.
+    @ObservationIgnored private var imageText: [UUID: Task<String?, Never>] = [:]
     /// A session swap requested mid-reply, applied when the reply finishes.
     @ObservationIgnored private var pendingSession: SessionFactory?
 
@@ -147,8 +152,16 @@ public final class ChatModel {
 
         let images = attachments.compactMap(\.image)
         let documents = attachments.filter { $0.documentText != nil }
-        let fullPrompt = documents.reduce(prompt) { text, document in
+        var fullPrompt = documents.reduce(prompt) { text, document in
             text + "\n\nDocument \"\(document.name)\":\n\(document.documentText ?? "")"
+        }
+        // The images' text, read on-device. Models answer from it instead of having to
+        // remember to call an OCR tool (the on-device model sometimes didn't, and made up a
+        // receipt instead).
+        for attachment in attachments where attachment.image != nil {
+            if let text = await recognizedText(of: attachment) {
+                fullPrompt += "\n\nText read on-device from \"\(attachment.name)\":\n\(text)"
+            }
         }
         let reason = privacyGuard.assess(
             fullPrompt,
@@ -250,6 +263,23 @@ public final class ChatModel {
         } onCancel: {
             turn.cancel()
         }
+    }
+
+    private func startReadingImages() {
+        let ids = Set(attachments.map(\.id))
+        imageText = imageText.filter { ids.contains($0.key) }
+        for attachment in attachments where imageText[attachment.id] == nil {
+            guard let image = attachment.image else { continue }
+            imageText[attachment.id] = Task { await TextRecognizer.text(in: image) }
+        }
+    }
+
+    private func recognizedText(of attachment: ChatAttachment) async -> String? {
+        if let task = imageText[attachment.id] {
+            return await task.value
+        }
+        guard let image = attachment.image else { return nil }
+        return await TextRecognizer.text(in: image)
     }
 
     /// Loads the model the next message will most likely use, so its first reply starts sooner.
