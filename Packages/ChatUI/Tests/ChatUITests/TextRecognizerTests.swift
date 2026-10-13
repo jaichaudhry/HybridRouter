@@ -4,12 +4,13 @@ import Foundation
 import HybridRouterKit
 import HybridRouterKitTesting
 import Testing
+import Vision
 @testable import ChatUI
 
 @MainActor
 struct TextRecognizerTests {
     /// A small receipt: item names on the left, prices on the right of the same line.
-    static func receipt() -> CGImage {
+    nonisolated static func receipt() -> CGImage {
         let width = 800, height = 400
         let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
                                 space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
@@ -32,7 +33,16 @@ struct TextRecognizerTests {
         return context.makeImage()!
     }
 
-    @Test func readsAReceiptLineByLine() async throws {
+    /// Whether Vision can read text on this machine. On GitHub's macOS runners (virtual
+    /// machines) it returns nothing, so the tests that need real OCR skip there.
+    nonisolated static let canRecognizeText: Bool = {
+        let request = VNRecognizeTextRequest()
+        try? VNImageRequestHandler(cgImage: receipt()).perform([request])
+        return !(request.results ?? []).isEmpty
+    }()
+
+    @Test(.enabled(if: canRecognizeText, "Needs Vision text recognition"))
+    func readsAReceiptLineByLine() async throws {
         let text = try #require(await TextRecognizer.text(in: ImageInput(Self.receipt(), label: "photo-1")))
         let lines = text.components(separatedBy: "\n")
         #expect(lines.count == 3)
@@ -46,7 +56,8 @@ struct TextRecognizerTests {
         #expect(await TextRecognizer.text(in: ImageInput(ChatModelTests.image(width: 200, height: 200), label: "blank")) == nil)
     }
 
-    @Test func theModelGetsTheTextOfAnAttachedPhoto() async throws {
+    @Test(.enabled(if: canRecognizeText, "Needs Vision text recognition"))
+    func theModelGetsTheTextOfAnAttachedPhoto() async throws {
         let onDevice = FakeProvider(route: .onDevice, reply: "ok")
         let session = RoutedSession(
             instructions: "Be brief.",
