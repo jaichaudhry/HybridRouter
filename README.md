@@ -9,7 +9,7 @@
 One shared conversation moves between them without losing history. Private messages never leave Apple's models, and every reply shows where it ran, why, and what it cost.
 
 <p align="center">
-  <img src="docs/gifs/hero.gif" width="300" alt="Trip Planner on an iPhone 17 Pro Max: a Kyoto itinerary is built on Apple Cloud (simulated) as day cards, Claude critiques the plan while offering to answer on-device instead, and a short rewrite runs on-device. Each reply has a route-colored edge, a badge with its route and why, and a line with its speed and cost. Claude's reply is sped up 1.5×.">
+  <img src="docs/gifs/hero.gif" width="300" alt="Trip Planner on an iPhone 17 Pro Max: a Kyoto itinerary is built on Apple Cloud (simulated) as day cards, Claude critiques the plan while offering to answer on-device instead, and a short rewrite runs on-device. Each reply has a route-colored edge, a badge with its route and why, and a line with its speed and cost; each route's badge is circled as it's chosen. Claude's reply is sped up 1.5×.">
   <br>
   <sub>iPhone 17 Pro Max · itinerary on Apple Cloud (simulated while the entitlement is pending) → critique on Claude → rewrite on-device. Waits are sped up.</sub>
 </p>
