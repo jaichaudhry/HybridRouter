@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		10C9144A233E4CA683C7D73F /* DocumentCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C6582CFB6A85333C8FA9E84 /* DocumentCards.swift */; };
 		14036354A649CE383BEBB1BE /* ChatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 26BB5A6C5BE7C9FEC71C1110 /* ChatUI */; };
+		31E817D090FB2CC071C90B6D /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 475BD9FCD8D78EDABF43EEA7 /* AppIcon.icon */; };
 		4ABC43073CB23616BF6A9641 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF2EF4049958BD1AF58338A /* AppModel.swift */; };
 		522962104E2B3019DAD7EBE3 /* Itinerary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20F77900120E6155D0FC4141 /* Itinerary.swift */; };
 		529DD3CECA47CE1207474B77 /* ItineraryCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21346C9E4202204A5B4C946C /* ItineraryCards.swift */; };
@@ -34,6 +35,7 @@
 		2A0B5D7416B9B563BDAC2D6E /* classifier_benchmark.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = classifier_benchmark.json; sourceTree = "<group>"; };
 		2D5D235154C4571E34593212 /* TripPlannerScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlannerScenario.swift; sourceTree = "<group>"; };
 		40D9B067395E4F3454748AD4 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		475BD9FCD8D78EDABF43EEA7 /* AppIcon.icon */ = {isa = PBXFileReference; path = AppIcon.icon; sourceTree = "<group>"; };
 		5C5A008662A9462F1B26DCD3 /* ChatUI */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ChatUI; path = Packages/ChatUI; sourceTree = SOURCE_ROOT; };
 		5C6582CFB6A85333C8FA9E84 /* DocumentCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentCards.swift; sourceTree = "<group>"; };
 		5EDA3B0B2C8A6931897A98E6 /* PlacesTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacesTool.swift; sourceTree = "<group>"; };
@@ -82,6 +84,7 @@
 			isa = PBXGroup;
 			children = (
 				E3D9E8BDCF8EEBF317AD45C7 /* AppConfig.swift */,
+				475BD9FCD8D78EDABF43EEA7 /* AppIcon.icon */,
 				DCF2EF4049958BD1AF58338A /* AppModel.swift */,
 				A3A2B3F2007FA3C54EF3F9DF /* ContentView.swift */,
 				F403000424EB9780533C886E /* HybridRouterApp.swift */,
@@ -234,6 +237,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				31E817D090FB2CC071C90B6D /* AppIcon.icon in Resources */,
 				E513A3FEF9215BCE00EC66E8 /* classifier_benchmark.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
