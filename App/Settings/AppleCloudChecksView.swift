@@ -120,6 +120,16 @@ final class AppleCloudChecks {
         step("Availability and quota") { checkAvailability(cloud) }
         step("Capabilities") { checkCapabilities(cloud) }
         await step("Context size") { await checkContextSize(cloud) }
+        // Without the entitlement, the first real request trips an assertion inside
+        // FoundationModels and crashes the app instead of throwing (confirmed on iOS 27.0.1:
+        // the three checks above pass, then "Simple reply" crashes). So only run requests in
+        // builds that have it.
+        guard app.isAppleCloudEnabled else {
+            for name in ["Simple reply", "Three-route hop", "Image + OCR", "Structured output"] {
+                add(name, .info, "Skipped: this build doesn't have the Private Cloud Compute entitlement. Without it, any request crashes the app inside FoundationModels.")
+            }
+            return
+        }
         await step("Simple reply") { await checkSimpleReply(cloud) }
         if Task.isCancelled { return }
         await step("Three-route hop") { await checkHop(app: app) }
