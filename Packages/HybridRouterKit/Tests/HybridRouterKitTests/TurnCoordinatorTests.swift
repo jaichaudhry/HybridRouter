@@ -39,6 +39,13 @@ struct TurnCoordinatorTests {
         #expect(outcome.failure == nil)
     }
 
+    @Test func askingForClaudeByNameGoesToClaude() async {
+        // The classifier would keep this short turn on-device.
+        let outcome = await coordinator(.always("simple")).run(.init(prompt: "hmm but claude can?"), in: session())
+        #expect(outcome.content == .text("claude"))
+        #expect(outcome.decision == RouteDecision(route: .claude, reason: "You asked for Claude", source: .rule))
+    }
+
     @Test func eventsReportTheRouteThenPartials() async {
         var events: [String] = []
         _ = await coordinator().run(.init(prompt: "Hi"), in: session()) { event in

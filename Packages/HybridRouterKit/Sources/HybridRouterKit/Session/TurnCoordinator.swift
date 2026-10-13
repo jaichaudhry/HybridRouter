@@ -206,7 +206,8 @@ public struct TurnCoordinator {
             hasImage: !request.images.isEmpty,
             visionRoutes: vision,
             followsUpOn: FollowUp.isBare(request.prompt) ? session.lastRoute : nil,
-            previousPrompt: session.lastPromptText
+            previousPrompt: session.lastPromptText,
+            namedRoute: RouteMention.named(in: request.prompt)
         )
     }
 }

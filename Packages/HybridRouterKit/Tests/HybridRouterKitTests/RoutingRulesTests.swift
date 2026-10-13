@@ -188,3 +188,57 @@ struct ComplexityMappingTests {
         #expect(ComplexityMapping.standard.route(for: "unknown") == nil)
     }
 }
+
+struct RouteMentionTests {
+    private static let allAvailable: [Route: ProviderAvailability] = [
+        .onDevice: .available, .appleCloud: .available, .claude: .available,
+    ]
+
+    @Test(arguments: [
+        ("hmm but claude can?", Route.claude),
+        ("Ask Claude to check this", .claude),
+        ("Can Apple Cloud do it instead?", .appleCloud),
+        ("Use Private Cloud Compute for this", .appleCloud),
+    ])
+    func findsANamedRoute(prompt: String, route: Route) {
+        #expect(RouteMention.named(in: prompt) == route)
+    }
+
+    @Test(arguments: [
+        "Give me three dinner ideas",
+        "Store the file on device",
+        "Is Claude better than Apple Cloud here?",
+        "Claudette is coming to dinner",
+    ])
+    func ignoresMessagesThatDontNameOneRoute(prompt: String) {
+        #expect(RouteMention.named(in: prompt) == nil)
+    }
+
+    @Test func namingARouteSendsTheTurnThere() {
+        let input = RoutingInput(availability: Self.allAvailable, namedRoute: .claude)
+        #expect(RoutingRules.evaluate(input) == .decided(RouteDecision(route: .claude, reason: "You asked for Claude", source: .rule)))
+    }
+
+    @Test func privacyWinsOverANamedRoute() {
+        let input = RoutingInput(privacyReason: "card number", availability: Self.allAvailable, namedRoute: .claude)
+        guard case .decided(let decision) = RoutingRules.evaluate(input) else {
+            Issue.record("expected a decision")
+            return
+        }
+        #expect(decision.route != .claude)
+        #expect(decision.reason.hasPrefix("Kept private"))
+    }
+
+    @Test func anUnavailableNamedRouteLeavesItToTheClassifier() {
+        var availability = Self.allAvailable
+        availability[.appleCloud] = .unavailable(reason: "Not enabled")
+        let input = RoutingInput(availability: availability, namedRoute: .appleCloud)
+        #expect(RoutingRules.evaluate(input) == .open(allowed: [.onDevice, .claude]))
+    }
+
+    @Test func eachRouteIsToldWhichModelItIs() {
+        #expect(RoutingProfile.routeNote(for: .onDevice).contains("This reply is from Apple's on-device model"))
+        #expect(RoutingProfile.routeNote(for: .claude).contains("This reply is from Claude"))
+        #expect(RoutingProfile.routeNote(for: .claude) == RoutingProfile.routeNote(for: .claude))
+    }
+}

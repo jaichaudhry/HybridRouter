@@ -57,7 +57,7 @@ The app has three scenarios, picked from the title bar. It opens in Chat, then r
 For each turn:
 
 1. **PrivacyGuard** checks the message on-device: the Private toggle, scanned documents, card numbers (Luhn-checked), ID numbers, phone numbers, emails, addresses and health terms.
-2. **Hard rules** settle the obvious cases, in order: your route override, privacy (never Claude), offline (on-device only), context fit (only models big enough for the conversation), images (a model that can see them), and bare follow-ups like "Why?" (stay with the model that answered).
+2. **Hard rules** settle the obvious cases, in order: your route override, privacy (never Claude), offline (on-device only), context fit (only models big enough for the conversation), images (a model that can see them), a model you name in the message ("ask Claude"), and bare follow-ups like "Why?" (stay with the model that answered). Each model is also told it shares the conversation with the other two, so it doesn't deny that Claude exists when you ask for it.
 3. **The on-device classifier** labels everything else as simple, moderate or complex, which maps to on-device, Apple Cloud or Claude. Each scenario can change the mapping, and each on-device model variant gets its own tuned instructions.
 4. **Escalation** retries a failed reply one route up: context too long, timeout, rate limit, decode failure, or an empty or cut-off reply. A private turn never escalates to Claude.
 

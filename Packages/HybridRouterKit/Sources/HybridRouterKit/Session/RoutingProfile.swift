@@ -21,7 +21,7 @@ struct RoutingProfile: LanguageModelSession.DynamicProfile {
     var body: some DynamicProfile {
         let activeTools = route == .claude ? tools : tools + appleOnlyTools
         Profile {
-            Instructions(instructions)
+            Instructions(instructions + "\n\n" + Self.routeNote(for: route))
             activeTools
         }
             .model(models[route])
@@ -31,6 +31,29 @@ struct RoutingProfile: LanguageModelSession.DynamicProfile {
                 // relying on when the framework re-evaluates this body.
                 HistoryPolicy.prepare(entries, for: privacy.route, privatePromptIDs: privacy.privatePromptIDs)
             }
+    }
+}
+
+extension RoutingProfile {
+    /// Tells each model it's one of several in this conversation. Without it, the on-device
+    /// model answered "but Claude can?" with "I am a foundation model developed by Apple — I
+    /// cannot be Claude." The note only changes with the route, so Claude's prompt cache holds.
+    static func routeNote(for route: Route) -> String {
+        """
+        This conversation is shared by three models: Apple's on-device model, Apple Private Cloud Compute and Claude. \
+        Earlier replies may have come from a different one. This reply is from \(route.modelDescription). \
+        If the user wants a different model, tell them they can ask for it by name.
+        """
+    }
+}
+
+private extension Route {
+    var modelDescription: String {
+        switch self {
+        case .onDevice: "Apple's on-device model"
+        case .appleCloud: "Apple Private Cloud Compute"
+        case .claude: "Claude"
+        }
     }
 }
 

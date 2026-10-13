@@ -21,6 +21,8 @@ public struct RoutingInput: Equatable, Sendable {
     public var followsUpOn: Route?
     /// The previous user message, shown to the classifier for short turns.
     public var previousPrompt: String?
+    /// A route the user named in the message ("ask Claude"). See ``RouteMention``.
+    public var namedRoute: Route?
 
     public init(
         override: Route? = nil,
@@ -32,7 +34,8 @@ public struct RoutingInput: Equatable, Sendable {
         hasImage: Bool = false,
         visionRoutes: Set<Route> = [],
         followsUpOn: Route? = nil,
-        previousPrompt: String? = nil
+        previousPrompt: String? = nil,
+        namedRoute: Route? = nil
     ) {
         self.override = override
         self.privacyReason = privacyReason
@@ -44,6 +47,7 @@ public struct RoutingInput: Equatable, Sendable {
         self.visionRoutes = visionRoutes
         self.followsUpOn = followsUpOn
         self.previousPrompt = previousPrompt
+        self.namedRoute = namedRoute
     }
 
     public var isPrivate: Bool { privacyReason != nil }
@@ -66,6 +70,21 @@ public enum FollowUp {
         return trimmed.hasSuffix("?")
             && (1...2).contains(words.count)
             && trimmed.contains(where: \.isLetter)
+    }
+}
+
+/// Finds a route the user asked for by name, such as "ask Claude" or "but Claude can?".
+/// Only Claude and Apple Cloud count: "on device" turns up in ordinary questions ("store it
+/// on device"), and On-device is where most turns go anyway.
+public enum RouteMention {
+    /// The single route named in the message, or nil if none or both are named.
+    public static func named(in prompt: String) -> Route? {
+        let names: [(Route, String)] = [
+            (.claude, #"\bclaude\b"#),
+            (.appleCloud, #"\b(apple cloud|private cloud compute)\b"#),
+        ]
+        let named = names.filter { prompt.range(of: $0.1, options: [.regularExpression, .caseInsensitive]) != nil }
+        return named.count == 1 ? named[0].0 : nil
     }
 }
 
@@ -131,6 +150,11 @@ public enum RoutingRules {
         }
         if !input.isOnline {
             return .decided(RouteDecision(route: .onDevice, reason: "Offline", source: .rule))
+        }
+        // The user asked for a model by name. Privacy, availability and context size were
+        // checked above, so a private turn that names Claude has already stayed off it.
+        if let named = input.namedRoute, fitting.contains(named) {
+            return .decided(RouteDecision(route: named, reason: "You asked for \(named.displayName)", source: .rule))
         }
         // A bare follow-up ("Why?") stays with the model that gave the previous reply.
         if let previous = input.followsUpOn, fitting.contains(previous) {
