@@ -8,9 +8,20 @@ import HybridRouterKit
 @MainActor
 @Observable
 final class AppModel {
-    let scenarios: [any Scenario] = [TripPlannerScenario(), DocumentHelperScenario(), GeneralScenario()]
-    var selectedScenarioID = TripPlannerScenario().id {
-        didSet { chat.prewarm() }
+    /// Chat first: it's the everyday mode, and its sample prompts still show all three routes.
+    let scenarios: [any Scenario] = [GeneralScenario(), TripPlannerScenario(), DocumentHelperScenario()]
+    /// Opens in Chat the first time, then wherever the user was last.
+    var selectedScenarioID = AppModel.storedScenarioID {
+        didSet {
+            UserDefaults.standard.set(selectedScenarioID, forKey: Self.scenarioKey)
+            chat.prewarm()
+        }
+    }
+
+    private static let scenarioKey = "HRSelectedScenario"
+
+    private static var storedScenarioID: String {
+        UserDefaults.standard.string(forKey: scenarioKey) ?? GeneralScenario().id
     }
 
     private(set) var claudeAuth: ClaudeAuth

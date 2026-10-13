@@ -32,17 +32,19 @@ One shared conversation moves between them without losing history. Private messa
 
 ## Tour
 
-The app has three scenarios, picked from the title bar. Sample prompts appear as chips above the composer.
+The app has three scenarios, picked from the title bar. It opens in Chat, then reopens wherever you were last. Sample prompts appear as chips above the composer.
 
 | Scenario | Try | Where it goes |
 |---|---|---|
+| **Chat** | "Give me three dinner ideas" | On-device |
+| | "Explain how vaccines work in two paragraphs" | Apple Cloud (Claude when Apple Cloud isn't available) |
+| | "Which is better for a beginner, Swift or Kotlin, and why?" | Claude |
 | **Trip Planner** | "Give me 5 weekend trip ideas from Seattle" | On-device (or Apple Cloud on newer iPhones) |
 | | "Make a 3-day Kyoto itinerary for a family with two kids" | Apple Cloud, rendered as day cards |
 | | "Is this plan realistic with jet lag and a 4-year-old? What would you cut?" | Claude |
 | | "Rewrite day 2 as a short text to my partner" | On-device |
 | **Document Helper** | Scan a receipt, then "Extract the total and merchant" | On-device, kept private, rendered as a receipt card |
 | | Import a contract, then "Summarize the key risks" | Claude, or Apple Cloud if it's private |
-| **Chat** | Anything | Wherever the router decides |
 
 - **The composer** has a "+" menu for attachments (photos, the document scanner, text or PDF files) and the route (Auto, On-device, Apple Cloud, Claude), and a Private lock in the message field.
 - **Compare mode** (toolbar) runs one prompt on all three routes side by side, with each route's speed and cost.
