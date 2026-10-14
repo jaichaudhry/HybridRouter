@@ -248,7 +248,7 @@ Either:
 
 ### Using Muse Wonder instead
 
-Create a key at [dev.meta.ai](https://dev.meta.ai/api-keys) (Standard mode, so your prompts aren't used for training). Then either paste it in Settings › Muse Wonder, or set `META_API_KEY` in `Config/Secrets.xcconfig` for Debug builds, and pick **Muse Wonder** under Settings › Cloud model. Replies are labelled with the model that wrote them, so a conversation can switch back and forth. Meta has no App Attest equivalent, so for other people's devices each user brings their own key.
+Create a key at [dev.meta.ai](https://dev.meta.ai/api-keys) (Standard mode, so your prompts aren't used for training). Then either paste it in Settings › Muse Wonder, or set `META_API_KEY` in `Config/Secrets.xcconfig` for Debug builds, and pick **Muse Wonder** under Settings › Cloud model. Replies are labelled with the model that wrote them, so a conversation can switch back and forth. Expect slower replies than Claude: Muse reasons before answering and its reply arrives all at once, a median 9.3 s to the first word against 2.2 s for Sonnet (see [Quality vs cost](#quality-vs-cost)). Meta has no App Attest equivalent, so for other people's devices each user brings their own key.
 
 ### Shipping with App Attest
 

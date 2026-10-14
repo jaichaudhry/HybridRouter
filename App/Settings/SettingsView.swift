@@ -81,7 +81,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Muse Wonder")
                 } footer: {
-                    Text("Meta's model, with your own key from dev.meta.ai. It's stored in this device's Keychain and sent only to Meta.")
+                    Text("Meta's model, with your own key from dev.meta.ai. Replies are slower than Claude's: it reasons first and sends the whole reply at once, often 10 seconds or more. Your key is stored in this device's Keychain and sent only to Meta.")
                 }
 
                 Section {
