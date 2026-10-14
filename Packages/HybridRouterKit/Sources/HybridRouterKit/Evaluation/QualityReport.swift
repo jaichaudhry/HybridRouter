@@ -9,6 +9,7 @@ public struct QualityReport: Sendable {
         case alwaysOnDevice
         case alwaysClaude
         case alwaysClaudeDeep
+        case alwaysMuseWonder
         /// The router's route mix, assigned at random: computed as an exact expectation.
         case randomSameMix
         /// The cheapest route whose answer passed: the best any router could do.
@@ -20,6 +21,7 @@ public struct QualityReport: Sendable {
             case .alwaysOnDevice: "Always on-device"
             case .alwaysClaude: "Always Claude Sonnet"
             case .alwaysClaudeDeep: "Always Claude Opus"
+            case .alwaysMuseWonder: "Always Muse Wonder"
             case .randomSameMix: "Random, same mix"
             case .oracle: "Oracle (cheapest good-enough)"
             }
@@ -95,7 +97,7 @@ public struct QualityReport: Sendable {
                 passRate: Double(picks.filter { $0.0.passes($0.1) }.count) / n,
                 meanScore: Double(picks.map { $0.0.score($0.1) }.reduce(0, +)) / n,
                 costPer100: picks.map { $0.0.answer($0.1)?.cost ?? 0 }.reduce(0, +) / n * 100,
-                claudeShare: Double(picks.filter { $0.1.route == .claude }.count) / n
+                claudeShare: Double(picks.filter { [.claude, .claudeDeep].contains($0.1) }.count) / n
             )
         }
 
@@ -105,6 +107,7 @@ public struct QualityReport: Sendable {
         if rungs.contains(.onDevice), let value = evaluate(.alwaysOnDevice, pick: { _ in .onDevice }) { results.append(value) }
         if rungs.contains(.claude), let value = evaluate(.alwaysClaude, pick: { _ in .claude }) { results.append(value) }
         if run.columns.contains(.claudeDeep), let value = evaluate(.alwaysClaudeDeep, pick: { _ in .claudeDeep }) { results.append(value) }
+        if run.columns.contains(.museWonder), let value = evaluate(.alwaysMuseWonder, pick: { _ in .museWonder }) { results.append(value) }
         if let random = Self.randomSameMix(cases: cases, rungs: rungs, routerColumn: routerColumn) { results.append(random) }
         if let value = evaluate(.oracle, pick: oracle) { results.append(value) }
         strategies = results

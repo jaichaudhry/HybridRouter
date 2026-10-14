@@ -128,6 +128,7 @@ struct QualityBenchmarkRunnerTests {
         judge: any AnswerJudge = FakeAnswerJudge.passing(containing: "claude"),
         classifier: FakeClassifier = .always("simple"),
         claudeAvailability: ProviderAvailability = .available,
+        museAvailability: ProviderAvailability = .unavailable(reason: "Muse Wonder not configured"),
         spendCap: Double = 100,
         checkpoint: URL? = nil
     ) -> QualityBenchmarkRunner {
@@ -136,8 +137,13 @@ struct QualityBenchmarkRunnerTests {
             makeSession: { column in
                 var appleCloud = FakeProvider(route: .appleCloud, reply: "cloud answer")
                 appleCloud.isSimulated = true
-                var claude = FakeProvider(route: .claude, reply: column == .claudeDeep ? "claude deep answer" : "claude answer")
-                claude.availability = claudeAvailability
+                let reply = switch column {
+                case .claudeDeep: "claude deep answer"
+                case .museWonder: "muse answer"
+                default: "claude answer"
+                }
+                var claude = FakeProvider(route: .claude, reply: reply)
+                claude.availability = column == .museWonder ? museAvailability : claudeAvailability
                 return RoutedSession(
                     instructions: "Be brief.",
                     onDevice: FakeProvider(route: .onDevice, reply: "device answer"),
@@ -164,6 +170,44 @@ struct QualityBenchmarkRunnerTests {
         #expect(!first.passes(.onDevice))
         #expect(first.routerRoute == .onDevice)
         #expect(result.spent > 0)
+    }
+
+    @Test func addsAColumnWithoutReansweringTheOthers() async throws {
+        let original = await runner().run(cases(2))
+        #expect(original.unmeasured["museWonder"] == "Muse Wonder not configured")
+
+        let judge = FakeAnswerJudge.passing(containing: "muse")
+        let extended = await runner(judge: judge, museAvailability: .available).addColumn(.museWonder, to: original)
+        #expect(extended.columns == [.onDevice, .claude, .claudeDeep, .museWonder])
+        #expect(extended.unmeasured["museWonder"] == nil)
+        #expect(judge.judged == ["muse answer", "muse answer"])
+        #expect(extended.cases.map(\.id) == [1, 2])
+        let first = try #require(extended.cases.first)
+        #expect(first.answers.count == 4)
+        #expect(first.passes(.museWonder))
+        #expect(first.answer(.claude)?.text == "claude answer")
+
+        let muse = try #require(QualityReport(extended).result(for: .alwaysMuseWonder))
+        #expect(muse.passRate == 1)
+        #expect(muse.claudeShare == 0)
+        // The router and the oracle still choose among the routing rungs only.
+        #expect(QualityReport(extended).result(for: .oracle) == QualityReport(original).result(for: .oracle))
+    }
+
+    @Test func addingAColumnResumesFromACheckpoint() async throws {
+        let checkpoint = FileManager.default.temporaryDirectory.appendingPathComponent("quality-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: checkpoint) }
+        let original = await runner().run(cases(3))
+        // Stop after the first prompt by capping spend at one prompt's worth.
+        let first = await runner(judge: FakeAnswerJudge.passing(containing: "muse", cost: 0.01), museAvailability: .available,
+                                 spendCap: 0.015, checkpoint: checkpoint).addColumn(.museWonder, to: original, concurrency: 1)
+        #expect(first.stoppedAtSpendCap)
+        #expect(first.cases.filter { $0.answer(.museWonder) != nil }.count == 1)
+
+        let judge = FakeAnswerJudge.passing(containing: "muse")
+        let resumed = await runner(judge: judge, museAvailability: .available, checkpoint: checkpoint).addColumn(.museWonder, to: original)
+        #expect(judge.judged.count == 2)
+        #expect(resumed.cases.allSatisfy { $0.answer(.museWonder) != nil })
     }
 
     @Test func simulatedAppleCloudIsNotMeasured() async {

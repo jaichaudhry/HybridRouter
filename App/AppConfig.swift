@@ -7,6 +7,8 @@ struct AppConfig {
     let isAppleCloudEnabled: Bool
     let claudeClientID: String?
     let developerKey: String?
+    /// A Meta Model API key for Muse Wonder, for Debug builds only.
+    let metaDeveloperKey: String?
 
     static func load(bundle: Bundle = .main) -> AppConfig {
         func value(_ key: String) -> String? {
@@ -17,8 +19,18 @@ struct AppConfig {
             claudeClientID: value("HRClaudeClientID"),
             // Only from the gitignored Secrets.xcconfig. The shared scheme is committed, so keys
             // must never go in its environment variables.
-            developerKey: value("HRDeveloperAnthropicKey")
+            developerKey: value("HRDeveloperAnthropicKey"),
+            metaDeveloperKey: value("HRDeveloperMetaKey")
         )
+    }
+
+    /// The Meta developer key, if this build may use one. Like the Anthropic key, never in Release.
+    var allowedMetaDeveloperKey: String? {
+        #if DEBUG
+        metaDeveloperKey
+        #else
+        nil
+        #endif
     }
 
     /// - Parameter skipAppAttest: true after App Attest failed, so a key can be used instead.

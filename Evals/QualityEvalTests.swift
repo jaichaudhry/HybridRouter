@@ -24,17 +24,24 @@ import Testing
 struct QualityEvalTests {
     nonisolated static let environment = ProcessInfo.processInfo.environment
     /// From ANTHROPIC_API_KEY, or else the gitignored Config/Secrets.xcconfig the app uses.
-    nonisolated static let apiKey: String? = {
-        if let key = environment["ANTHROPIC_API_KEY"], !key.isEmpty { return key }
+    nonisolated static let apiKey = secret("ANTHROPIC_API_KEY")
+    /// Meta's Model API key, for the Muse Wonder column. Same lookup as `apiKey`.
+    nonisolated static let metaKey = secret("META_API_KEY")
+
+    /// A key from the environment, or else from Config/Secrets.xcconfig. Never printed.
+    nonisolated static func secret(_ name: String) -> String? {
+        if let key = environment[name], !key.isEmpty { return key }
         let secrets = URL(filePath: #filePath).deletingLastPathComponent()
             .appending(path: "../Config/Secrets.xcconfig").standardized
         guard let text = try? String(contentsOf: secrets, encoding: .utf8) else { return nil }
-        for line in text.split(separator: "\n") where line.hasPrefix("ANTHROPIC_API_KEY") {
-            let value = line.split(separator: "=", maxSplits: 1).last?.trimmingCharacters(in: .whitespaces) ?? ""
-            if !value.isEmpty { return value }
+        for line in text.split(separator: "\n") where line.trimmingCharacters(in: .whitespaces).hasPrefix(name) {
+            let parts = line.split(separator: "=", maxSplits: 1)
+            guard parts.first?.trimmingCharacters(in: .whitespaces) == name else { continue }
+            let value = parts.last?.trimmingCharacters(in: .whitespaces) ?? ""
+            if parts.count == 2, !value.isEmpty { return value }
         }
         return nil
-    }()
+    }
     nonisolated static let isRequested = environment["HR_RUN_QUALITY_EVAL"] == "1"
 
     static let resultsDirectory = URL(filePath: #filePath).deletingLastPathComponent().appending(path: "results")
@@ -44,6 +51,47 @@ struct QualityEvalTests {
         let all = try QualityBenchmark.load(Data(contentsOf: url))
         guard let limit = environment["HR_QUALITY_LIMIT"].flatMap(Int.init) else { return all }
         return Array(all.prefix(limit))
+    }
+
+    static func claudeAuth() -> ClaudeAuth {
+        ClaudeAuthSource.resolve(
+            environment: ClaudeAuthEnvironment(
+                clientID: nil, isPhysicalDevice: false, isAppAttestSupported: false,
+                developerKey: apiKey, allowsDeveloperKey: true
+            ),
+            userKey: nil
+        )
+    }
+
+    /// A session whose cloud slot serves the column's model: Sonnet, Opus, or Muse Wonder (which
+    /// is measured only when a Meta key is set).
+    static func session(for column: QualityBenchmark.Column) -> RoutedSession {
+        let cloud: any ModelProvider = switch column {
+        case .claudeDeep: ClaudeProvider(auth: claudeAuth(), tier: .deep)
+        case .museWonder: MuseProvider(apiKey: metaKey)
+        default: ClaudeProvider(auth: claudeAuth(), tier: .standard)
+        }
+        return RoutedSession(
+            instructions: QualityBenchmark.answerInstructions,
+            onDevice: OnDeviceProvider(),
+            // No Private Cloud Compute entitlement on a Mac, so Apple Cloud isn't measured.
+            appleCloud: AppleCloudProvider(isEnabled: false),
+            claude: cloud,
+            costTable: (try? CostTable.bundled()) ?? CostTable(updated: "", source: "", models: [:])
+        )
+    }
+
+    /// Claude Opus as the judge, for every column.
+    static func judge() throws -> ModelAnswerJudge {
+        let costTable = try CostTable.bundled()
+        let auth = claudeAuth()
+        return ModelAnswerJudge {
+            RoutedSession(
+                instructions: ModelAnswerJudge.instructionsForSession,
+                onDevice: OnDeviceProvider(), appleCloud: AppleCloudProvider(isEnabled: false),
+                claude: ClaudeProvider(auth: auth, tier: .deep), costTable: costTable
+            )
+        }
     }
 
     @Test func benchmarkIsWellFormed() throws {
@@ -58,38 +106,13 @@ struct QualityEvalTests {
     @Test(.enabled(if: isRequested && apiKey != nil && SystemLanguageModel.default.isAvailable,
                    "Set HR_RUN_QUALITY_EVAL=1 and a Claude key (ANTHROPIC_API_KEY or Config/Secrets.xcconfig); needs the on-device model"))
     func answerQuality() async throws {
-        let auth = ClaudeAuthSource.resolve(
-            environment: ClaudeAuthEnvironment(
-                clientID: nil, isPhysicalDevice: false, isAppAttestSupported: false,
-                developerKey: Self.apiKey, allowsDeveloperKey: true
-            ),
-            userKey: nil
-        )
-        let costTable = try CostTable.bundled()
-        func session(claudeTier: ClaudeProvider.Tier) -> RoutedSession {
-            RoutedSession(
-                instructions: QualityBenchmark.answerInstructions,
-                onDevice: OnDeviceProvider(),
-                // No Private Cloud Compute entitlement on a Mac, so Apple Cloud isn't measured.
-                appleCloud: AppleCloudProvider(isEnabled: false),
-                claude: ClaudeProvider(auth: auth, tier: claudeTier),
-                costTable: costTable
-            )
-        }
-        let judgeSession: @MainActor () -> RoutedSession = {
-            RoutedSession(
-                instructions: ModelAnswerJudge.instructionsForSession,
-                onDevice: OnDeviceProvider(), appleCloud: AppleCloudProvider(isEnabled: false),
-                claude: ClaudeProvider(auth: auth, tier: .deep), costTable: costTable
-            )
-        }
         let classifier = OnDeviceClassifier()
         let spendCap = Self.environment["HR_QUALITY_SPEND_CAP"].flatMap(Double.init) ?? 15
         try FileManager.default.createDirectory(at: Self.resultsDirectory, withIntermediateDirectories: true)
 
         let runner = QualityBenchmarkRunner(
-            makeSession: { column in session(claudeTier: column == .claudeDeep ? .deep : .standard) },
-            judge: ModelAnswerJudge(makeSession: judgeSession),
+            makeSession: Self.session(for:),
+            judge: try Self.judge(),
             classifier: classifier,
             spendCap: spendCap,
             checkpoint: Self.resultsDirectory.appending(path: "checkpoint-mac.json"),
@@ -116,6 +139,51 @@ struct QualityEvalTests {
 
         #expect(result.spent <= spendCap)
         #expect(!result.cases.isEmpty)
+    }
+
+    /// Adds a Muse Wonder column to a saved run: each prompt answered by Meta's Muse Wonder and
+    /// graded by the same Claude Opus judge, leaving the other columns as they were. Writes
+    /// `<run>-muse.json` and `.md` next to the input. Progress is saved after every prompt.
+    ///
+    ///     HR_RUN_MUSE_EVAL=1 HR_QUALITY_RESULTS=Evals/results/2026-10-14-iphone-quality.json \
+    ///         swift test --package-path Evals --filter museWonderColumn
+    @Test(.enabled(if: environment["HR_RUN_MUSE_EVAL"] == "1" && environment["HR_QUALITY_RESULTS"] != nil
+                   && apiKey != nil && metaKey != nil,
+                   "Set HR_RUN_MUSE_EVAL=1, HR_QUALITY_RESULTS, and Claude and Meta keys"))
+    func museWonderColumn() async throws {
+        let repo = URL(filePath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+        let path = try #require(Self.environment["HR_QUALITY_RESULTS"])
+        let input = path.hasPrefix("/") ? URL(filePath: path) : repo.appending(path: path)
+        let run = try QualityBenchmark.RunResult.load(Data(contentsOf: input))
+        let spendCap = Self.environment["HR_QUALITY_SPEND_CAP"].flatMap(Double.init) ?? 10
+
+        let runner = QualityBenchmarkRunner(
+            makeSession: Self.session(for:),
+            judge: try Self.judge(),
+            classifier: OnDeviceClassifier(),
+            spendCap: spendCap,
+            checkpoint: Self.resultsDirectory.appending(path: "checkpoint-muse.json"),
+            device: run.device, classifierName: run.classifier, judgeModelID: run.judgeModelID
+        )
+        let result = await runner.addColumn(.museWonder, to: run) { progress in
+            if let current = progress.current {
+                print("MUSE \(progress.done + 1)/\(progress.total) $\(String(format: "%.2f", progress.spent)) \(current.prefix(60))")
+            }
+        }
+
+        let base = input.deletingPathExtension().deletingLastPathComponent()
+            .appending(path: input.deletingPathExtension().lastPathComponent + "-muse")
+        try result.encoded().write(to: base.appendingPathExtension("json"))
+        let markdown = [
+            "# Answer quality on \(result.device), with Muse Wonder (\(result.cases.count) prompts, $\(String(format: "%.2f", result.spent)) in all)",
+            QualityReport(result, split: "heldout").markdown(title: "Held-out"),
+            QualityReport(result, split: "tuning").markdown(title: "Tuning"),
+        ].joined(separator: "\n\n")
+        try markdown.write(to: base.appendingPathExtension("md"), atomically: true, encoding: .utf8)
+        print(markdown)
+
+        let failures = result.cases.compactMap { $0.answer(.museWonder)?.failure }
+        #expect(failures.isEmpty, "Muse Wonder failed on \(failures.count) prompts: \(Set(failures))")
     }
 
     /// Re-reports a saved run without calling any model: writes its Markdown summary next to it

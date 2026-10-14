@@ -20,6 +20,8 @@ One shared conversation moves between them without losing history. Private messa
 | Apple Cloud | Apple Private Cloud Compute | Longer context, multi-step plans |
 | Claude | Claude Sonnet 5.5 / Opus 5.5 via [`ClaudeForFoundationModels`](https://github.com/anthropics/ClaudeForFoundationModels) | Judgment calls, trade-offs, code |
 
+The cloud route can be served by Meta's **Muse Wonder** instead of Claude (Settings › Cloud model). It uses the same bridge, pointed at Meta's Anthropic-compatible endpoint, and the same routing and privacy rules.
+
 ## What this demonstrates
 
 - **Three model providers behind one conversation.** All three implement Apple's `LanguageModel` protocol, so a single `LanguageModelSession` with a Dynamic Profile switches models per turn and keeps one transcript.
@@ -74,10 +76,10 @@ Each badge says why its reply went where it did ("Multi-step planning", "Kept pr
 
 ### Quality vs cost
 
-Does routing keep answers good while spending less? On an iPhone 17 Pro Max, each of 150 held-out prompts (chat, trip planning and pasted documents, none used while tuning the router) was answered on-device, by Claude Sonnet and by Claude Opus. Claude Opus 5.5 graded every answer, without knowing which model wrote it, as good enough or not. Each strategy is then scored on the answers it would have given:
+Does routing keep answers good while spending less? On an iPhone 17 Pro Max, each of 150 held-out prompts (chat, trip planning and pasted documents, none used while tuning the router) was answered on-device, by Claude Sonnet, by Claude Opus and by Meta's Muse Wonder. Claude Opus 5.5 graded every answer, without knowing which model wrote it, as good enough or not. Each strategy is then scored on the answers it would have given:
 
 <p align="center">
-  <img src="docs/quality-pareto.svg" width="760" alt="Scatter of answers judged good enough against cost per 100 prompts. Always on-device: 62% at $0. Random routing with the router's mix: 84% at $0.45. HybridRouter: 91% at $0.61. Always Sonnet: 97% at $0.71. Always Opus: 100% at $1.51. Perfect routing: 99% at $0.42.">
+  <img src="docs/quality-pareto.svg" width="760" alt="Scatter of answers judged good enough against cost per 100 prompts. Always on-device: 62% at $0. Random routing with the router's mix: 84% at $0.45. HybridRouter: 91% at $0.61. Always Sonnet: 97% at $0.71. Always Opus: 100% at $1.51. Always Muse Wonder: 98% at $1.88. Perfect routing: 99% at $0.42.">
 </p>
 
 | Strategy | Answers good enough | Cost per 100 prompts | Sent to Claude |
@@ -86,18 +88,20 @@ Does routing keep answers good while spending less? On an iPhone 17 Pro Max, eac
 | Always on-device | 62% | $0 | 0% |
 | Always Claude Sonnet | 97% | $0.71 | 100% |
 | Always Claude Opus (reference) | 100% | $1.51 | 100% |
+| Always Muse Wonder (Meta) | 98% | $1.88 | 0% |
 | Random, same mix as the router | 84% | $0.45 | 63% |
 | Perfect routing (cheapest route that passed) | 99% | $0.42 | 38% |
 
 - **The router beats chance.** It closes 83% of the quality gap between always-on-device and always-Claude, 7 points above random routing with the same share of Claude.
 - **It doesn't yet save much against Sonnet alone:** 14% cheaper for 6 points less. Perfect routing would keep 99% for 41% less, so there's headroom.
 - **Against always-Opus it's 60% cheaper, but mostly because Sonnet costs half as much.** With Opus as the router's Claude tier (the same routing decisions, scored on the Opus answers), it would pass 93% at $1.28 per 100 prompts: 15% cheaper than always-Opus. So routing itself saves about 15% whichever Claude sits on top, and perfect routing would save 42% with Opus at no loss in quality.
+- **Muse Wonder matches the top tier but costs the most and answers slowest.** It passed 98%, between Sonnet and Opus, and got 4 prompts right that Sonnet missed. But it reasons at length before answering, so it costs more than Opus at the same list price ($1.88 per 100 prompts, 27% more output) and took a median 9.3 s to the first word, against 2.2 s for Sonnet; Meta's Anthropic-compatible endpoint sends the whole reply at once. With Muse as the router's cloud tier, the router would pass 92% at $1.51 per 100 prompts.
 - **Most of the gap is over-routing.** 48 of the 150 prompts went to Claude when the on-device answer was already good enough, mostly summaries, rewrites, explainers and short code.
 - **The 9 quality misses are mostly prompts that look easy but aren't** for a small model: counting letters, date arithmetic, time zones, word counts and scaling a recipe.
 
 **Checking the judge.** A model grading models can be wrong or favor its own answers, so 40 verdicts, mixed across routes and passes and fails, were hand-checked blind to which model wrote each answer. The checker agreed on 35 and disagreed on 1, a borderline time-zone answer the judge failed as misleading: 97% of the calls they took a side on, or 88% counting the 4 they weren't sure about.
 
-Caveats: Apple Cloud isn't in this run, because the Private Cloud Compute entitlement is pending, so its turns went to Claude as in the shipped app. Costs are API list prices for answers only; the run cost $8.52 in total, judging included. Full answers, verdicts and every misrouted prompt are in [`Evals/results/`](Evals/results/2026-10-14-iphone-quality.md).
+Caveats: Apple Cloud isn't in this run, because the Private Cloud Compute entitlement is pending, so its turns went to Claude as in the shipped app. Muse Wonder was added afterwards from a Mac (its answers don't depend on the device) and graded by the same judge; the hand check above predates it, and a Claude judge may favor Claude-style answers. Its first pass exposed an app bug: told it was one of three models, Muse signed replies "I'm Muse Wonder", which the judge failed as an invented identity. The note now says to mention the model only when asked, and Muse was re-run; the other models had almost never repeated it (Sonnet once in 175 answers, Opus never), so they weren't. Costs are API list prices for answers only; the runs reported here cost $13.46 in total, judging included. Full answers, verdicts and every misrouted prompt are in [`Evals/results/`](Evals/results/2026-10-14-iphone-quality-muse.md).
 
 ### Routing accuracy
 
@@ -241,6 +245,10 @@ Either:
 
 - **In the app:** open Settings and paste an Anthropic API key. It's stored in the device's Keychain.
 - **For development:** set `ANTHROPIC_API_KEY` in `Config/Secrets.xcconfig`, which is gitignored. Debug builds only; Release builds ignore it. Don't put keys in the scheme's environment variables: the scheme is shared and committed.
+
+### Using Muse Wonder instead
+
+Create a key at [dev.meta.ai](https://dev.meta.ai/api-keys) (Standard mode, so your prompts aren't used for training). Then either paste it in Settings › Muse Wonder, or set `META_API_KEY` in `Config/Secrets.xcconfig` for Debug builds, and pick **Muse Wonder** under Settings › Cloud model. Replies are labelled with the model that wrote them, so a conversation can switch back and forth. Meta has no App Attest equivalent, so for other people's devices each user brings their own key.
 
 ### Shipping with App Attest
 

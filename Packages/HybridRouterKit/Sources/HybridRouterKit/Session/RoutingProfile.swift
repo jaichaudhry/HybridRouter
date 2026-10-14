@@ -21,7 +21,7 @@ struct RoutingProfile: LanguageModelSession.DynamicProfile {
     var body: some DynamicProfile {
         let activeTools = route == .claude ? tools : tools + appleOnlyTools
         Profile {
-            Instructions(instructions + "\n\n" + Self.routeNote(for: route))
+            Instructions(instructions + "\n\n" + Self.routeNote(for: route, cloud: models.cloud))
             activeTools
         }
             .model(models[route])
@@ -37,22 +37,25 @@ struct RoutingProfile: LanguageModelSession.DynamicProfile {
 extension RoutingProfile {
     /// Tells each model it's one of several in this conversation. Without it, the on-device
     /// model answered "but Claude can?" with "I am a foundation model developed by Apple — I
-    /// cannot be Claude." The note only changes with the route, so Claude's prompt cache holds.
-    static func routeNote(for route: Route) -> String {
+    /// cannot be Claude." Muse Wonder took the note as something to say, signing replies "I'm Muse
+    /// Wonder", so it's only for when the user asks. It only changes with the route, so Claude's
+    /// prompt cache holds.
+    static func routeNote(for route: Route, cloud: CloudModel = .claude) -> String {
         """
-        This conversation is shared by three models: Apple's on-device model, Apple Private Cloud Compute and Claude. \
-        Earlier replies may have come from a different one. This reply is from \(route.modelDescription). \
-        If the user wants a different model, tell them they can ask for it by name.
+        This conversation is shared by three models: Apple's on-device model, Apple Private Cloud Compute and \(cloud.displayName). \
+        Earlier replies may have come from a different one. This reply is from \(route.modelDescription(cloud: cloud)). \
+        Don't mention this unless the user asks which model is answering or wants a different one; \
+        then tell them they can ask for a model by name.
         """
     }
 }
 
 private extension Route {
-    var modelDescription: String {
+    func modelDescription(cloud: CloudModel) -> String {
         switch self {
         case .onDevice: "Apple's on-device model"
         case .appleCloud: "Apple Private Cloud Compute"
-        case .claude: "Claude"
+        case .claude: cloud.displayName
         }
     }
 }
@@ -63,8 +66,11 @@ struct RouteModels: Sendable {
     private let appleCloud: any LanguageModel
     private let claude: any LanguageModel
     private let responseLimits: [Route: Int]
+    /// Which model serves the cloud route.
+    let cloud: CloudModel
 
     init(onDevice: any ModelProvider, appleCloud: any ModelProvider, claude: any ModelProvider) {
+        self.cloud = CloudModel(modelID: claude.modelID) ?? .claude
         self.onDevice = onDevice.model
         self.appleCloud = appleCloud.model
         self.claude = claude.model

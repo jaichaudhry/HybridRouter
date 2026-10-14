@@ -51,6 +51,7 @@ public struct RouterAurora: View {
 
 /// The empty chat: what the app does, over the router aurora.
 struct EmptyChatState: View {
+    @Environment(\.routeLabels) private var labels
     var body: some View {
         ZStack {
             RouterAurora()
@@ -66,7 +67,7 @@ struct EmptyChatState: View {
                     .multilineTextAlignment(.center)
                 HStack(spacing: 6) {
                     ForEach(Route.allCases, id: \.self) { route in
-                        Label(route.displayName, systemImage: route.symbolName)
+                        Label(labels.name(route), systemImage: labels.symbol(route))
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(route.ink)
                             .padding(.horizontal, 9)

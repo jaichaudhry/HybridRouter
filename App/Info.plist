@@ -26,8 +26,10 @@
 	<string>$(CLAUDE_CLIENT_ID)</string>
 	<key>HRDeveloperAnthropicKey</key>
 	<string>$(ANTHROPIC_API_KEY)</string>
+	<key>HRDeveloperMetaKey</key>
+	<string>$(META_API_KEY)</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Scan receipts and documents. Scans stay on your device or Apple's Private Cloud Compute and are never sent to Claude.</string>
+	<string>Scan receipts and documents. Scans stay on your device or Apple's Private Cloud Compute and are never sent to Claude or Muse Wonder.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

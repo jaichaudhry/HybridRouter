@@ -16,6 +16,7 @@ struct Composer: View {
     @State private var showsScanner = false
     @State private var attachError: String?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.routeLabels) private var labels
 
     var body: some View {
         VStack(spacing: 6) {
@@ -133,11 +134,11 @@ struct Composer: View {
                 Picker(selection: $model.routeOverride) {
                     Label("Auto", systemImage: "arrow.triangle.branch").tag(Route?.none)
                     ForEach(Route.allCases, id: \.self) { route in
-                        Label(route.displayName, systemImage: route.symbolName).tag(Route?.some(route))
+                        Label(labels.name(route), systemImage: labels.symbol(route)).tag(Route?.some(route))
                     }
                 } label: {
                     Label("Route", systemImage: "arrow.triangle.branch")
-                    Text(model.routeOverride?.displayName ?? "Auto")
+                    Text(model.routeOverride.map { labels.name($0) } ?? "Auto")
                 }
                 .pickerStyle(.menu)
             }
@@ -150,7 +151,7 @@ struct Composer: View {
         }
         .glassEffect(.regular.interactive(), in: .circle)
         .accessibilityLabel("Attach or choose route")
-        .accessibilityValue("Route: \(model.routeOverride?.displayName ?? "Auto")")
+        .accessibilityValue("Route: \(model.routeOverride.map { labels.name($0) } ?? "Auto")")
     }
 
     /// A pinned route, shown only when it isn't Auto. Tap to go back to Auto.
@@ -159,8 +160,8 @@ struct Composer: View {
             model.routeOverride = nil
         } label: {
             HStack(spacing: 5) {
-                Image(systemName: route.symbolName)
-                Text("Always \(route.displayName)")
+                Image(systemName: labels.symbol(route))
+                Text("Always \(labels.name(route))")
                 Image(systemName: "xmark")
                     .font(.caption2.weight(.bold))
             }
@@ -172,7 +173,7 @@ struct Composer: View {
             .contentShape(.capsule)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Route pinned to \(route.displayName)")
+        .accessibilityLabel("Route pinned to \(labels.name(route))")
         .accessibilityHint("Double-tap to go back to Auto")
     }
 

@@ -4,6 +4,7 @@ import SwiftUI
 /// A route's name with its icon in the route color.
 public struct RouteLabel: View {
     let route: Route
+    @Environment(\.routeLabels) private var labels
 
     public init(_ route: Route) {
         self.route = route
@@ -11,9 +12,9 @@ public struct RouteLabel: View {
 
     public var body: some View {
         Label {
-            Text(route.displayName)
+            Text(labels.name(route))
         } icon: {
-            Image(systemName: route.symbolName)
+            Image(systemName: labels.symbol(route))
                 .foregroundStyle(route.ink)
         }
     }
@@ -109,12 +110,13 @@ private struct DecidedRouteBadge: View {
     let animatesArrival: Bool
 
     @State private var hops = 0
+    @Environment(\.routeLabels) private var labels
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             ForEach(Array(previousRoutes.enumerated()), id: \.offset) { _, route in
-                Text(route.displayName)
+                Text(labels.name(route))
                     .strikethrough()
                     .foregroundStyle(.secondary)
                 Image(systemName: "arrow.right")
@@ -122,7 +124,7 @@ private struct DecidedRouteBadge: View {
                     .foregroundStyle(.secondary)
             }
             HStack(alignment: .firstTextBaseline, spacing: 5) {
-                Image(systemName: decision.route.symbolName)
+                Image(systemName: labels.symbol(decision.route))
                     .foregroundStyle(decision.route.ink)
                     .keyframeAnimator(initialValue: Hop(), trigger: hops) { icon, hop in
                         icon
@@ -174,7 +176,7 @@ private struct DecidedRouteBadge: View {
     }
 
     private var title: String {
-        decision.route.displayName + (isSimulated ? " (simulated)" : "")
+        labels.name(decision.route) + (isSimulated ? " (simulated)" : "")
     }
 
     private var detail: String {
@@ -185,7 +187,7 @@ private struct DecidedRouteBadge: View {
     }
 
     private var accessibilityLabel: String {
-        var parts = previousRoutes.map { "Tried \($0.displayName)" }
+        var parts = previousRoutes.map { "Tried \(labels.name($0))" }
         parts.append("Answered by \(title)")
         parts.append(detail)
         return parts.joined(separator: ". ")

@@ -23,6 +23,8 @@ public struct RoutingInput: Equatable, Sendable {
     public var previousPrompt: String?
     /// A route the user named in the message ("ask Claude"). See ``RouteMention``.
     public var namedRoute: Route?
+    /// Route names for reasons, with the cloud route named for the model serving it.
+    public var labels: RouteLabels
 
     public init(
         override: Route? = nil,
@@ -35,7 +37,8 @@ public struct RoutingInput: Equatable, Sendable {
         visionRoutes: Set<Route> = [],
         followsUpOn: Route? = nil,
         previousPrompt: String? = nil,
-        namedRoute: Route? = nil
+        namedRoute: Route? = nil,
+        labels: RouteLabels = .standard
     ) {
         self.override = override
         self.privacyReason = privacyReason
@@ -48,6 +51,7 @@ public struct RoutingInput: Equatable, Sendable {
         self.followsUpOn = followsUpOn
         self.previousPrompt = previousPrompt
         self.namedRoute = namedRoute
+        self.labels = labels
     }
 
     public var isPrivate: Bool { privacyReason != nil }
@@ -74,13 +78,14 @@ public enum FollowUp {
 }
 
 /// Finds a route the user asked for by name, such as "ask Claude" or "but Claude can?".
-/// Only Claude and Apple Cloud count: "on device" turns up in ordinary questions ("store it
+/// Either cloud model's name ("Claude", "Muse Wonder") asks for the cloud route, whichever model
+/// serves it. Only the cloud route and Apple Cloud count: "on device" turns up in ordinary questions ("store it
 /// on device"), and On-device is where most turns go anyway.
 public enum RouteMention {
     /// The single route named in the message, or nil if none or both are named.
     public static func named(in prompt: String) -> Route? {
         let names: [(Route, String)] = [
-            (.claude, #"\bclaude\b"#),
+            (.claude, #"\b(claude|muse wonder)\b"#),
             (.appleCloud, #"\b(apple cloud|private cloud compute)\b"#),
         ]
         let named = names.filter { prompt.range(of: $0.1, options: [.regularExpression, .caseInsensitive]) != nil }
@@ -105,7 +110,7 @@ public enum RoutingRules {
         if let override = input.override {
             // Privacy wins over a forced route: forcing Claude on a private turn is blocked.
             if let reason = input.privacyReason, override == .claude {
-                return .blocked(reason: "Kept private (\(reason)), so this can't go to Claude.")
+                return .blocked(reason: "Kept private (\(reason)), so this can't go to \(input.labels.name(.claude)).")
             }
             if let reason = input.availability[override]?.reason {
                 return .blocked(reason: "\(override.displayName) unavailable: \(reason)")
@@ -154,7 +159,7 @@ public enum RoutingRules {
         // The user asked for a model by name. Privacy, availability and context size were
         // checked above, so a private turn that names Claude has already stayed off it.
         if let named = input.namedRoute, fitting.contains(named) {
-            return .decided(RouteDecision(route: named, reason: "You asked for \(named.displayName)", source: .rule))
+            return .decided(RouteDecision(route: named, reason: "You asked for \(input.labels.name(named))", source: .rule))
         }
         // A bare follow-up ("Why?") stays with the model that gave the previous reply.
         if let previous = input.followsUpOn, fitting.contains(previous) {

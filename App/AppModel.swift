@@ -25,6 +25,15 @@ final class AppModel {
     }
 
     private(set) var claudeAuth: ClaudeAuth
+    /// Which model serves the cloud route. Switching keeps every conversation.
+    var cloudModel: CloudModel = AppModel.storedCloudModel {
+        didSet {
+            UserDefaults.standard.set(cloudModel.rawValue, forKey: Self.cloudModelKey)
+            rebuildSessions()
+        }
+    }
+    /// Bumped when the Meta key changes, so views reading `hasMetaKey` refresh.
+    private var metaKeyVersion = 0
     /// Why App Attest was abandoned this launch, if it was.
     private(set) var appAttestFailure: String?
     /// Each scenario keeps its own conversation.
@@ -51,12 +60,13 @@ final class AppModel {
         let auth = Self.resolveAuth(config: config, secrets: secrets, skipAppAttest: false)
         self.claudeAuth = auth
         let network = network
+        let cloud = Self.cloudProvider(Self.storedCloudModel, auth: auth, metaKey: Self.metaKey(config: config, secrets: secrets))
         var chats: [String: ChatModel] = [:]
         for scenario in scenarios {
             let session = Self.makeSession(
                 scenario: scenario,
                 config: config,
-                auth: auth,
+                cloud: cloud,
                 costTable: costTable,
                 simulatesAppleCloud: Self.storedSimulatesAppleCloud,
                 history: []
@@ -90,7 +100,7 @@ final class AppModel {
         Self.makeSession(
             scenario: scenario,
             config: config,
-            auth: claudeAuth,
+            cloud: currentCloudProvider,
             costTable: costTable,
             simulatesAppleCloud: simulatesAppleCloud,
             history: []
@@ -99,14 +109,14 @@ final class AppModel {
 
     /// A fresh session for the answer-quality benchmark, with the app's providers and the given
     /// Claude tier (`.deep` for the Opus column and the judge).
-    func makeBenchmarkSession(instructions: String, claudeTier: ClaudeProvider.Tier) -> RoutedSession {
+    /// Its cloud slot is Claude at `claudeTier` whatever the setting, or `cloud` if given.
+    func makeBenchmarkSession(instructions: String, claudeTier: ClaudeProvider.Tier, cloud: (any ModelProvider)? = nil) -> RoutedSession {
         Self.makeSession(
             instructions: instructions,
             config: config,
-            auth: claudeAuth,
+            cloud: cloud ?? ClaudeProvider(auth: claudeAuth, tier: claudeTier),
             costTable: costTable,
-            simulatesAppleCloud: simulatesAppleCloud,
-            claudeTier: claudeTier
+            simulatesAppleCloud: simulatesAppleCloud
         )
     }
 
@@ -145,20 +155,72 @@ final class AppModel {
     /// Rebuilds every scenario's session with the current providers, keeping each conversation
     /// and its private turns.
     private func rebuildSessions() {
-        let auth = claudeAuth
+        let cloud = currentCloudProvider
         let simulates = simulatesAppleCloud
         for scenario in scenarios {
             chats[scenario.id]?.replaceSession { [config, costTable] history, privatePromptIDs in
                 Self.makeSession(
                     scenario: scenario,
                     config: config,
-                    auth: auth,
+                    cloud: cloud,
                     costTable: costTable,
                     simulatesAppleCloud: simulates,
                     history: history,
                     privatePromptIDs: privatePromptIDs
                 )
             }
+        }
+    }
+
+    // MARK: Cloud model
+
+    private static let cloudModelKey = "HRCloudModel"
+    static let metaAPIKeyAccount = "meta-api-key"
+
+    private static var storedCloudModel: CloudModel {
+        UserDefaults.standard.string(forKey: cloudModelKey).flatMap(CloudModel.init(rawValue:)) ?? .claude
+    }
+
+    /// Names for the UI, with the cloud route named for the model serving it.
+    var routeLabels: RouteLabels { RouteLabels(cloud: cloudModel) }
+
+    /// The user's Meta key from the Keychain, else the Debug-only developer key.
+    var metaKey: String? {
+        _ = metaKeyVersion
+        return Self.metaKey(config: config, secrets: secrets)
+    }
+
+    /// Whether the user saved their own Meta key (not the developer one).
+    var hasUserMetaKey: Bool {
+        _ = metaKeyVersion
+        return ((try? secrets.read(Self.metaAPIKeyAccount)) ?? nil) != nil
+    }
+
+    func saveMetaKey(_ key: String) throws {
+        try secrets.write(key.trimmingCharacters(in: .whitespacesAndNewlines), for: Self.metaAPIKeyAccount)
+        metaKeyVersion += 1
+        rebuildSessions()
+    }
+
+    func removeMetaKey() throws {
+        try secrets.delete(Self.metaAPIKeyAccount)
+        metaKeyVersion += 1
+        rebuildSessions()
+    }
+
+    private var currentCloudProvider: any ModelProvider {
+        Self.cloudProvider(cloudModel, auth: claudeAuth, metaKey: metaKey)
+    }
+
+    private static func metaKey(config: AppConfig, secrets: any SecretStore) -> String? {
+        let userKey = (try? secrets.read(metaAPIKeyAccount)) ?? nil
+        return userKey ?? config.allowedMetaDeveloperKey
+    }
+
+    private static func cloudProvider(_ model: CloudModel, auth: ClaudeAuth, metaKey: String?) -> any ModelProvider {
+        switch model {
+        case .claude: ClaudeProvider(auth: auth)
+        case .museWonder: MuseProvider(apiKey: metaKey)
         }
     }
 
@@ -221,7 +283,7 @@ final class AppModel {
     private static func makeSession(
         scenario: any Scenario,
         config: AppConfig,
-        auth: ClaudeAuth,
+        cloud: any ModelProvider,
         costTable: CostTable,
         simulatesAppleCloud: Bool,
         history: [Transcript.Entry],
@@ -232,7 +294,7 @@ final class AppModel {
             tools: scenario.tools,
             appleOnlyTools: scenario.appleOnlyTools,
             config: config,
-            auth: auth,
+            cloud: cloud,
             costTable: costTable,
             simulatesAppleCloud: simulatesAppleCloud,
             history: history,
@@ -245,10 +307,9 @@ final class AppModel {
         tools: [any Tool] = [],
         appleOnlyTools: [any Tool] = [],
         config: AppConfig,
-        auth: ClaudeAuth,
+        cloud: any ModelProvider,
         costTable: CostTable,
         simulatesAppleCloud: Bool,
-        claudeTier: ClaudeProvider.Tier = .standard,
         history: [Transcript.Entry] = [],
         privatePromptIDs: Set<String> = []
     ) -> RoutedSession {
@@ -262,7 +323,7 @@ final class AppModel {
             appleOnlyTools: appleOnlyTools,
             onDevice: OnDeviceProvider(),
             appleCloud: appleCloud,
-            claude: ClaudeProvider(auth: auth, tier: claudeTier),
+            claude: cloud,
             costTable: costTable,
             history: history,
             privatePromptIDs: privatePromptIDs

@@ -9,12 +9,17 @@ struct MessageRow: View {
     /// Switches a reply that's still waiting for its first token to on-device.
     var answerOnDevice: (() -> Void)?
 
+    @Environment(\.routeLabels) private var labels
+
     var body: some View {
         switch message.role {
         case .user:
             UserMessage(message: message)
         case .assistant:
             AssistantMessage(message: message, answerOnDevice: answerOnDevice)
+                // A finished reply keeps the name of the model that wrote it, even after the
+                // cloud model is switched.
+                .environment(\.routeLabels, labels.answered(by: message.metrics?.modelID))
         }
     }
 
@@ -157,6 +162,7 @@ private struct AssistantMessage: View {
 /// What's happening before the first token: the router choosing, then the model thinking,
 /// with the route's symbol breathing and an elapsed timer.
 private struct WaitingStatus: View {
+    @Environment(\.routeLabels) private var labels
     let message: ChatMessage
     let answerOnDevice: (() -> Void)?
 
@@ -190,10 +196,10 @@ private struct WaitingStatus: View {
     private var status: some View {
         HStack(spacing: 6) {
             if let decision = message.decision {
-                Image(systemName: decision.route.symbolName)
+                Image(systemName: labels.symbol(decision.route))
                     .foregroundStyle(decision.route.ink)
                     .symbolEffect(.breathe.pulse.byLayer, options: .repeating)
-                Text("Waiting for \(decision.route.displayName)")
+                Text("Waiting for \(labels.name(decision.route))")
                 if let routedAt = message.routedAt {
                     Text("·")
                     Text(timerInterval: routedAt...Date.distantFuture, countsDown: false)
@@ -214,6 +220,7 @@ private struct WaitingStatus: View {
 /// The finished reply's one-line summary: route · first token · cost.
 private struct ProvenanceLine: View {
     let metrics: StepMetrics
+    @Environment(\.routeLabels) private var labels
 
     var body: some View {
         Text(parts.joined(separator: " · "))
@@ -226,7 +233,7 @@ private struct ProvenanceLine: View {
     }
 
     private var parts: [String] {
-        var parts = [metrics.route.displayName + (metrics.isSimulated ? " (simulated)" : "")]
+        var parts = [labels.name(metrics.route, modelID: metrics.modelID) + (metrics.isSimulated ? " (simulated)" : "")]
         if metrics.timeToFirstToken != nil {
             parts.append("\(Format.seconds(metrics.timeToFirstToken)) first token")
         }

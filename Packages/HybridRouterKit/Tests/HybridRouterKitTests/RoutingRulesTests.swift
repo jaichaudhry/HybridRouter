@@ -1,3 +1,4 @@
+import HybridRouterKitTesting
 import Testing
 @testable import HybridRouterKit
 
@@ -199,6 +200,7 @@ struct RouteMentionTests {
         ("Ask Claude to check this", .claude),
         ("Can Apple Cloud do it instead?", .appleCloud),
         ("Use Private Cloud Compute for this", .appleCloud),
+        ("What would Muse Wonder say?", .claude),
     ])
     func findsANamedRoute(prompt: String, route: Route) {
         #expect(RouteMention.named(in: prompt) == route)
@@ -240,5 +242,45 @@ struct RouteMentionTests {
         #expect(RoutingProfile.routeNote(for: .onDevice).contains("This reply is from Apple's on-device model"))
         #expect(RoutingProfile.routeNote(for: .claude).contains("This reply is from Claude"))
         #expect(RoutingProfile.routeNote(for: .claude) == RoutingProfile.routeNote(for: .claude))
+        let muse = RoutingProfile.routeNote(for: .claude, cloud: .museWonder)
+        #expect(muse.contains("Apple Private Cloud Compute and Muse Wonder"))
+        #expect(muse.contains("This reply is from Muse Wonder"))
+        // Said only when asked, or models sign every reply with it.
+        #expect(muse.contains("Don't mention this unless the user asks"))
+    }
+
+    @Test func reasonsNameTheModelServingTheCloudRoute() {
+        let muse = RouteLabels(cloud: .museWonder)
+        let named = RoutingInput(availability: Self.allAvailable, namedRoute: .claude, labels: muse)
+        #expect(RoutingRules.evaluate(named) == .decided(RouteDecision(route: .claude, reason: "You asked for Muse Wonder", source: .rule)))
+        let forced = RoutingInput(override: .claude, privacyReason: "card number", availability: Self.allAvailable, labels: muse)
+        #expect(RoutingRules.evaluate(forced) == .blocked(reason: "Kept private (card number), so this can't go to Muse Wonder."))
+    }
+}
+
+struct RouteLabelsTests {
+    @Test func theCloudRouteIsNamedForItsModel() {
+        #expect(RouteLabels.standard.name(.claude) == "Claude")
+        #expect(RouteLabels(cloud: .museWonder).name(.claude) == "Muse Wonder")
+        #expect(RouteLabels(cloud: .museWonder).symbol(.claude) == "infinity")
+        #expect(RouteLabels(cloud: .museWonder).name(.appleCloud) == "Apple Cloud")
+    }
+
+    @Test func aReplyKeepsTheNameOfTheModelThatWroteIt() {
+        let muse = RouteLabels(cloud: .museWonder)
+        #expect(muse.name(.claude, modelID: "claude-sonnet-5-5") == "Claude")
+        #expect(RouteLabels.standard.name(.claude, modelID: "muse-wonder-1.0") == "Muse Wonder")
+        #expect(muse.name(.onDevice, modelID: "apple-on-device") == "On-device")
+    }
+
+    @MainActor @Test func aSessionIsLabelledByItsCloudProvider() {
+        let costTable = CostTable(updated: "", source: "", models: [:])
+        let session = RoutedSession(
+            instructions: "", onDevice: FakeProvider(route: .onDevice, reply: ""), appleCloud: FakeProvider(route: .appleCloud, reply: ""),
+            claude: MuseProvider(apiKey: "test"), costTable: costTable
+        )
+        #expect(session.labels == RouteLabels(cloud: .museWonder))
+        #expect(session.availability(of: .claude) == .available)
+        #expect(MuseProvider(apiKey: nil).availability == .unavailable(reason: "Muse Wonder not configured"))
     }
 }

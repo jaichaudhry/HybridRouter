@@ -106,6 +106,8 @@ public enum Motion {
 extension EnvironmentValues {
     /// The route of the reply being rendered, so structured cards can use its color.
     @Entry public var replyRoute: Route? = nil
+    /// Route names, with the cloud route named for the model serving it (Claude or Muse Wonder).
+    @Entry public var routeLabels: RouteLabels = .standard
 }
 
 /// A route-tinted capsule background: the fill at low opacity, plus an ink stroke with

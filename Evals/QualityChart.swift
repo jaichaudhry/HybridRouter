@@ -27,7 +27,9 @@ enum QualityChart {
         body.append(#"<text class="axis" x="\#(f((plot.left + plot.right) / 2))" y="\#(f(plot.bottom + 46))" text-anchor="middle">Cost per 100 prompts (USD)</text>"#)
         body.append(#"<text class="axis" transform="translate(18 \#(f((plot.top + plot.bottom) / 2))) rotate(-90)" text-anchor="middle">Answers judged good enough</text>"#)
 
-        // Points, labelled to the right except where that would leave the plot or collide.
+        // Points, labelled to the right except where that would leave the plot; a label that
+        // would overlap one already placed goes below its point instead.
+        var placed: [(minX: Double, maxX: Double, minY: Double, maxY: Double)] = []
         for result in report.strategies {
             let px = x(result.costPer100), py = y(result.passRate)
             let leftLabel = result.strategy == .oracle || px > plot.right - 200
@@ -41,8 +43,21 @@ enum QualityChart {
             let anchor = leftLabel ? "end" : "start"
             let name = label(result.strategy)
             let detail = "\(Int((result.passRate * 100).rounded()))% · $\(String(format: "%.2f", result.costPer100))"
-            body.append(#"<text class="\#(result.strategy == .router ? "name strong" : "name")" x="\#(f(lx))" y="\#(f(py - 2))" text-anchor="\#(anchor)">\#(name)</text>"#)
-            body.append(#"<text class="detail" x="\#(f(lx))" y="\#(f(py + 13))" text-anchor="\#(anchor)">\#(detail)</text>"#)
+            // Roughly 7 px per character at 13 px.
+            let width = Double(max(name.count, detail.count)) * 7
+            func box(_ top: Double) -> (minX: Double, maxX: Double, minY: Double, maxY: Double) {
+                (leftLabel ? lx - width : lx, leftLabel ? lx : lx + width, top, top + 32)
+            }
+            var top = py - 15
+            if placed.contains(where: { other in
+                let mine = box(top)
+                return mine.minX < other.maxX && other.minX < mine.maxX && mine.minY < other.maxY && other.minY < mine.maxY
+            }) {
+                top = py + 12
+            }
+            placed.append(box(top))
+            body.append(#"<text class="\#(result.strategy == .router ? "name strong" : "name")" x="\#(f(lx))" y="\#(f(top + 13))" text-anchor="\#(anchor)">\#(name)</text>"#)
+            body.append(#"<text class="detail" x="\#(f(lx))" y="\#(f(top + 28))" text-anchor="\#(anchor)">\#(detail)</text>"#)
         }
         body.append(#"<text class="detail" x="\#(f(plot.left))" y="\#(f(height - 12))">\#(escape(caption))</text>"#)
 
@@ -84,6 +99,7 @@ enum QualityChart {
         case .alwaysOnDevice: "Always on-device"
         case .alwaysClaude: "Always Sonnet"
         case .alwaysClaudeDeep: "Always Opus"
+        case .alwaysMuseWonder: "Always Muse Wonder"
         case .randomSameMix: "Random, same mix"
         case .oracle: "Perfect routing"
         }

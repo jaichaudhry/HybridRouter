@@ -75,13 +75,14 @@ public struct CompareView: View {
 
 private struct CompareCard: View {
     let column: CompareModel.Column
+    @Environment(\.routeLabels) private var labels
     /// Finished before the other routes.
     let isFirst: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label(column.route.displayName, systemImage: column.route.symbolName)
+                Label(labels.name(column.route), systemImage: labels.symbol(column.route))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(column.route.ink)
                     .padding(.horizontal, 9)
@@ -94,7 +95,7 @@ private struct CompareCard: View {
                 }
                 Spacer()
                 if column.isRunning {
-                    Image(systemName: column.route.symbolName)
+                    Image(systemName: labels.symbol(column.route))
                         .foregroundStyle(column.route.ink)
                         .symbolEffect(.breathe.pulse.byLayer, options: .repeating)
                         .accessibilityLabel("Answering")

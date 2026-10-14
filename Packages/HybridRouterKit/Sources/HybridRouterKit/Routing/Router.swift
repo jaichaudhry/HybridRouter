@@ -86,9 +86,9 @@ public struct Router: Sendable {
         if route == target {
             reason = classification.reason
         } else if input.isAvailable(target), !input.fits(target) {
-            reason = "\(classification.reason) (too long for \(target.displayName))"
+            reason = "\(classification.reason) (too long for \(input.labels.name(target)))"
         } else {
-            reason = "\(classification.reason) (\(target.displayName) unavailable)"
+            reason = "\(classification.reason) (\(input.labels.name(target)) unavailable)"
         }
         return RouteDecision(route: route, reason: reason, source: .classifier)
     }

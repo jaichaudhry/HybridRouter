@@ -43,6 +43,8 @@ struct ContentView: View {
                 // Toolbars stay monochrome; route colors are for content.
                 .tint(Theme.ink)
         }
+        // The cloud route is named for the model serving it, in every view and sheet.
+        .environment(\.routeLabels, model.routeLabels)
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .active { model.chat.prewarm() }
         }
@@ -53,6 +55,7 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showsSettings) {
             SettingsView(model: model)
+                .environment(\.routeLabels, model.routeLabels)
         }
         .sheet(isPresented: $showsSummary) {
             NavigationStack {

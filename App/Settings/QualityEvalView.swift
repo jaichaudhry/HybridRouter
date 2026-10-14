@@ -34,7 +34,7 @@ struct QualityEvalView: View {
                     }
                 }
             } footer: {
-                Text("Answers every prompt on each available route plus Claude Opus, and has Opus grade each answer. Claude is billed to your key: about $9 for a full run, and it stops before passing the cap. Keep the app open; the screen stays on while it runs, and progress is saved after every prompt.")
+                Text("Answers every prompt on each available route plus Claude Opus (and Muse Wonder, with a Meta key), and has Opus grade each answer. Calls are billed to your keys: about $9 for a full run, about $16 with Muse Wonder, and it stops before passing the cap. Keep the app open; the screen stays on while it runs, and progress is saved after every prompt.")
             }
 
             if let run = model.result {
@@ -141,6 +141,7 @@ private extension QualityReport.Strategy {
         case .alwaysOnDevice: "On-device"
         case .alwaysClaude: "Sonnet"
         case .alwaysClaudeDeep: "Opus"
+        case .alwaysMuseWonder: "Muse"
         case .randomSameMix: "Random"
         case .oracle: "Oracle"
         }
@@ -205,8 +206,10 @@ final class QualityEvalModel {
         let classifier = OnDeviceClassifier()
         let runner = QualityBenchmarkRunner(
             makeSession: { column in
+                // Muse Wonder is measured only with a Meta key; otherwise it's listed as not measured.
                 app.makeBenchmarkSession(instructions: QualityBenchmark.answerInstructions,
-                                         claudeTier: column == .claudeDeep ? .deep : .standard)
+                                         claudeTier: column == .claudeDeep ? .deep : .standard,
+                                         cloud: column == .museWonder ? MuseProvider(apiKey: app.metaKey) : nil)
             },
             judge: ModelAnswerJudge {
                 app.makeBenchmarkSession(instructions: ModelAnswerJudge.instructionsForSession, claudeTier: .deep)

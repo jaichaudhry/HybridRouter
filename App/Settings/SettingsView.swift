@@ -2,12 +2,13 @@ import ChatUI
 import HybridRouterKit
 import SwiftUI
 
-/// Route status and Claude credentials.
+/// Route status, the cloud model and its credentials.
 struct SettingsView: View {
-    let model: AppModel
+    @Bindable var model: AppModel
 
     @Environment(\.dismiss) private var dismiss
     @State private var keyDraft = ""
+    @State private var metaKeyDraft = ""
     @State private var errorMessage: String?
 
     var body: some View {
@@ -17,6 +18,16 @@ struct SettingsView: View {
                     ForEach(Route.allCases, id: \.self) { route in
                         RouteStatusRow(route: route, availability: model.availability(of: route))
                     }
+                }
+
+                Section {
+                    Picker("Cloud model", selection: $model.cloudModel) {
+                        ForEach(CloudModel.allCases, id: \.self) { cloud in
+                            Label(cloud.displayName, systemImage: cloud.symbolName).tag(cloud)
+                        }
+                    }
+                } footer: {
+                    Text("The model behind the top route, for turns too big or hard for Apple's models. Private turns never reach it. Switching keeps your conversations.")
                 }
 
                 Section {
@@ -48,6 +59,29 @@ struct SettingsView: View {
                     Text("Claude")
                 } footer: {
                     Text("Your key is stored in this device's Keychain and sent only to Anthropic.")
+                }
+
+                Section {
+                    LabeledContent("Muse Wonder", value: model.hasUserMetaKey ? "Your key" : (model.metaKey != nil ? "Dev key" : "Not set"))
+                    if model.hasUserMetaKey {
+                        Button("Remove your key", role: .destructive) {
+                            perform { try model.removeMetaKey() }
+                        }
+                    } else {
+                        SecureField("Meta Model API key", text: $metaKeyDraft)
+                            .textContentType(.password)
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
+                        Button("Save key") {
+                            perform { try model.saveMetaKey(metaKeyDraft) }
+                            metaKeyDraft = ""
+                        }
+                        .disabled(metaKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                } header: {
+                    Text("Muse Wonder")
+                } footer: {
+                    Text("Meta's model, with your own key from dev.meta.ai. It's stored in this device's Keychain and sent only to Meta.")
                 }
 
                 Section {

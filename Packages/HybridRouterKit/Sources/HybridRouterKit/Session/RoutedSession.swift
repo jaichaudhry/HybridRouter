@@ -70,6 +70,11 @@ public final class RoutedSession {
 
     public var transcript: Transcript { session.transcript }
 
+    /// Route names, with the cloud route named for the model serving it (Claude or Muse Wonder).
+    public var labels: RouteLabels {
+        RouteLabels(cloud: CloudModel(modelID: providers[.claude]?.modelID ?? "") ?? .claude)
+    }
+
     /// Prompt IDs of turns Claude must only see as placeholders. Pass them to a rebuilt session.
     public var privatePromptIDs: Set<String> { privacy.privatePromptIDs }
 

@@ -93,10 +93,10 @@ public struct EscalationPolicy: Equatable, Sendable {
 
     public func next(after cause: FailureCause, decision: RouteDecision, input: RoutingInput) -> EscalationOutcome {
         guard decision.source != .userOverride else {
-            return .stop(reason: "\(decision.route.displayName) couldn't answer (\(cause.label)). Try another route.")
+            return .stop(reason: "\(input.labels.name(decision.route)) couldn't answer (\(cause.label)). Try another route.")
         }
         guard shouldEscalate(cause) else {
-            return .stop(reason: "\(decision.route.displayName) couldn't answer (\(cause.label)).")
+            return .stop(reason: "\(input.labels.name(decision.route)) couldn't answer (\(cause.label)).")
         }
 
         let higher = Route.allCases.drop { $0 != decision.route }.dropFirst()
@@ -105,7 +105,7 @@ public struct EscalationPolicy: Equatable, Sendable {
 
         guard let next else {
             if input.isPrivate, candidates.contains(.claude) {
-                return .stop(reason: "Kept private, so this wasn't sent to Claude (\(cause.label)).")
+                return .stop(reason: "Kept private, so this wasn't sent to \(input.labels.name(.claude)) (\(cause.label)).")
             }
             return .stop(reason: "No larger model is available (\(cause.label)).")
         }

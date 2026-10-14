@@ -9,6 +9,7 @@ public struct ChatView: View {
     let samplePromptsFillDraft: Bool
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.routeLabels) private var labels
     @State private var scrollPosition = ScrollPosition(idType: UUID.self)
     /// Counts Private being switched on, to play one ripple each time.
     @State private var privateRipples = 0
@@ -58,7 +59,7 @@ public struct ChatView: View {
         .onChange(of: model.isSending) { wasSending, isSending in
             guard wasSending, !isSending, let reply = model.messages.last else { return }
             let announcement = reply.errorMessage
-                ?? reply.decision.map { "Reply from \($0.route.displayName)" }
+                ?? reply.decision.map { "Reply from \(labels.name($0.route, modelID: reply.metrics?.modelID))" }
                 ?? "Reply finished"
             AccessibilityNotification.Announcement(announcement).post()
         }

@@ -115,6 +115,79 @@ public final class QualityBenchmarkRunner {
         return result
     }
 
+    /// Adds a column to a finished run without re-answering the others: every prompt in `run` is
+    /// answered on `column` and graded, `concurrency` prompts at a time. Resumes from the
+    /// checkpoint if it holds the same run. Stops early when cancelled or at the cap, counting
+    /// only this column's spend toward it.
+    @discardableResult
+    public func addColumn(
+        _ column: QualityBenchmark.Column,
+        to run: QualityBenchmark.RunResult,
+        concurrency: Int = 4,
+        onProgress: (Progress) -> Void = { _ in }
+    ) async -> QualityBenchmark.RunResult {
+        var extended = run
+        if let checkpoint, let data = try? Data(contentsOf: checkpoint),
+           let saved = try? QualityBenchmark.RunResult.load(data),
+           // JSON dates keep whole seconds only.
+           abs(saved.startedAt.timeIntervalSince(run.startedAt)) < 1,
+           saved.cases.map(\.id) == run.cases.map(\.id), saved.columns.contains(column) {
+            extended = saved
+        }
+        if !extended.columns.contains(column) {
+            extended.columns.append(column)
+            extended.unmeasured[column.rawValue] = nil
+        }
+        extended.stoppedAtSpendCap = false
+        result = extended
+
+        var added = 0.0
+        var done = 0
+        let pending = result.cases.indices.filter { result.cases[$0].answer(column) == nil }
+        let total = pending.count
+        for batchStart in stride(from: 0, to: pending.count, by: max(1, concurrency)) {
+            if Task.isCancelled { break }
+            let batch = pending[batchStart..<min(batchStart + max(1, concurrency), pending.count)]
+            // Stop before a batch that would probably cross the cap, using the average so far.
+            let average = done == 0 ? 0 : added / Double(done)
+            if added + average * Double(batch.count) > spendCap {
+                result.stoppedAtSpendCap = true
+                break
+            }
+            onProgress(Progress(done: done, total: total, spent: added, current: result.cases[batch.first!].case.prompt))
+            // Main-actor tasks rather than a task group, as in `measure`.
+            let tasks = batch.map { index in
+                let benchmarkCase = result.cases[index].case
+                return Task {
+                    let answer = await self.answer(benchmarkCase, on: column)
+                    let judgment = answer.failure == nil ? await self.judged(answer, for: benchmarkCase) : nil
+                    return (index, answer, judgment)
+                }
+            }
+            for task in tasks {
+                let (index, answer, judgment) = await task.value
+                let measured = result.cases[index]
+                result.cases[index] = QualityBenchmark.CaseResult(
+                    case: measured.case,
+                    routerRoute: measured.routerRoute,
+                    routerReason: measured.routerReason,
+                    routerLatency: measured.routerLatency,
+                    answers: measured.answers + [answer],
+                    judgments: measured.judgments + (judgment.map { [$0] } ?? [])
+                )
+                let cost = answer.cost + (judgment?.cost ?? 0)
+                added += cost
+                result.spent += cost
+                done += 1
+            }
+            if Task.isCancelled { break }
+            saveCheckpoint()
+        }
+        saveCheckpoint()
+        onProgress(Progress(done: done, total: total, spent: added, current: nil))
+        return result
+    }
+
     /// Clears saved progress so the next run starts over.
     public func discardCheckpoint() {
         if let checkpoint { try? FileManager.default.removeItem(at: checkpoint) }

@@ -35,16 +35,17 @@ public enum QualityBenchmark {
     }
 
     /// Where an answer comes from. The first three are the routes the router chooses between,
-    /// cheapest first; `claudeDeep` (Opus) is the quality ceiling, never a routing choice.
+    /// cheapest first; `claudeDeep` (Opus) is the quality ceiling and `museWonder` (Meta) a
+    /// comparison, never routing choices.
     public enum Column: String, Codable, Sendable, CaseIterable, Comparable {
-        case onDevice, appleCloud, claude, claudeDeep
+        case onDevice, appleCloud, claude, claudeDeep, museWonder
 
         /// The route that serves this column.
         public var route: Route {
             switch self {
             case .onDevice: .onDevice
             case .appleCloud: .appleCloud
-            case .claude, .claudeDeep: .claude
+            case .claude, .claudeDeep, .museWonder: .claude
             }
         }
 
@@ -66,6 +67,7 @@ public enum QualityBenchmark {
             case .appleCloud: "Apple Cloud"
             case .claude: "Claude Sonnet"
             case .claudeDeep: "Claude Opus"
+            case .museWonder: "Muse Wonder"
             }
         }
 
