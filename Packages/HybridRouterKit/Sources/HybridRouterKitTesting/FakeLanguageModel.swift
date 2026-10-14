@@ -12,6 +12,8 @@ public enum FakeBehavior: Hashable, Sendable {
     case empty
     case timeout
     case contextExceeded
+    /// Throws a rate limit, like Apple Cloud past its daily allowance.
+    case rateLimited
 }
 
 /// A LanguageModel that streams a canned reply word by word and records every request,
@@ -82,6 +84,8 @@ public struct FakeExecutor: LanguageModelExecutor {
             throw LanguageModelError.timeout(.init(debugDescription: "fake timeout"))
         case .contextExceeded:
             throw LanguageModelError.contextSizeExceeded(.init(contextSize: 10, tokenCount: 20, debugDescription: "fake"))
+        case .rateLimited:
+            throw LanguageModelError.rateLimited(.init(resetDate: nil, debugDescription: "fake rate limit"))
         }
         let reply = configuration.behavior == .empty ? "" : configuration.reply
         let words = reply.split(separator: " ", omittingEmptySubsequences: false)

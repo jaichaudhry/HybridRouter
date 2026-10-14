@@ -142,6 +142,25 @@ public enum QualityBenchmark {
         /// Whether a column's answer passed. Failed and unjudged answers don't pass.
         public func passes(_ column: Column) -> Bool { judgment(column)?.passes ?? false }
         public func score(_ column: Column) -> Int { judgment(column)?.score ?? 1 }
+
+        /// The router's choice had Apple Cloud been available. The classifier's label doesn't
+        /// depend on availability, and a turn it sent to Apple Cloud moves up only because
+        /// Apple Cloud is missing ("… (Apple Cloud unavailable)"), so those turns, and failed
+        /// classifications (which fall back to Apple Cloud), move back down. Others are unchanged.
+        public func routedWithAppleCloud() -> CaseResult {
+            guard let reason = routerReason, routerRoute != .appleCloud else { return self }
+            let suffix = " (\(Route.appleCloud.displayName) unavailable)"
+            let newReason: String
+            if reason.hasSuffix(suffix) {
+                newReason = String(reason.dropLast(suffix.count))
+            } else if reason.hasPrefix("Couldn't classify") {
+                newReason = reason
+            } else {
+                return self
+            }
+            return CaseResult(case: self.case, routerRoute: .appleCloud, routerReason: newReason,
+                              routerLatency: routerLatency, answers: answers, judgments: judgments)
+        }
     }
 
     /// A whole run, saved as JSON so runs can be compared and re-reported later.
@@ -157,6 +176,11 @@ public enum QualityBenchmark {
         /// Answers plus judging, in USD.
         public var spent: Double
         public var stoppedAtSpendCap: Bool
+        /// Set when a route's provider reported its rate limit, e.g. Apple Cloud's daily
+        /// allowance. Prompts it couldn't answer stay pending, so a later run picks them up.
+        public var stoppedAtRateLimit: Bool?
+        /// How the router's choices were derived, when not measured directly in this run.
+        public var routerNote: String?
 
         public init(device: String, classifier: String, judgeModelID: String, startedAt: Date, columns: [Column], unmeasured: [String: String]) {
             self.device = device

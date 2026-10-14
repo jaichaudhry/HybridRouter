@@ -76,5 +76,5 @@
   <circle class="oracle" cx="204.3" cy="49.1" r="6.5"/>
   <text class="name" x="190.3" y="47.1" text-anchor="end">Perfect routing</text>
   <text class="detail" x="190.3" y="62.1" text-anchor="end">99% · $0.42</text>
-  <text class="detail" x="70.0" y="458.0">150 held-out prompts on an iPhone 17 Pro Max, each answered on every route and graded by Claude Opus 5.5.</text>
+  <text class="detail" x="70.0" y="458.0">150 held-out prompts, on-device answers from an iPhone 17 Pro Max; every answer graded by Claude Opus 5.5.</text>
 </svg>

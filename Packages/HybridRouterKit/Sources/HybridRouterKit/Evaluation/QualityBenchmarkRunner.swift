@@ -117,8 +117,12 @@ public final class QualityBenchmarkRunner {
 
     /// Adds a column to a finished run without re-answering the others: every prompt in `run` is
     /// answered on `column` and graded, `concurrency` prompts at a time. Resumes from the
-    /// checkpoint if it holds the same run. Stops early when cancelled or at the cap, counting
-    /// only this column's spend toward it.
+    /// checkpoint if it holds the same run. Stops early when cancelled, at the cap (counting only
+    /// this column's spend), or when the provider reports its rate limit.
+    ///
+    /// A column served by a stand-in or unavailable provider isn't added: `run` comes back as
+    /// is. Adding Apple Cloud also recomputes the router's choices as if Apple Cloud had been
+    /// available, from the run's own classifications (see ``QualityBenchmark/CaseResult/routedWithAppleCloud()``).
     @discardableResult
     public func addColumn(
         _ column: QualityBenchmark.Column,
@@ -126,6 +130,9 @@ public final class QualityBenchmarkRunner {
         concurrency: Int = 4,
         onProgress: (Progress) -> Void = { _ in }
     ) async -> QualityBenchmark.RunResult {
+        let probe = makeSession(column).provider(for: column.route)
+        guard !probe.isSimulated, probe.availability.isAvailable else { return run }
+
         var extended = run
         if let checkpoint, let data = try? Data(contentsOf: checkpoint),
            let saved = try? QualityBenchmark.RunResult.load(data),
@@ -136,9 +143,15 @@ public final class QualityBenchmarkRunner {
         }
         if !extended.columns.contains(column) {
             extended.columns.append(column)
+            extended.columns.sort()
             extended.unmeasured[column.rawValue] = nil
         }
+        if column == .appleCloud {
+            extended.cases = extended.cases.map { $0.routedWithAppleCloud() }
+            extended.routerNote = "Router choices recomputed for Apple Cloud from the original run's classifications."
+        }
         extended.stoppedAtSpendCap = false
+        extended.stoppedAtRateLimit = nil
         result = extended
 
         var added = 0.0
@@ -164,8 +177,14 @@ public final class QualityBenchmarkRunner {
                     return (index, answer, judgment)
                 }
             }
+            var hitRateLimit = false
             for task in tasks {
                 let (index, answer, judgment) = await task.value
+                // Leave the prompt pending: the limit says nothing about the answer's quality.
+                if answer.failure == FailureCause.rateLimited.label {
+                    hitRateLimit = true
+                    continue
+                }
                 let measured = result.cases[index]
                 result.cases[index] = QualityBenchmark.CaseResult(
                     case: measured.case,
@@ -180,8 +199,12 @@ public final class QualityBenchmarkRunner {
                 result.spent += cost
                 done += 1
             }
-            if Task.isCancelled { break }
             saveCheckpoint()
+            if hitRateLimit {
+                result.stoppedAtRateLimit = true
+                break
+            }
+            if Task.isCancelled { break }
         }
         saveCheckpoint()
         onProgress(Progress(done: done, total: total, spent: added, current: nil))

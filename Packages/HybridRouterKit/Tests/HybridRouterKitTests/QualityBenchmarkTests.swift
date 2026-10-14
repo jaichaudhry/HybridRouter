@@ -129,14 +129,16 @@ struct QualityBenchmarkRunnerTests {
         classifier: FakeClassifier = .always("simple"),
         claudeAvailability: ProviderAvailability = .available,
         museAvailability: ProviderAvailability = .unavailable(reason: "Muse Wonder not configured"),
+        appleCloudIsReal: Bool = false,
+        appleCloudBehavior: FakeBehavior = .reply,
         spendCap: Double = 100,
         checkpoint: URL? = nil
     ) -> QualityBenchmarkRunner {
         let costTable = costTable
         return QualityBenchmarkRunner(
             makeSession: { column in
-                var appleCloud = FakeProvider(route: .appleCloud, reply: "cloud answer")
-                appleCloud.isSimulated = true
+                var appleCloud = FakeProvider(route: .appleCloud, reply: "cloud answer", behavior: appleCloudBehavior)
+                appleCloud.isSimulated = !appleCloudIsReal
                 let reply = switch column {
                 case .claudeDeep: "claude deep answer"
                 case .museWonder: "muse answer"
@@ -208,6 +210,57 @@ struct QualityBenchmarkRunnerTests {
         let resumed = await runner(judge: judge, museAvailability: .available, checkpoint: checkpoint).addColumn(.museWonder, to: original)
         #expect(judge.judged.count == 2)
         #expect(resumed.cases.allSatisfy { $0.answer(.museWonder) != nil })
+    }
+
+    @Test func addingAppleCloudRecomputesTheRoutersChoices() async throws {
+        // "moderate" goes to Apple Cloud; without it, the router moved those turns up to Claude.
+        let original = await runner(classifier: .always("moderate")).run(cases(2))
+        #expect(original.cases.allSatisfy { $0.routerRoute == .claude && $0.routerReason?.hasSuffix("(Apple Cloud unavailable)") == true })
+
+        let judge = FakeAnswerJudge.passing(containing: "cloud")
+        let extended = await runner(judge: judge, appleCloudIsReal: true).addColumn(.appleCloud, to: original)
+        #expect(extended.columns == [.onDevice, .appleCloud, .claude, .claudeDeep])
+        #expect(extended.unmeasured["appleCloud"] == nil)
+        #expect(extended.cases.allSatisfy { $0.routerRoute == .appleCloud && $0.routerReason?.contains("unavailable") == false })
+        #expect(extended.routerNote != nil)
+        #expect(judge.judged == ["cloud answer", "cloud answer"])
+
+        let report = QualityReport(extended)
+        #expect(report.result(for: .alwaysAppleCloud)?.passRate == 1)
+        // The router now picks Apple Cloud, whose answers passed, at no cost.
+        #expect(report.result(for: .router)?.passRate == 1)
+        #expect(report.result(for: .router)?.costPer100 == 0)
+        #expect(report.result(for: .oracle)?.claudeShare == 0)
+    }
+
+    @Test func routingWithAppleCloudOnlyMovesTurnsItWouldHaveTaken() {
+        func result(_ route: Route, _ reason: String) -> QualityBenchmark.CaseResult {
+            .init(case: cases(1)[0], routerRoute: route, routerReason: reason, routerLatency: nil, answers: [], judgments: [])
+        }
+        let moved = result(.claude, "Multi-step summary (Apple Cloud unavailable)").routedWithAppleCloud()
+        #expect(moved.routerRoute == .appleCloud)
+        #expect(moved.routerReason == "Multi-step summary")
+        #expect(result(.claude, "Couldn't classify (timed out), so using a mid-size model").routedWithAppleCloud().routerRoute == .appleCloud)
+        #expect(result(.claude, "Complex reasoning").routedWithAppleCloud().routerRoute == .claude)
+        #expect(result(.onDevice, "Quick conversation").routedWithAppleCloud().routerRoute == .onDevice)
+    }
+
+    @Test func aSimulatedOrMissingColumnIsNotAdded() async {
+        let original = await runner().run(cases(1))
+        let simulated = await runner().addColumn(.appleCloud, to: original)
+        #expect(!simulated.columns.contains(.appleCloud))
+        let missing = await runner().addColumn(.museWonder, to: original)
+        #expect(!missing.columns.contains(.museWonder))
+    }
+
+    @Test func aRateLimitStopsTheRunAndLeavesPromptsPending() async throws {
+        let original = await runner().run(cases(3))
+        let judge = FakeAnswerJudge.passing(containing: "cloud")
+        let stopped = await runner(judge: judge, appleCloudIsReal: true, appleCloudBehavior: .rateLimited)
+            .addColumn(.appleCloud, to: original, concurrency: 1)
+        #expect(stopped.stoppedAtRateLimit == true)
+        #expect(stopped.cases.allSatisfy { $0.answer(.appleCloud) == nil })
+        #expect(judge.judged.isEmpty)
     }
 
     @Test func simulatedAppleCloudIsNotMeasured() async {

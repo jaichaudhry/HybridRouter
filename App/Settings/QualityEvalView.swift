@@ -12,6 +12,7 @@ struct QualityEvalView: View {
     @State private var model = QualityEvalModel()
     /// `.task(id:)` cancels a run when the screen closes, so paid requests stop too.
     @State private var runToken: UUID?
+    @State private var runMode = QualityEvalModel.Mode.full
 
     var body: some View {
         List {
@@ -28,7 +29,7 @@ struct QualityEvalView: View {
                     }
                     Button("Stop", role: .destructive) { runToken = nil }
                 } else {
-                    Button(model.hasSavedProgress ? "Resume" : "Run benchmark") { runToken = UUID() }
+                    Button(model.hasSavedProgress ? "Resume" : "Run benchmark") { start(.full) }
                     if model.hasSavedProgress {
                         Button("Start over", role: .destructive) { model.discardProgress() }
                     }
@@ -37,7 +38,35 @@ struct QualityEvalView: View {
                 Text("Answers every prompt on each available route plus Claude Opus (and Muse Wonder, with a Meta key), and has Opus grade each answer. Calls are billed to your keys: about $9 for a full run, about $16 with Muse Wonder, and it stops before passing the cap. Keep the app open; the screen stays on while it runs, and progress is saved after every prompt.")
             }
 
+            // Only with the real entitlement: a stand-in says nothing about Apple Cloud.
+            if app.isAppleCloudEnabled, model.baseline != nil {
+                Section {
+                    if !model.isRunning {
+                        Button(model.hasSavedAppleCloudProgress ? "Resume adding Apple Cloud" : "Add Apple Cloud to the 0.2.0 results") {
+                            start(.addAppleCloud)
+                        }
+                        if model.hasSavedAppleCloudProgress {
+                            Button("Start over", role: .destructive) { model.discardAppleCloudProgress() }
+                        }
+                    }
+                } header: {
+                    Text("Help measure Apple Cloud")
+                } footer: {
+                    Text("Answers the same prompts on Private Cloud Compute and adds them to HybridRouter's published results, without re-answering the other models: about 15 minutes. Claude Opus grades each answer, about $3 on your Claude key; Apple Cloud itself is free. If Apple Cloud reaches its daily limit, the run stops and resumes later. Then share the results on the GitHub issue.")
+                }
+            }
+
             if let run = model.result {
+                if run.stoppedAtRateLimit == true {
+                    Section {
+                        Label("Apple Cloud reached its daily limit. Progress is saved; resume later.", systemImage: "hourglass")
+                    }
+                }
+                if let note = run.routerNote {
+                    Section {
+                        Text(note).font(.footnote).foregroundStyle(.secondary)
+                    }
+                }
                 if !run.unmeasured.isEmpty {
                     Section("Not measured") {
                         ForEach(run.unmeasured.sorted(by: <), id: \.key) { column, reason in
@@ -68,10 +97,18 @@ struct QualityEvalView: View {
         .navigationTitle("Answer quality")
         .task(id: runToken) {
             guard runToken != nil else { return }
-            await model.run(app: app)
+            switch runMode {
+            case .full: await model.run(app: app)
+            case .addAppleCloud: await model.addAppleCloud(app: app)
+            }
             runToken = nil
         }
         .onAppear { model.loadSaved() }
+    }
+
+    private func start(_ mode: QualityEvalModel.Mode) {
+        runMode = mode
+        runToken = UUID()
     }
 }
 
@@ -139,6 +176,7 @@ private extension QualityReport.Strategy {
         switch self {
         case .router: "Router"
         case .alwaysOnDevice: "On-device"
+        case .alwaysAppleCloud: "Apple Cloud"
         case .alwaysClaude: "Sonnet"
         case .alwaysClaudeDeep: "Opus"
         case .alwaysMuseWonder: "Muse"
@@ -156,8 +194,14 @@ private enum Format {
 @MainActor
 @Observable
 final class QualityEvalModel {
+    enum Mode { case full, addAppleCloud }
+
     static let spendCap = 15.0
     private static let checkpoint = URL.cachesDirectory.appending(path: "quality-benchmark-checkpoint.json")
+    private static let appleCloudCheckpoint = URL.cachesDirectory.appending(path: "quality-applecloud-checkpoint.json")
+    /// HybridRouter's published 0.2.0 results, bundled so people with the Private Cloud Compute
+    /// entitlement can add Apple Cloud to them.
+    private static let baselineName = "2026-10-14-iphone-quality-muse"
 
     let cases: [QualityBenchmark.Case]
     private(set) var isRunning = false
@@ -171,11 +215,20 @@ final class QualityEvalModel {
     }
 
     var hasSavedProgress: Bool { FileManager.default.fileExists(atPath: Self.checkpoint.path()) }
+    var hasSavedAppleCloudProgress: Bool { FileManager.default.fileExists(atPath: Self.appleCloudCheckpoint.path()) }
+
+    /// The bundled 0.2.0 results, or nil if missing from the bundle.
+    var baseline: QualityBenchmark.RunResult? {
+        Bundle.main.url(forResource: Self.baselineName, withExtension: "json")
+            .flatMap { try? Data(contentsOf: $0) }
+            .flatMap { try? QualityBenchmark.RunResult.load($0) }
+    }
 
     var markdown: String {
         guard let result else { return "" }
         return [
-            "# Answer quality on \(result.device) (\(result.cases.count) prompts, \(Format.dollars(result.spent)))",
+            "# Answer quality on \(result.device) (\(result.cases.count) prompts, \(Format.dollars(result.spent)))"
+                + (result.routerNote.map { "\n\n\($0)" } ?? ""),
             QualityReport(result, split: "heldout").markdown(title: "Held-out"),
             QualityReport(result, split: "tuning").markdown(title: "Tuning"),
         ].joined(separator: "\n\n")
@@ -183,15 +236,55 @@ final class QualityEvalModel {
 
     /// Shows results saved by an earlier, unfinished or finished run.
     func loadSaved() {
-        guard result == nil, let data = try? Data(contentsOf: Self.checkpoint),
-              let saved = try? QualityBenchmark.RunResult.load(data) else { return }
-        show(saved)
+        guard result == nil else { return }
+        if let data = try? Data(contentsOf: Self.appleCloudCheckpoint), let saved = try? QualityBenchmark.RunResult.load(data) {
+            show(saved, suffix: "applecloud")
+        } else if let data = try? Data(contentsOf: Self.checkpoint), let saved = try? QualityBenchmark.RunResult.load(data) {
+            show(saved)
+        }
+    }
+
+    func discardAppleCloudProgress() {
+        try? FileManager.default.removeItem(at: Self.appleCloudCheckpoint)
+        result = nil
+        exportFile = nil
     }
 
     func discardProgress() {
         try? FileManager.default.removeItem(at: Self.checkpoint)
         result = nil
         exportFile = nil
+    }
+
+    /// Answers the bundled results' prompts on Apple Cloud, grades them, and adds the column.
+    func addAppleCloud(app: AppModel) async {
+        guard !isRunning, let baseline else { return }
+        isRunning = true
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer {
+            isRunning = false
+            progress = nil
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
+        let runner = QualityBenchmarkRunner(
+            makeSession: { column in
+                app.makeBenchmarkSession(instructions: QualityBenchmark.answerInstructions,
+                                         claudeTier: column == .claudeDeep ? .deep : .standard)
+            },
+            judge: ModelAnswerJudge {
+                app.makeBenchmarkSession(instructions: ModelAnswerJudge.instructionsForSession, claudeTier: .deep)
+            },
+            classifier: OnDeviceClassifier(),
+            spendCap: Self.spendCap,
+            checkpoint: Self.appleCloudCheckpoint,
+            device: baseline.device,
+            classifierName: baseline.classifier,
+            judgeModelID: baseline.judgeModelID
+        )
+        let result = await runner.addColumn(.appleCloud, to: baseline) { [weak self] progress in
+            self?.progress = progress
+        }
+        show(result, suffix: "applecloud")
     }
 
     func run(app: AppModel) async {
@@ -227,10 +320,10 @@ final class QualityEvalModel {
         show(result)
     }
 
-    private func show(_ result: QualityBenchmark.RunResult) {
+    private func show(_ result: QualityBenchmark.RunResult, suffix: String? = nil) {
         self.result = result
         let stamp = ISO8601DateFormatter.string(from: result.startedAt, timeZone: .current, formatOptions: [.withFullDate])
-        let file = URL.temporaryDirectory.appending(path: "\(stamp)-iphone-quality.json")
+        let file = URL.temporaryDirectory.appending(path: "\(stamp)-iphone-quality\(suffix.map { "-\($0)" } ?? "").json")
         if let data = try? result.encoded(), (try? data.write(to: file)) != nil {
             exportFile = file
         }

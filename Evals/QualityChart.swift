@@ -97,6 +97,7 @@ enum QualityChart {
         switch strategy {
         case .router: "HybridRouter"
         case .alwaysOnDevice: "Always on-device"
+        case .alwaysAppleCloud: "Always Apple Cloud"
         case .alwaysClaude: "Always Sonnet"
         case .alwaysClaudeDeep: "Always Opus"
         case .alwaysMuseWonder: "Always Muse Wonder"

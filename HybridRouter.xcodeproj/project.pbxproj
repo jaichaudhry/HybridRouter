@@ -29,6 +29,7 @@
 		DF2BFC2DF87DC5031C206F9E /* AppleCloudChecksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1270BE3E83D2B9E245B8ED1 /* AppleCloudChecksView.swift */; };
 		E513A3FEF9215BCE00EC66E8 /* classifier_benchmark.json in Resources */ = {isa = PBXBuildFile; fileRef = 2A0B5D7416B9B563BDAC2D6E /* classifier_benchmark.json */; };
 		F751E029F9FD712552A4E662 /* HybridRouterKit in Frameworks */ = {isa = PBXBuildFile; productRef = 09724B000CD1208B71F52D0A /* HybridRouterKit */; };
+		F77336D3513767E8837CFDBD /* 2026-10-14-iphone-quality-muse.json in Resources */ = {isa = PBXBuildFile; fileRef = 52E3562E23F0DA0620ACDD04 /* 2026-10-14-iphone-quality-muse.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +41,7 @@
 		40D9B067395E4F3454748AD4 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		475BD9FCD8D78EDABF43EEA7 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		4EE4F5466197C29F330B6A58 /* quality_benchmark.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = quality_benchmark.json; sourceTree = "<group>"; };
+		52E3562E23F0DA0620ACDD04 /* 2026-10-14-iphone-quality-muse.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "2026-10-14-iphone-quality-muse.json"; sourceTree = "<group>"; };
 		5C5A008662A9462F1B26DCD3 /* ChatUI */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ChatUI; path = Packages/ChatUI; sourceTree = SOURCE_ROOT; };
 		5C6582CFB6A85333C8FA9E84 /* DocumentCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentCards.swift; sourceTree = "<group>"; };
 		5EDA3B0B2C8A6931897A98E6 /* PlacesTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacesTool.swift; sourceTree = "<group>"; };
@@ -107,6 +109,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		A3C25A17FF49FB4EF895D71A /* results */ = {
+			isa = PBXGroup;
+			children = (
+				52E3562E23F0DA0620ACDD04 /* 2026-10-14-iphone-quality-muse.json */,
+			);
+			path = results;
+			sourceTree = "<group>";
+		};
 		A469DD2F840798F83C7E5C7E /* Settings */ = {
 			isa = PBXGroup;
 			children = (
@@ -145,6 +155,7 @@
 			children = (
 				2A0B5D7416B9B563BDAC2D6E /* classifier_benchmark.json */,
 				4EE4F5466197C29F330B6A58 /* quality_benchmark.json */,
+				A3C25A17FF49FB4EF895D71A /* results */,
 			);
 			path = Evals;
 			sourceTree = "<group>";
@@ -237,6 +248,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F77336D3513767E8837CFDBD /* 2026-10-14-iphone-quality-muse.json in Resources */,
 				31E817D090FB2CC071C90B6D /* AppIcon.icon in Resources */,
 				E513A3FEF9215BCE00EC66E8 /* classifier_benchmark.json in Resources */,
 				7D981EF0DE2488E69D3A6EA5 /* quality_benchmark.json in Resources */,

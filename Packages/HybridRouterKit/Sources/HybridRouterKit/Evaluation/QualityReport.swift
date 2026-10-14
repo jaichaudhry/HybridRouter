@@ -7,6 +7,7 @@ public struct QualityReport: Sendable {
     public enum Strategy: String, Sendable, CaseIterable {
         case router
         case alwaysOnDevice
+        case alwaysAppleCloud
         case alwaysClaude
         case alwaysClaudeDeep
         case alwaysMuseWonder
@@ -19,6 +20,7 @@ public struct QualityReport: Sendable {
             switch self {
             case .router: "HybridRouter"
             case .alwaysOnDevice: "Always on-device"
+            case .alwaysAppleCloud: "Always Apple Cloud"
             case .alwaysClaude: "Always Claude Sonnet"
             case .alwaysClaudeDeep: "Always Claude Opus"
             case .alwaysMuseWonder: "Always Muse Wonder"
@@ -105,6 +107,7 @@ public struct QualityReport: Sendable {
         let router = evaluate(.router, pick: routerColumn)
         if let router { results.append(router) }
         if rungs.contains(.onDevice), let value = evaluate(.alwaysOnDevice, pick: { _ in .onDevice }) { results.append(value) }
+        if rungs.contains(.appleCloud), let value = evaluate(.alwaysAppleCloud, pick: { _ in .appleCloud }) { results.append(value) }
         if rungs.contains(.claude), let value = evaluate(.alwaysClaude, pick: { _ in .claude }) { results.append(value) }
         if run.columns.contains(.claudeDeep), let value = evaluate(.alwaysClaudeDeep, pick: { _ in .claudeDeep }) { results.append(value) }
         if run.columns.contains(.museWonder), let value = evaluate(.alwaysMuseWonder, pick: { _ in .museWonder }) { results.append(value) }
