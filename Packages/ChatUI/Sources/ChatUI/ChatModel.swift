@@ -287,6 +287,8 @@ public final class ChatModel {
     public func prewarm() {
         let route = routeOverride ?? Route.allCases.first { session.availability(of: $0).isAvailable }
         if let route { session.prewarm(route) }
+        // The classifier runs its own short on-device request before every turn; warm it too.
+        Task(priority: .utility) { [coordinator] in await coordinator.prewarm() }
     }
 
     /// Swaps in a new session (e.g. after Claude credentials change) that continues the same

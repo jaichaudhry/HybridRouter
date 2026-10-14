@@ -1,3 +1,4 @@
+import Foundation
 import HybridRouterKitTesting
 import Testing
 @testable import HybridRouterKit
@@ -43,6 +44,54 @@ struct RouterTests {
         #expect(result.decision?.route == .appleCloud)
         guard case .routed(_, let run) = result else { Issue.record("not routed"); return }
         #expect(run?.classification == nil)
+    }
+
+    /// Answers after `delay`. With `ignoresCancellation`, it waits on a timer that cancelling
+    /// can't interrupt, like a stalled on-device request.
+    private struct SlowClassifier: RouteClassifier {
+        let delay: Double
+        var ignoresCancellation = false
+
+        func classify(_ prompt: String, previous: String?) async throws -> RouteClassification {
+            if ignoresCancellation {
+                await withCheckedContinuation { continuation in
+                    DispatchQueue.global().asyncAfter(deadline: .now() + delay) { continuation.resume() }
+                }
+            } else {
+                try await Task.sleep(for: .seconds(delay))
+            }
+            return RouteClassification(complexity: "simple", task: "chat")
+        }
+    }
+
+    @Test(arguments: [false, true])
+    func aStalledClassifierTimesOutAndFallsBack(ignoresCancellation: Bool) async {
+        let router = Router(classifier: SlowClassifier(delay: 5, ignoresCancellation: ignoresCancellation),
+                            classifierTimeout: .milliseconds(100))
+        let start = ContinuousClock.now
+        let result = await router.route("Hi", input: everything)
+        #expect(ContinuousClock.now - start < .seconds(2))
+        #expect(result.decision == RouteDecision(route: .appleCloud, reason: "Couldn't classify (timed out), so using a mid-size model", source: .classifier))
+        guard case .routed(_, let run) = result else { Issue.record("not routed"); return }
+        #expect(run?.failure == .timeout)
+    }
+
+    @Test func aClassifierWithinTheLimitIsUsed() async {
+        let router = Router(classifier: SlowClassifier(delay: 0.05), classifierTimeout: .seconds(2))
+        #expect(await router.route("Hi", input: everything).decision?.route == .onDevice)
+    }
+
+    @Test func prewarmingReachesTheClassifier() async {
+        final class Counter: RouteClassifier, @unchecked Sendable {
+            var prewarms = 0
+            func classify(_ prompt: String, previous: String?) async throws -> RouteClassification {
+                RouteClassification(complexity: "simple", task: "chat")
+            }
+            func prewarm() async { prewarms += 1 }
+        }
+        let counter = Counter()
+        await Router(classifier: counter).prewarm()
+        #expect(counter.prewarms == 1)
     }
 
     @Test func classifierFailureWithoutAppleCloudUsesTheNearestRoute() {

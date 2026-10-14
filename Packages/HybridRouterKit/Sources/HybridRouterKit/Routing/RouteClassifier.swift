@@ -6,12 +6,17 @@ public protocol RouteClassifier: Sendable {
     ///   - prompt: the user's message.
     ///   - previous: the previous user message, for short follow-ups; nil otherwise.
     func classify(_ prompt: String, previous: String?) async throws -> RouteClassification
+
+    /// Gets ready for the first real turn, e.g. by loading the model. Optional.
+    func prewarm() async
 }
 
 extension RouteClassifier {
     public func classify(_ prompt: String) async throws -> RouteClassification {
         try await classify(prompt, previous: nil)
     }
+
+    public func prewarm() async {}
 }
 
 /// Classifies with the on-device model, using a fresh, short session per turn so it stays fast.
@@ -105,6 +110,13 @@ public struct OnDeviceClassifier: RouteClassifier {
     public init(model: SystemLanguageModel = .default, instructionSet: InstructionSet? = nil) {
         self.model = model
         self.instructionSet = instructionSet ?? InstructionSet.tuned(for: model.variant)
+    }
+
+    /// Classifies a throwaway message so the first real turn doesn't pay for loading the model
+    /// and the output schema. On an iPhone 17 Pro Max the first message after launch sat on
+    /// "Checking privacy and complexity…" for seconds; later ones take about 0.6 s.
+    public func prewarm() async {
+        _ = try? await classify("Hi", previous: nil)
     }
 
     public func classify(_ prompt: String, previous: String?) async throws -> RouteClassification {

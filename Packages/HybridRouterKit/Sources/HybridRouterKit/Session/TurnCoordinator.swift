@@ -104,6 +104,11 @@ public struct TurnCoordinator {
         self.isOnline = isOnline
     }
 
+    /// Warms the router's classifier, e.g. when the app comes to the foreground.
+    public func prewarm() async {
+        await router.prewarm()
+    }
+
     public func run(
         _ request: Request,
         in session: RoutedSession,

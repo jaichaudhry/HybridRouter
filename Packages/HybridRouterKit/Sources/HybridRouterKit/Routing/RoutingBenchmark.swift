@@ -81,7 +81,7 @@ public enum RoutingBenchmark {
         mapping: ComplexityMapping = .standard,
         onResult: @Sendable (Result) async -> Void = { _ in }
     ) async -> Report {
-        let router = Router(classifier: classifier, mapping: mapping)
+        let router = Router(classifier: classifier, mapping: mapping, classifierTimeout: nil)
         var results: [Result] = []
         for routingCase in cases {
             let routed = await router.route(routingCase.prompt, input: routingCase.input)

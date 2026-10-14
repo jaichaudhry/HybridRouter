@@ -76,7 +76,7 @@ struct RoutingEvalTests {
         arguments: RoutingCase.classified
     )
     func liveClassifierRoutesAsExpected(_ routingCase: RoutingCase) async {
-        let router = Router(classifier: OnDeviceClassifier())
+        let router = Router(classifier: OnDeviceClassifier(), classifierTimeout: nil)
         let result = await router.route(routingCase.prompt, input: routingCase.input)
         guard case .routed(let decision, let run) = result else {
             Issue.record("Blocked: \(result)")

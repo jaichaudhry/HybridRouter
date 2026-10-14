@@ -27,7 +27,7 @@ struct RoutingEvaluation: Evaluation {
             availability: [.onDevice: .available, .appleCloud: .available, .claude: .available],
             previousPrompt: routingCase?.previousPrompt
         )
-        let result = await Router(classifier: OnDeviceClassifier()).route(sample.promptDescription, input: input)
+        let result = await Router(classifier: OnDeviceClassifier(), classifierTimeout: nil).route(sample.promptDescription, input: input)
         return ModelSubject(value: result.decision?.route.rawValue ?? "blocked")
     }
 

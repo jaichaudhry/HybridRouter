@@ -57,6 +57,8 @@ public enum FailureCause: Equatable, Sendable {
             case .quotaLimitReached: .rateLimited
             default: .providerError
             }
+        case is ClassifierTimeoutError:
+            self = .timeout
         case is CancellationError:
             self = .cancelled
         case let error as URLError where error.code == .timedOut:

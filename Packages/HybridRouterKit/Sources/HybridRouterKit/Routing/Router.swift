@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// How the classifier did on one turn, for telemetry and evals.
 public struct ClassifierRun: Equatable, Sendable {
@@ -25,14 +26,30 @@ public enum RoutingResult: Equatable, Sendable {
     }
 }
 
+/// The classifier took longer than the router's limit.
+public struct ClassifierTimeoutError: Error, Equatable {
+    public init() {}
+}
+
 /// Picks a route for each turn: hard rules first, then the on-device classifier.
 public struct Router: Sendable {
     public var mapping: ComplexityMapping
+    /// How long the classifier may take before the turn falls back as if it had failed. About
+    /// six times its usual 0.6 s on an iPhone, so it only trips when the on-device model stalls.
+    /// Nil waits as long as it takes, for measuring the classifier itself: the on-device model
+    /// answers one request at a time, so concurrent eval cases queue past any short limit.
+    public var classifierTimeout: Duration?
     private let classifier: any RouteClassifier
 
-    public init(classifier: any RouteClassifier, mapping: ComplexityMapping = .standard) {
+    public init(classifier: any RouteClassifier, mapping: ComplexityMapping = .standard, classifierTimeout: Duration? = .seconds(4)) {
         self.classifier = classifier
         self.mapping = mapping
+        self.classifierTimeout = classifierTimeout
+    }
+
+    /// Warms the classifier so the first turn routes as fast as later ones.
+    public func prewarm() async {
+        await classifier.prewarm()
     }
 
     /// - Parameters:
@@ -60,10 +77,54 @@ public struct Router: Sendable {
         let clock = ContinuousClock()
         let start = clock.now
         do {
-            let classification = try await classifier.classify(prompt, previous: previous)
+            let classification = if let classifierTimeout {
+                try await Self.withTimeout(classifierTimeout) { [classifier] in
+                    try await classifier.classify(prompt, previous: previous)
+                }
+            } else {
+                try await classifier.classify(prompt, previous: previous)
+            }
             return ClassifierRun(classification: classification, latency: start.duration(to: clock.now).seconds)
         } catch {
             return ClassifierRun(classification: nil, latency: start.duration(to: clock.now).seconds, failure: FailureCause(error))
+        }
+    }
+
+    /// Runs `operation`, or throws ``ClassifierTimeoutError`` once `limit` passes. Returns at the
+    /// limit even if the operation ignores cancellation, which a task group would wait for.
+    static func withTimeout<T: Sendable>(
+        _ limit: Duration,
+        _ operation: @escaping @Sendable () async throws -> T
+    ) async throws -> T {
+        let resumed = Mutex(false)
+        func claim() -> Bool {
+            resumed.withLock { done in
+                defer { done = true }
+                return !done
+            }
+        }
+        let work = Mutex<Task<Void, Never>?>(nil)
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                let task = Task {
+                    do {
+                        let value = try await operation()
+                        if claim() { continuation.resume(returning: value) }
+                    } catch {
+                        if claim() { continuation.resume(throwing: error) }
+                    }
+                }
+                work.withLock { $0 = task }
+                Task {
+                    try? await Task.sleep(for: limit)
+                    if claim() {
+                        task.cancel()
+                        continuation.resume(throwing: ClassifierTimeoutError())
+                    }
+                }
+            }
+        } onCancel: {
+            work.withLock { $0?.cancel() }
         }
     }
 
