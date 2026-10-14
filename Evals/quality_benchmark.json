@@ -1,0 +1,1524 @@
+[
+  {
+    "id": 1,
+    "split": "tuning",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "What's the best month to visit Japan for cherry blossoms?",
+    "criteria": "Late March to early April for Tokyo and Kyoto; notes that it varies by region (earlier in Okinawa, May in Hokkaido)."
+  },
+  {
+    "id": 2,
+    "split": "tuning",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "List 10 things to pack for a beach trip",
+    "criteria": "Ten items that make sense for a beach trip; any reasonable ones count."
+  },
+  {
+    "id": 3,
+    "split": "tuning",
+    "group": "trip",
+    "task": "rewrite",
+    "difficulty": "easy",
+    "prompt": "Translate 'where is the train station' into Japanese"
+  },
+  {
+    "id": 4,
+    "split": "tuning",
+    "group": "trip",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Plan a 4-day Lisbon trip for two foodies on a mid-range budget"
+  },
+  {
+    "id": 5,
+    "split": "tuning",
+    "group": "trip",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Build a day-by-day road trip from San Francisco to Los Angeles over 5 days"
+  },
+  {
+    "id": 7,
+    "split": "tuning",
+    "group": "trip",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "We have $3,000 for a week in Italy with two teens. Is that realistic, and where should we cut?"
+  },
+  {
+    "id": 8,
+    "split": "tuning",
+    "group": "trip",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Compare a Disney cruise vs Disney World for a 6-year-old who gets seasick"
+  },
+  {
+    "id": 9,
+    "split": "tuning",
+    "group": "trip",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "My flight got cancelled and I'm stuck in Frankfurt overnight with a toddler. What are my options?"
+  },
+  {
+    "id": 11,
+    "split": "tuning",
+    "group": "trip",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Is a 50-minute layover in Chicago O'Hare enough to change terminals?"
+  },
+  {
+    "id": 12,
+    "split": "tuning",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "Suggest three rainy-day activities in Seattle"
+  },
+  {
+    "id": 13,
+    "split": "tuning",
+    "group": "trip",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Plan a weekend in Kyoto that avoids the biggest crowds"
+  },
+  {
+    "id": 14,
+    "split": "tuning",
+    "group": "trip",
+    "task": "rewrite",
+    "difficulty": "easy",
+    "prompt": "Write a polite email asking the hotel for early check-in"
+  },
+  {
+    "id": 29,
+    "split": "tuning",
+    "group": "document-text",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "What does 'indemnify' mean in this contract?"
+  },
+  {
+    "id": 31,
+    "split": "tuning",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "Hi!"
+  },
+  {
+    "id": 32,
+    "split": "tuning",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "What's 15% of 240?",
+    "criteria": "36."
+  },
+  {
+    "id": 33,
+    "split": "tuning",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "Give me a fun fact about octopuses"
+  },
+  {
+    "id": 34,
+    "split": "tuning",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "Explain how a refrigerator works"
+  },
+  {
+    "id": 35,
+    "split": "tuning",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "Write a haiku about Monday mornings"
+  },
+  {
+    "id": 36,
+    "split": "tuning",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "Explain the difference between a Roth and a traditional IRA"
+  },
+  {
+    "id": 37,
+    "split": "tuning",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Should I refinance my mortgage at 6.1% if I plan to move in 3 years?"
+  },
+  {
+    "id": 38,
+    "split": "tuning",
+    "group": "chat",
+    "task": "code",
+    "difficulty": "hard",
+    "prompt": "Write a Swift function that debounces a closure"
+  },
+  {
+    "id": 40,
+    "split": "tuning",
+    "group": "chat",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Plan a weekly study schedule for learning Spanish in 3 months"
+  },
+  {
+    "id": 41,
+    "split": "tuning",
+    "group": "chat",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Outline a 5-minute talk on climate adaptation"
+  },
+  {
+    "id": 43,
+    "split": "tuning",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Which is better for a startup: Postgres or DynamoDB? Consider cost and scale"
+  },
+  {
+    "id": 44,
+    "split": "tuning",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Prove that the square root of 2 is irrational"
+  },
+  {
+    "id": 101,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "What's the capital of Australia?",
+    "criteria": "Canberra."
+  },
+  {
+    "id": 102,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "Convert 72 degrees Fahrenheit to Celsius.",
+    "criteria": "About 22.2 °C."
+  },
+  {
+    "id": 103,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "Give me five synonyms for 'happy'."
+  },
+  {
+    "id": 104,
+    "split": "heldout",
+    "group": "chat",
+    "task": "rewrite",
+    "difficulty": "easy",
+    "prompt": "Make this sentence more polite: 'Send me the report now.'"
+  },
+  {
+    "id": 105,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "Suggest five names for a golden retriever puppy."
+  },
+  {
+    "id": 106,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "How many minutes are in a week?",
+    "criteria": "10,080."
+  },
+  {
+    "id": 107,
+    "split": "heldout",
+    "group": "chat",
+    "task": "rewrite",
+    "difficulty": "easy",
+    "prompt": "Write a two-line birthday message for my coworker Priya."
+  },
+  {
+    "id": 108,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "What's the difference between 'affect' and 'effect'?",
+    "criteria": "'Affect' is usually the verb, 'effect' usually the noun."
+  },
+  {
+    "id": 109,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "Suggest three quick breakfast ideas with eggs."
+  },
+  {
+    "id": 110,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "Tell me a clean joke about cats."
+  },
+  {
+    "id": 111,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "Explain compound interest with a simple example.",
+    "criteria": "Interest earned on previous interest, with a correct worked example."
+  },
+  {
+    "id": 112,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "What causes the seasons on Earth?",
+    "criteria": "Earth's axial tilt, not its distance from the Sun."
+  },
+  {
+    "id": 113,
+    "split": "heldout",
+    "group": "chat",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Make a 30-minute beginner bodyweight workout with a warm-up and cool-down."
+  },
+  {
+    "id": 114,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "Explain what an API is to a non-technical person."
+  },
+  {
+    "id": 115,
+    "split": "heldout",
+    "group": "chat",
+    "task": "rewrite",
+    "difficulty": "medium",
+    "prompt": "Turn these notes into a short LinkedIn post: shipped v2 of our app, 40% faster load times, thanks to the design team.",
+    "criteria": "Keeps all three facts."
+  },
+  {
+    "id": 116,
+    "split": "heldout",
+    "group": "chat",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Create a weekly dinner plan for a vegetarian family of four who don't eat eggs, with a shopping list.",
+    "criteria": "No meat, fish or eggs anywhere in the plan or shopping list; includes a shopping list."
+  },
+  {
+    "id": 117,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "medium",
+    "prompt": "What are the pros and cons of an electric car versus a hybrid for someone who drives 15 miles a day?"
+  },
+  {
+    "id": 118,
+    "split": "heldout",
+    "group": "chat",
+    "task": "code",
+    "difficulty": "medium",
+    "prompt": "Write a Python function that checks whether a string is a palindrome, ignoring spaces and case.",
+    "criteria": "Correct code that ignores spaces and case."
+  },
+  {
+    "id": 119,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "Explain the difference between a virus and a bacterium.",
+    "criteria": "Bacteria are living cells; viruses need a host cell to replicate; antibiotics don't work on viruses."
+  },
+  {
+    "id": 120,
+    "split": "heldout",
+    "group": "chat",
+    "task": "code",
+    "difficulty": "medium",
+    "prompt": "What does git rebase do, and when should I use it instead of merge?",
+    "criteria": "Rewrites commits onto a new base; warns against rebasing shared/public history."
+  },
+  {
+    "id": 121,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "tricky-hard",
+    "prompt": "A bat and a ball cost $1.10 in total. The bat costs $1.00 more than the ball. How much does the ball cost?",
+    "criteria": "$0.05, not $0.10."
+  },
+  {
+    "id": 122,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "If I invest $500 a month for 20 years at a 7% annual return, roughly how much will I have, and how much of that is growth?",
+    "criteria": "About $260,000 total, of which $120,000 is contributions and about $140,000 growth (monthly compounding)."
+  },
+  {
+    "id": 123,
+    "split": "heldout",
+    "group": "chat",
+    "task": "code",
+    "difficulty": "hard",
+    "prompt": "Write a Swift async function that fetches three URLs concurrently and returns their data in the original order, with proper error handling.",
+    "criteria": "Runs concurrently (async let or a task group), preserves order, propagates or handles errors."
+  },
+  {
+    "id": 124,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "My landlord wants to raise the rent 12% at renewal. What questions should I ask, and what are my negotiation options?",
+    "criteria": "Mentions checking local rent-increase laws; gives concrete negotiation options."
+  },
+  {
+    "id": 125,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Explain why you should switch doors in the Monty Hall problem, in a way a skeptic would accept.",
+    "criteria": "Switching wins 2/3 of the time, with a convincing argument."
+  },
+  {
+    "id": 126,
+    "split": "heldout",
+    "group": "chat",
+    "task": "code",
+    "difficulty": "hard",
+    "prompt": "Find the bug: func average(_ xs: [Int]) -> Double { Double(xs.reduce(0, +) / xs.count) }",
+    "criteria": "Integer division happens before converting to Double; also crashes on an empty array."
+  },
+  {
+    "id": 127,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Should a 30-year-old with $20k of credit card debt at 24% APR and $15k in savings use the savings to pay down the debt? Walk through the trade-offs.",
+    "criteria": "Recommends paying down most of the high-interest debt while keeping an emergency fund."
+  },
+  {
+    "id": 128,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Design a database schema for a library with books, members, loans and reservations, and explain the key relationships.",
+    "criteria": "Separate tables with keys; loans and reservations link members to books (or copies)."
+  },
+  {
+    "id": 129,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "What are the strongest arguments for and against a four-day work week, and what does the evidence say?",
+    "criteria": "Balanced; mentions trial evidence and its limits."
+  },
+  {
+    "id": 130,
+    "split": "heldout",
+    "group": "chat",
+    "task": "code",
+    "difficulty": "hard",
+    "prompt": "Explain the difference between actor, @MainActor and Sendable in Swift concurrency, with a short example of each.",
+    "criteria": "Accurate definitions and valid example code."
+  },
+  {
+    "id": 131,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "tricky-easy",
+    "prompt": "Explain quantum entanglement in one sentence for a 10-year-old.",
+    "criteria": "One sentence, accurate enough, child-friendly."
+  },
+  {
+    "id": 132,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "tricky-easy",
+    "prompt": "What's the plural of 'cactus'?",
+    "criteria": "Cacti (cactuses also accepted)."
+  },
+  {
+    "id": 133,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "tricky-easy",
+    "prompt": "Summarize the plot of Romeo and Juliet in three sentences.",
+    "criteria": "Three sentences, accurate plot."
+  },
+  {
+    "id": 134,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "tricky-easy",
+    "prompt": "Write a limerick about a programmer who never sleeps.",
+    "criteria": "Limerick form (AABBA)."
+  },
+  {
+    "id": 135,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "tricky-hard",
+    "prompt": "Is 1,001 a prime number?",
+    "criteria": "No: 1,001 = 7 × 11 × 13."
+  },
+  {
+    "id": 136,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "tricky-hard",
+    "prompt": "How many r's are in the word 'strawberry'?",
+    "criteria": "Three."
+  },
+  {
+    "id": 137,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "tricky-hard",
+    "prompt": "If today is Tuesday, what day of the week will it be 100 days from now?",
+    "criteria": "Thursday."
+  },
+  {
+    "id": 138,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "tricky-hard",
+    "prompt": "What's 17 × 24?",
+    "criteria": "408."
+  },
+  {
+    "id": 139,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "Give me a beginner's explanation of how vaccines train the immune system.",
+    "criteria": "Accurate: exposure to a harmless antigen leads to memory cells and antibodies."
+  },
+  {
+    "id": 140,
+    "split": "heldout",
+    "group": "chat",
+    "task": "rewrite",
+    "difficulty": "medium",
+    "prompt": "Rewrite this to be clearer: 'Due to the fact that the meeting was rescheduled, the deliverables that were previously due will be due at a later date which is to be determined.'",
+    "criteria": "Short and clear; keeps the meaning (deadline moved, new date TBD)."
+  },
+  {
+    "id": 141,
+    "split": "heldout",
+    "group": "chat",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Outline the steps to start a small vegetable garden on a balcony."
+  },
+  {
+    "id": 142,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Compare renting versus buying in a city where rent is $2,500 a month and a similar home costs $600,000. What else would I need to know?",
+    "criteria": "Considers mortgage rate, down payment, taxes, maintenance, appreciation and time horizon."
+  },
+  {
+    "id": 143,
+    "split": "heldout",
+    "group": "chat",
+    "task": "code",
+    "difficulty": "hard",
+    "prompt": "Write a SQL query that finds the top 3 customers by total order value in each country, given tables customers(id, name, country) and orders(id, customer_id, amount).",
+    "criteria": "Correct per-country ranking (window function or equivalent), top 3 per country."
+  },
+  {
+    "id": 144,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "What year did the first iPhone come out?",
+    "criteria": "2007."
+  },
+  {
+    "id": 145,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "Explain what inflation is and why central banks raise interest rates to fight it."
+  },
+  {
+    "id": 146,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Two trains leave cities 300 miles apart at the same time, heading toward each other at 60 mph and 90 mph. When and where do they meet?",
+    "criteria": "After 2 hours, 120 miles from the 60-mph train's starting point."
+  },
+  {
+    "id": 147,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "What's the difference between machine learning and traditional programming?"
+  },
+  {
+    "id": 148,
+    "split": "heldout",
+    "group": "chat",
+    "task": "rewrite",
+    "difficulty": "easy",
+    "prompt": "Turn this into a bullet list: milk, eggs, bread, spinach and coffee beans.",
+    "criteria": "Five bullets, nothing added."
+  },
+  {
+    "id": 149,
+    "split": "heldout",
+    "group": "chat",
+    "task": "rewrite",
+    "difficulty": "medium",
+    "prompt": "Write a persuasive but honest paragraph asking my manager for a raise. This year I took over two projects and our team grew from 4 to 7.",
+    "criteria": "Uses both facts; doesn't invent other accomplishments."
+  },
+  {
+    "id": 150,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "tricky-hard",
+    "prompt": "Why isn't 0.1 + 0.2 exactly 0.3 in most programming languages?",
+    "criteria": "Binary floating-point can't represent 0.1 or 0.2 exactly."
+  },
+  {
+    "id": 151,
+    "split": "heldout",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "What's the usual time difference between New York and London?",
+    "criteria": "5 hours (briefly 4 when daylight saving dates differ)."
+  },
+  {
+    "id": 152,
+    "split": "heldout",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "Do US citizens need a visa to visit Canada for a week as tourists?",
+    "criteria": "No visa for a tourist visit; a valid passport (or approved document) is needed."
+  },
+  {
+    "id": 153,
+    "split": "heldout",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "What's the tipping custom in Japan?",
+    "criteria": "Tipping isn't customary and can be declined."
+  },
+  {
+    "id": 154,
+    "split": "heldout",
+    "group": "trip",
+    "task": "rewrite",
+    "difficulty": "easy",
+    "prompt": "Translate 'Can I have the check, please?' into Spanish, French and Italian.",
+    "criteria": "Correct in all three languages."
+  },
+  {
+    "id": 155,
+    "split": "heldout",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "List five must-see sights in Paris."
+  },
+  {
+    "id": 156,
+    "split": "heldout",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "What currency is used in Switzerland?",
+    "criteria": "Swiss franc (CHF)."
+  },
+  {
+    "id": 157,
+    "split": "heldout",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "Give me a packing list for a 3-day business trip."
+  },
+  {
+    "id": 158,
+    "split": "heldout",
+    "group": "trip",
+    "task": "rewrite",
+    "difficulty": "easy",
+    "prompt": "Write a short message to my Airbnb host saying we'll arrive around 10 pm."
+  },
+  {
+    "id": 159,
+    "split": "heldout",
+    "group": "trip",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Plan a 3-day trip to Chicago for a couple who love architecture and jazz."
+  },
+  {
+    "id": 160,
+    "split": "heldout",
+    "group": "trip",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Plan one day in Rome for first-timers who want to see the Colosseum and the Vatican.",
+    "criteria": "Realistic about distance and timed entry; doesn't cram too much."
+  },
+  {
+    "id": 161,
+    "split": "heldout",
+    "group": "trip",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Suggest a 7-day Iceland Ring Road itinerary in summer, with daily driving times.",
+    "criteria": "Daily driving times; plausible order around the island."
+  },
+  {
+    "id": 162,
+    "split": "heldout",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "What should I know before renting a car in Italy?",
+    "criteria": "Mentions ZTL limited-traffic zones and the International Driving Permit."
+  },
+  {
+    "id": 163,
+    "split": "heldout",
+    "group": "trip",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Plan a kid-friendly weekend in San Diego for a family with a 5- and an 8-year-old."
+  },
+  {
+    "id": 164,
+    "split": "heldout",
+    "group": "trip",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Create a two-week backpacking route through Southeast Asia starting in Bangkok, on a $1,500 budget.",
+    "criteria": "Route and budget are plausible."
+  },
+  {
+    "id": 165,
+    "split": "heldout",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "What's the best way to get from Heathrow to central London, and roughly what does each option cost?",
+    "criteria": "Covers the Elizabeth line, Heathrow Express, the Tube and taxis with plausible price ranges."
+  },
+  {
+    "id": 166,
+    "split": "heldout",
+    "group": "trip",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Make a 5-day Tokyo itinerary that mixes modern neighborhoods with traditional temples."
+  },
+  {
+    "id": 167,
+    "split": "heldout",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "How can I avoid jet lag on a flight from Los Angeles to Sydney?"
+  },
+  {
+    "id": 168,
+    "split": "heldout",
+    "group": "trip",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Plan a romantic 3-day anniversary trip to Napa Valley."
+  },
+  {
+    "id": 169,
+    "split": "heldout",
+    "group": "trip",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "We're choosing between Portugal and Greece for 10 days in late October with a toddler. Compare the weather, logistics and costs, and recommend one.",
+    "criteria": "Considers late-October weather and ferry/island logistics; makes a clear recommendation."
+  },
+  {
+    "id": 170,
+    "split": "heldout",
+    "group": "trip",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "My passport expires in 4 months and I'm flying to Thailand next month. Is that a problem, and what should I do?",
+    "criteria": "Flags that Thailand (and many airlines) expect 6 months' validity; advises renewing first."
+  },
+  {
+    "id": 171,
+    "split": "heldout",
+    "group": "trip",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "I have a 1-hour layover at Paris CDG, flying Boston to Rome. Is that enough, and what happens if I miss the connection on one ticket versus separate tickets?",
+    "criteria": "Tight but possible (Schengen entry at CDG); one ticket means the airline rebooks, separate tickets mean you're on your own."
+  },
+  {
+    "id": 172,
+    "split": "heldout",
+    "group": "trip",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Build a 10-day Japan itinerary using the JR Pass and tell me whether the pass is actually worth it for that route.",
+    "criteria": "Itinerary plus an honest cost comparison (the pass's price rose sharply in 2023)."
+  },
+  {
+    "id": 173,
+    "split": "heldout",
+    "group": "trip",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Four friends are splitting a trip. One paid $1,200 for the house, one $480 for the car, one $300 for groceries and one paid nothing. Who owes whom, and how much?",
+    "criteria": "Total $1,980, $495 each. The non-payer owes $495, the grocery payer $195 and the car payer $15, all to the house payer."
+  },
+  {
+    "id": 174,
+    "split": "heldout",
+    "group": "trip",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Is it safe to travel to Mexico City right now, and which precautions actually matter?",
+    "criteria": "Points to current official advisories rather than claiming real-time knowledge; gives practical precautions."
+  },
+  {
+    "id": 175,
+    "split": "heldout",
+    "group": "trip",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Plan a wheelchair-accessible 4-day trip to Barcelona, including transport and which sights have accessibility barriers."
+  },
+  {
+    "id": 176,
+    "split": "heldout",
+    "group": "trip",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "My hotel overcharged me €180 and the front desk won't fix it. I paid by credit card. What are my options, step by step?",
+    "criteria": "Documents it, escalates in writing, then a credit card chargeback."
+  },
+  {
+    "id": 177,
+    "split": "heldout",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "tricky-easy",
+    "prompt": "Which is farther from New York: London or Los Angeles?",
+    "criteria": "London (about 3,460 miles vs about 2,450 miles)."
+  },
+  {
+    "id": 178,
+    "split": "heldout",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "tricky-easy",
+    "prompt": "Suggest a fun name for our family travel group chat."
+  },
+  {
+    "id": 179,
+    "split": "heldout",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "tricky-easy",
+    "prompt": "Summarize the main things to do in Amsterdam in one paragraph.",
+    "criteria": "One paragraph."
+  },
+  {
+    "id": 180,
+    "split": "heldout",
+    "group": "trip",
+    "task": "reason",
+    "difficulty": "tricky-hard",
+    "prompt": "If I leave Seattle at 9 am on a 10-hour flight to Tokyo, what local time will I land?",
+    "criteria": "About 11 am the next day in summer, about noon in winter (Japan time)."
+  },
+  {
+    "id": 181,
+    "split": "heldout",
+    "group": "trip",
+    "task": "reason",
+    "difficulty": "tricky-hard",
+    "prompt": "How many vacation days do I need for a trip from Thursday, March 5, 2026 to Tuesday, March 17, 2026 if I don't work weekends and there are no holidays?",
+    "criteria": "9 weekdays."
+  },
+  {
+    "id": 182,
+    "split": "heldout",
+    "group": "trip",
+    "task": "rewrite",
+    "difficulty": "medium",
+    "prompt": "Rewrite this itinerary as a friendly text to my parents: 'Day 1 Lisbon arrive 2pm, Alfama walk, dinner 8. Day 2 Sintra day trip, back by 6.'",
+    "criteria": "Keeps every time and place."
+  },
+  {
+    "id": 183,
+    "split": "heldout",
+    "group": "trip",
+    "task": "extract",
+    "difficulty": "medium",
+    "prompt": "From this booking, list each flight number with its date and seat: 'Booking ABC123. UA 901 SFO→FRA 12 May 2026 seat 34C. LH 1234 FRA→ATH 13 May 2026 seat 21A. Return A3 860 ATH→FRA 20 May seat 18F, LH 454 FRA→SFO 20 May seat 40K.'",
+    "criteria": "All four flights with the right dates and seats."
+  },
+  {
+    "id": 184,
+    "split": "heldout",
+    "group": "trip",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "I have 6 hours in Singapore between flights. Is it worth leaving the airport, and what would you do?",
+    "criteria": "Notes that leaving the airport depends on the traveler's nationality and visa rules; accounts for immigration and travel time; suggests a realistic plan or Jewel."
+  },
+  {
+    "id": 185,
+    "split": "heldout",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "What health precautions should I think about for a trip to Kenya?",
+    "criteria": "Suggests a travel clinic; mentions yellow fever and malaria considerations."
+  },
+  {
+    "id": 186,
+    "split": "heldout",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "Recommend three apps for planning a trip."
+  },
+  {
+    "id": 187,
+    "split": "heldout",
+    "group": "trip",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Plan a long-weekend fall foliage road trip in Vermont."
+  },
+  {
+    "id": 188,
+    "split": "heldout",
+    "group": "trip",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "For a 3-week trip through 6 European cities, compare a Eurail pass with budget flights. Which is cheaper, and when?",
+    "criteria": "Depends on route and booking; mentions reservation fees and airport transfer costs."
+  },
+  {
+    "id": 189,
+    "split": "heldout",
+    "group": "trip",
+    "task": "rewrite",
+    "difficulty": "easy",
+    "prompt": "Write a two-sentence Instagram caption for a sunset photo in Santorini.",
+    "criteria": "Two sentences."
+  },
+  {
+    "id": 190,
+    "split": "heldout",
+    "group": "trip",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "What are the rules for liquids in carry-on bags in the US?",
+    "criteria": "3-1-1: containers up to 3.4 oz (100 ml) in one quart-size bag."
+  },
+  {
+    "id": 191,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "extract",
+    "difficulty": "easy",
+    "prompt": "What's the amount due and the due date on this invoice? 'Invoice #4471 — Brightline Design LLC. Services: logo refresh. Amount due: $1,250.00. Issued: Sep 2, 2026. Due: Oct 2, 2026. Late fee: 1.5% per month.'",
+    "criteria": "$1,250.00, due Oct 2, 2026."
+  },
+  {
+    "id": 192,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "extract",
+    "difficulty": "easy",
+    "prompt": "From this email signature, what's the person's job title and company? 'Maya Chen | Operations Lead | Northwind Traders'",
+    "criteria": "Operations Lead at Northwind Traders."
+  },
+  {
+    "id": 193,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "summarize",
+    "difficulty": "easy",
+    "prompt": "Summarize this in one sentence: 'The city council voted 7–2 on Tuesday to extend the downtown bike lane by 1.2 miles, with construction starting next spring. Supporters cited safety data; opponents worried about parking for small businesses.'",
+    "criteria": "One sentence, accurate."
+  },
+  {
+    "id": 194,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "rewrite",
+    "difficulty": "easy",
+    "prompt": "Fix the grammar: 'Me and him was going to the store, but they was closed so we goes home.'",
+    "criteria": "He and I were going to the store, but it was closed, so we went home."
+  },
+  {
+    "id": 195,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "extract",
+    "difficulty": "easy",
+    "prompt": "List the ingredients in this recipe: 'Whisk 2 eggs with 1 cup milk and a pinch of salt. Add 1 cup flour gradually. Rest 10 minutes. Cook in a buttered pan.'",
+    "criteria": "Eggs, milk, salt, flour, butter."
+  },
+  {
+    "id": 196,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "What does 'net 30' mean on an invoice?",
+    "criteria": "Payment is due within 30 days."
+  },
+  {
+    "id": 197,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "summarize",
+    "difficulty": "medium",
+    "prompt": "Summarize this article in three bullet points: 'A two-year study of 1,600 employees at a travel company found that working from home two days a week had no measurable effect on productivity or promotions, while cutting resignations by a third. The effect was strongest for women, non-managers and employees with long commutes. Managers initially predicted productivity would fall, but changed their view after seeing performance reviews. The researchers caution that results may differ for jobs that depend on in-person collaboration, such as lab work or customer-facing roles, and that the company had invested in training managers to run hybrid teams.'",
+    "criteria": "Three bullets: no productivity or promotion loss, a third fewer resignations, plus the caveats."
+  },
+  {
+    "id": 198,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "extract",
+    "difficulty": "medium",
+    "prompt": "Turn these meeting notes into action items with owners and dates: 'Sam will update the pricing page by Friday. We agreed to pause the newsletter until Q1. Priya to send the vendor shortlist next Wednesday. Need someone to own the onboarding survey — Alex volunteered.'",
+    "criteria": "Sam: pricing page, Friday. Priya: vendor shortlist, next Wednesday. Alex: onboarding survey. The newsletter pause is a decision, not an owner task."
+  },
+  {
+    "id": 199,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "summarize",
+    "difficulty": "medium",
+    "prompt": "Explain this in plain English: 'The Lessee shall indemnify and hold harmless the Lessor from any and all claims arising from the Lessee's use of the Premises, except to the extent caused by the Lessor's gross negligence.'",
+    "criteria": "The tenant covers claims from their use of the property, unless the landlord was grossly negligent."
+  },
+  {
+    "id": 200,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "rewrite",
+    "difficulty": "medium",
+    "prompt": "Rewrite this complaint email to be firm but polite: 'This is the third time your delivery has been late. Fix it or I'm cancelling.'",
+    "criteria": "Firm, polite, keeps 'third time' and the cancellation intent."
+  },
+  {
+    "id": 201,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "extract",
+    "difficulty": "medium",
+    "prompt": "From this renters insurance summary, what's the deductible, the liability limit, and is water backup covered? 'Personal property coverage $30,000. Liability $100,000. Deductible $500. Water backup is excluded unless the Water Backup rider is purchased.'",
+    "criteria": "$500 deductible, $100,000 liability; water backup only with the rider."
+  },
+  {
+    "id": 202,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "summarize",
+    "difficulty": "medium",
+    "prompt": "Give me the TL;DR of these release notes: 'Version 4.2: Offline mode now syncs edits when you reconnect. Search is up to 3x faster on large libraries. We removed the legacy export to .xls (use .xlsx or CSV instead). Fixed a bug where reminders fired twice after daylight saving changes. Dark mode now applies to the settings screen. The minimum supported iOS version is now 18.'",
+    "criteria": "Mentions the removed .xls export and the new iOS 18 minimum."
+  },
+  {
+    "id": 203,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "extract",
+    "difficulty": "medium",
+    "prompt": "Categorize these transactions into groceries, transport, dining and subscriptions: 'Whole Foods $64.20; Uber $18.40; Netflix $15.49; Chipotle $12.85; Trader Joe's $41.10; Spotify $11.99; Lyft $22.30; Starbucks $6.45'",
+    "criteria": "Groceries: Whole Foods, Trader Joe's. Transport: Uber, Lyft. Dining: Chipotle, Starbucks. Subscriptions: Netflix, Spotify."
+  },
+  {
+    "id": 204,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "rewrite",
+    "difficulty": "medium",
+    "prompt": "Turn these bullets into a short professional project update: - API migration 80% done - blocked on auth team review - new ETA Oct 30 - no customer impact so far",
+    "criteria": "Keeps all four facts."
+  },
+  {
+    "id": 205,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "extract",
+    "difficulty": "medium",
+    "prompt": "What are the cancellation terms here? 'Members may cancel at any time. Cancellations within 14 days of purchase receive a full refund. After 14 days, the remaining months are refunded pro rata minus a $25 processing fee. Annual plans renew automatically unless cancelled 7 days before renewal.'",
+    "criteria": "Full refund within 14 days; afterwards pro rata minus $25; auto-renews unless cancelled 7 days before."
+  },
+  {
+    "id": 206,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Is this non-compete clause likely enforceable, and what should I ask before signing? 'Employee agrees not to work for any competitor anywhere in the United States for 3 years after leaving the Company, for any reason.'",
+    "criteria": "Notes that enforceability depends on the state (e.g. void in California) and that its scope and length are broad; suggests questions; isn't legal advice."
+  },
+  {
+    "id": 207,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Compare these job offers and recommend one. Offer A: $145k salary, 10% bonus target, 4% 401(k) match, fully remote. Offer B: $130k salary, $40k/year in RSUs vesting over 4 years, 6% 401(k) match, hybrid 3 days with a 45-minute commute.",
+    "criteria": "Compares total compensation correctly (B is higher on paper if the RSUs hold value) and weighs commute and risk."
+  },
+  {
+    "id": 208,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Here are two kitchen remodel quotes. Which is better value, and what's missing from each? Quote 1: $38,000 — cabinets, quartz countertops, installation, 6 weeks, 1-year warranty. Quote 2: $33,500 — cabinets, laminate countertops, installation, permits, demolition and disposal, 8 weeks, 2-year warranty.",
+    "criteria": "Quote 1 is missing permits and demolition/disposal; quote 2 has laminate rather than quartz; compares like for like."
+  },
+  {
+    "id": 209,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "summarize",
+    "difficulty": "hard",
+    "prompt": "Summarize the risks for the tenant in this lease excerpt: 'Section 4. Renewal: This lease renews automatically for successive 12-month terms unless either party gives written notice at least 60 days before the end of the term. Section 7. Rent: Upon each renewal, Landlord may increase rent by up to 8%. Section 9. Repairs: Tenant is responsible for all repairs costing less than $500 per incident, regardless of cause. Section 11. Entry: Landlord may enter with 24 hours' notice, or without notice in an emergency. Section 13. Deposit: The security deposit will be returned within 45 days of move-out, less deductions.'",
+    "criteria": "Auto-renewal with 60-day notice, increases of up to 8%, and tenant-paid repairs under $500 regardless of cause."
+  },
+  {
+    "id": 210,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "What should I ask about this SaaS contract before signing? 'Term: 36 months. Fees: $4,000/month, increasing 7% annually. Termination: either party with 90 days' notice after month 24; early termination requires payment of remaining fees. Data: provider may use anonymized customer data to improve services. Liability capped at fees paid in prior 3 months.'",
+    "criteria": "Flags the lock-in and early-termination fees, 7% escalators, data use, and the low liability cap."
+  },
+  {
+    "id": 211,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "chat",
+    "difficulty": "tricky-easy",
+    "prompt": "This contract says 'time is of the essence.' What does that mean?",
+    "criteria": "Deadlines are strict; missing one can be a material breach."
+  },
+  {
+    "id": 212,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "chat",
+    "difficulty": "tricky-easy",
+    "prompt": "Count the words in this sentence: 'The quick brown fox jumps over the lazy dog.'",
+    "criteria": "9."
+  },
+  {
+    "id": 213,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "summarize",
+    "difficulty": "tricky-easy",
+    "prompt": "What's the main idea of this paragraph? 'Bees pollinate roughly a third of the crops we eat. As bee populations decline from habitat loss and pesticides, farmers are paying more to rent hives, and some crops may become more expensive.'",
+    "criteria": "Declining bees threaten pollination and raise crop costs."
+  },
+  {
+    "id": 214,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "reason",
+    "difficulty": "tricky-hard",
+    "prompt": "Do these numbers add up? 'Subtotal $84.50, tax 8% $6.76, tip $15.00, total $105.26.'",
+    "criteria": "No: the total should be $106.26. It's $1 short (the tax is right)."
+  },
+  {
+    "id": 215,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "reason",
+    "difficulty": "tricky-hard",
+    "prompt": "Which date is earlier: 03/04/2026 written in the US, or 03/04/2026 written in the UK?",
+    "criteria": "The US one (March 4) is earlier than the UK one (April 3)."
+  },
+  {
+    "id": 216,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "extract",
+    "difficulty": "medium",
+    "prompt": "Extract every date and what happens on it: 'Applications open Nov 3. Interviews run Nov 17–21. Offers go out by Dec 5, and the program starts Jan 12, 2027.'",
+    "criteria": "Nov 3 applications open, Nov 17–21 interviews, Dec 5 offers, Jan 12, 2027 start."
+  },
+  {
+    "id": 217,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "summarize",
+    "difficulty": "medium",
+    "prompt": "Summarize this email thread in two sentences: 'Dana (Mon): Can we move the launch from Oct 20 to Oct 27? QA found two blockers. Lee (Tue): Oct 27 works for marketing if we get final screenshots by the 22nd. Dana (Wed): Blockers fixed. Screenshots will be ready on the 21st. Let's lock Oct 27.'",
+    "criteria": "The launch moved to Oct 27; the blockers are fixed and screenshots will be ready on the 21st."
+  },
+  {
+    "id": 218,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "rewrite",
+    "difficulty": "medium",
+    "prompt": "Make this job description more inclusive and less jargon-heavy: 'We're looking for a rockstar ninja developer who thrives in a fast-paced, work-hard-play-hard culture and can hit the ground running.'"
+  },
+  {
+    "id": 219,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Here's my monthly budget. Where can I realistically save $400? Rent $1,850; car payment $420; insurance $160; groceries $650; dining out $380; subscriptions $95; gym $70; phone $85; utilities $140; shopping $300.",
+    "criteria": "Specific cuts that add up to about $400, mostly from discretionary categories."
+  },
+  {
+    "id": 220,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "What does this log suggest is wrong, and how would you fix it? 'ERROR 2026-10-01T12:03:44Z db.pool: timeout acquiring connection after 30000ms (active=50, idle=0, waiting=212) ... WARN slow query 18.2s: SELECT * FROM orders WHERE customer_name LIKE '%son%' ...'",
+    "criteria": "Pool exhaustion caused by slow queries; the leading-wildcard LIKE prevents index use; fix the query or index and tune the pool."
+  },
+  {
+    "id": 221,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "extract",
+    "difficulty": "medium",
+    "prompt": "Turn this into a table of product, price and stock: 'We have the blue mug at $12 with 40 in stock, the green mug at $14 with 12 left, and the travel tumbler at $28 but it's sold out.'",
+    "criteria": "Three rows; the tumbler has 0 in stock."
+  },
+  {
+    "id": 222,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "rewrite",
+    "difficulty": "easy",
+    "prompt": "Shorten this to under 20 words: 'We wanted to reach out to let you know that our office will be closed on Monday in observance of the holiday, and we will reopen on Tuesday at 9 am.'",
+    "criteria": "Under 20 words; keeps closed Monday, reopening Tuesday at 9 am."
+  },
+  {
+    "id": 223,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "What's the difference between a W-2 employee and a 1099 contractor?",
+    "criteria": "Tax withholding, benefits, control over the work; contractors pay self-employment tax."
+  },
+  {
+    "id": 224,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Does the conclusion follow? 'Sales rose 20% after we redesigned the website in March. Therefore the redesign caused the increase.' What else would you check?",
+    "criteria": "Correlation isn't causation; check seasonality, marketing, pricing and a control or A/B test."
+  },
+  {
+    "id": 225,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "summarize",
+    "difficulty": "medium",
+    "prompt": "Summarize these reviews into the top complaints and the main praise: '1) Love the design, but the battery dies by 3 pm. 2) Setup took forever and the app kept crashing. 3) Great sound for the price. 4) Battery life is awful. 5) Customer support never replied to me. 6) Sounds amazing, the app is buggy though.'",
+    "criteria": "Complaints: battery, the buggy/crashing app, support. Praise: sound (and design)."
+  },
+  {
+    "id": 226,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Give me specific feedback on the argument and structure of this essay paragraph: 'Social media has made people lonelier. Everyone is on their phones all the time now, and nobody talks anymore. Studies show teens use social media for hours a day. In the past, people spent time together in person. Therefore, we should ban social media for anyone under 18, which would fix loneliness.'",
+    "criteria": "Points out generalizations, unsupported causation, vague evidence and a leap to the conclusion; suggests concrete fixes."
+  },
+  {
+    "id": 227,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "extract",
+    "difficulty": "medium",
+    "prompt": "Scale this recipe from 4 servings to 6: '300 g pasta, 2 cloves garlic, 60 ml olive oil, 1 tsp chili flakes, 40 g parmesan.'",
+    "criteria": "450 g pasta, 3 cloves garlic, 90 ml oil, 1.5 tsp chili flakes, 60 g parmesan."
+  },
+  {
+    "id": 228,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "reason",
+    "difficulty": "tricky-hard",
+    "prompt": "This receipt says: 'Coffee $4.50 x3, Muffin $3.25 x2, 10% discount applied to total.' What's the final amount?",
+    "criteria": "$18.00."
+  },
+  {
+    "id": 229,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "summarize",
+    "difficulty": "easy",
+    "prompt": "Write a headline for this: 'After a decade of decline, the town's main street is busy again: eight new shops opened this year, foot traffic is up 35%, and the farmers market now runs twice a week.'"
+  },
+  {
+    "id": 230,
+    "split": "heldout",
+    "group": "document-text",
+    "task": "rewrite",
+    "difficulty": "medium",
+    "prompt": "Rewrite this notice in plain language for residents: 'Pursuant to scheduled maintenance, water service will be interrupted between the hours of 0900 and 1300 on the date indicated. Residents are advised to store water accordingly.'",
+    "criteria": "Water will be off from 9 am to 1 pm; store water beforehand."
+  },
+  {
+    "id": 231,
+    "split": "heldout",
+    "group": "chat",
+    "task": "code",
+    "difficulty": "medium",
+    "prompt": "Write a regular expression that matches US ZIP codes, including ZIP+4.",
+    "criteria": "Equivalent to ^\\d{5}(-\\d{4})?$."
+  },
+  {
+    "id": 232,
+    "split": "heldout",
+    "group": "chat",
+    "task": "code",
+    "difficulty": "hard",
+    "prompt": "Why does this SwiftUI view lose its state and re-create its model every time it renders, and how do I fix it? struct ListView: View { var body: some View { ItemsView(model: ItemsModel()) } }",
+    "criteria": "The model is created inside body on every render; own it with @State (or @StateObject) instead."
+  },
+  {
+    "id": 233,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "What does HTTP status code 404 mean?",
+    "criteria": "Not Found."
+  },
+  {
+    "id": 234,
+    "split": "heldout",
+    "group": "chat",
+    "task": "code",
+    "difficulty": "medium",
+    "prompt": "Convert this JavaScript to Swift: const evens = nums.filter(n => n % 2 === 0).map(n => n * n);",
+    "criteria": "Correct Swift: filter even numbers, then square them."
+  },
+  {
+    "id": 235,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Estimate how many piano tuners there are in Chicago. Show your reasoning.",
+    "criteria": "A clear Fermi estimate with stated assumptions; a final number in the tens to low hundreds."
+  },
+  {
+    "id": 236,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "Explain the difference between TCP and UDP, with an example of when to use each."
+  },
+  {
+    "id": 237,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "tricky-hard",
+    "prompt": "A store offers either 25% off or 'buy 3, get 1 free.' If I'm buying 4 items at the same price, which deal is better? What if I only want 3?",
+    "criteria": "For 4 items the deals are equal (both 25% off); for 3 items, 25% off is better."
+  },
+  {
+    "id": 238,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "easy",
+    "prompt": "Give me three tips for better sleep."
+  },
+  {
+    "id": 239,
+    "split": "heldout",
+    "group": "chat",
+    "task": "rewrite",
+    "difficulty": "medium",
+    "prompt": "Outline an honest reference letter for a former intern who was reliable but needed coaching on communication.",
+    "criteria": "Honest and constructive; doesn't overstate."
+  },
+  {
+    "id": 240,
+    "split": "heldout",
+    "group": "chat",
+    "task": "code",
+    "difficulty": "hard",
+    "prompt": "Implement an LRU cache in Swift with O(1) get and put, and explain the design.",
+    "criteria": "Dictionary plus doubly linked list (or equivalent); O(1) operations; correct eviction."
+  },
+  {
+    "id": 241,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "What's the difference between weather and climate?"
+  },
+  {
+    "id": 242,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "tricky-hard",
+    "prompt": "Is it true that we only use 10% of our brains?",
+    "criteria": "No, it's a myth: brain imaging shows activity across virtually all regions over a day, and damage to almost any area causes deficits."
+  },
+  {
+    "id": 243,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "tricky-easy",
+    "prompt": "Explain the theory of relativity in exactly three bullet points.",
+    "criteria": "Exactly three accurate bullets."
+  },
+  {
+    "id": 244,
+    "split": "heldout",
+    "group": "chat",
+    "task": "plan",
+    "difficulty": "medium",
+    "prompt": "Help me plan a surprise 40th birthday party for 20 people on a $600 budget.",
+    "criteria": "A plan that fits the $600 budget."
+  },
+  {
+    "id": 245,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "I'm choosing between a 15-year mortgage at 5.4% and a 30-year at 6.0% on a $400,000 loan. Compare the monthly payments and total interest.",
+    "criteria": "About $3,247/month and $184k total interest (15-year) vs about $2,398/month and $463k interest (30-year)."
+  },
+  {
+    "id": 246,
+    "split": "heldout",
+    "group": "chat",
+    "task": "rewrite",
+    "difficulty": "easy",
+    "prompt": "Make this message sound less passive-aggressive: 'Per my last message, I'm still waiting on those numbers.'"
+  },
+  {
+    "id": 247,
+    "split": "heldout",
+    "group": "chat",
+    "task": "chat",
+    "difficulty": "medium",
+    "prompt": "What is a credit score, and what are the main things that affect it?",
+    "criteria": "Explains what a credit score is and covers the main factors (such as payment history and credit utilization); doesn't need to list every factor."
+  },
+  {
+    "id": 248,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Our team of 6 keeps missing its sprint goals. Give me a structured way to diagnose why, and three experiments to try."
+  },
+  {
+    "id": 249,
+    "split": "heldout",
+    "group": "chat",
+    "task": "code",
+    "difficulty": "medium",
+    "prompt": "Write a shell command that finds all .log files larger than 100 MB under /var/log.",
+    "criteria": "Equivalent to: find /var/log -name '*.log' -size +100M"
+  },
+  {
+    "id": 250,
+    "split": "heldout",
+    "group": "chat",
+    "task": "reason",
+    "difficulty": "hard",
+    "prompt": "Explain the trade-offs between running an AI model on-device versus in the cloud for a mobile app.",
+    "criteria": "Covers privacy, latency, cost, capability, offline use and battery."
+  }
+]

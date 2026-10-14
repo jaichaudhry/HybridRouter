@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -13,10 +13,12 @@
 		4ABC43073CB23616BF6A9641 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF2EF4049958BD1AF58338A /* AppModel.swift */; };
 		522962104E2B3019DAD7EBE3 /* Itinerary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20F77900120E6155D0FC4141 /* Itinerary.swift */; };
 		529DD3CECA47CE1207474B77 /* ItineraryCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21346C9E4202204A5B4C946C /* ItineraryCards.swift */; };
+		5CC9B639AB5132479D7B3F26 /* QualityEvalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18B5B6663B7DB28AA51BD343 /* QualityEvalView.swift */; };
 		6830BC7643C7CA34B77C777E /* TripPlannerScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D5D235154C4571E34593212 /* TripPlannerScenario.swift */; };
 		6D571F9F4D7DC99CD2BB2049 /* DocumentSchemas.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDBDECAC3AE3C5005D93777B /* DocumentSchemas.swift */; };
 		7A6D76409900DF6EF96E8898 /* Scenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DDD0D7C41E6B7C54D7A4C60 /* Scenario.swift */; };
 		7B1A64C6A3AEAAED2E5603B3 /* RoutingBenchmarkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E24A6F752500FF0E3D76E5 /* RoutingBenchmarkView.swift */; };
+		7D981EF0DE2488E69D3A6EA5 /* quality_benchmark.json in Resources */ = {isa = PBXBuildFile; fileRef = 4EE4F5466197C29F330B6A58 /* quality_benchmark.json */; };
 		82A204264E0B2AC4EC6255CE /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D9E8BDCF8EEBF317AD45C7 /* AppConfig.swift */; };
 		91492B8BCA83F48890A1E49E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3A2B3F2007FA3C54EF3F9DF /* ContentView.swift */; };
 		A29724AA347156C6ED0AE5E7 /* PlacesTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EDA3B0B2C8A6931897A98E6 /* PlacesTool.swift */; };
@@ -30,12 +32,14 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		18B5B6663B7DB28AA51BD343 /* QualityEvalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QualityEvalView.swift; sourceTree = "<group>"; };
 		20F77900120E6155D0FC4141 /* Itinerary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Itinerary.swift; sourceTree = "<group>"; };
 		21346C9E4202204A5B4C946C /* ItineraryCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItineraryCards.swift; sourceTree = "<group>"; };
 		2A0B5D7416B9B563BDAC2D6E /* classifier_benchmark.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = classifier_benchmark.json; sourceTree = "<group>"; };
 		2D5D235154C4571E34593212 /* TripPlannerScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlannerScenario.swift; sourceTree = "<group>"; };
 		40D9B067395E4F3454748AD4 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
-		475BD9FCD8D78EDABF43EEA7 /* AppIcon.icon */ = {isa = PBXFileReference; path = AppIcon.icon; sourceTree = "<group>"; };
+		475BD9FCD8D78EDABF43EEA7 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
+		4EE4F5466197C29F330B6A58 /* quality_benchmark.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = quality_benchmark.json; sourceTree = "<group>"; };
 		5C5A008662A9462F1B26DCD3 /* ChatUI */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ChatUI; path = Packages/ChatUI; sourceTree = SOURCE_ROOT; };
 		5C6582CFB6A85333C8FA9E84 /* DocumentCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentCards.swift; sourceTree = "<group>"; };
 		5EDA3B0B2C8A6931897A98E6 /* PlacesTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacesTool.swift; sourceTree = "<group>"; };
@@ -53,7 +57,7 @@
 		F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		F403000424EB9780533C886E /* HybridRouterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HybridRouterApp.swift; sourceTree = "<group>"; };
 		F8E24A6F752500FF0E3D76E5 /* RoutingBenchmarkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingBenchmarkView.swift; sourceTree = "<group>"; };
-		FEACF29366B59AAC7EAB091C /* HybridRouter.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HybridRouter.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FEACF29366B59AAC7EAB091C /* HybridRouter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HybridRouter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +112,7 @@
 			children = (
 				B1270BE3E83D2B9E245B8ED1 /* AppleCloudChecksView.swift */,
 				E2A77CA1F811B723F0F5882C /* MeasureRoutesView.swift */,
+				18B5B6663B7DB28AA51BD343 /* QualityEvalView.swift */,
 				F8E24A6F752500FF0E3D76E5 /* RoutingBenchmarkView.swift */,
 				F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */,
 			);
@@ -139,6 +144,7 @@
 			isa = PBXGroup;
 			children = (
 				2A0B5D7416B9B563BDAC2D6E /* classifier_benchmark.json */,
+				4EE4F5466197C29F330B6A58 /* quality_benchmark.json */,
 			);
 			path = Evals;
 			sourceTree = "<group>";
@@ -203,11 +209,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-					FC6F68AC88ABF61E49C12455 = {
-						DevelopmentTeam = "";
-					};
-				};
 			};
 			buildConfigurationList = FD27FFF40241FCB65DCE8A2F /* Build configuration list for PBXProject "HybridRouter" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -223,7 +224,6 @@
 				E238C8DD7D579C1528480EA0 /* XCLocalSwiftPackageReference "Packages/ChatUI" */,
 				3BA1B5EB95021FB6A9D343C3 /* XCLocalSwiftPackageReference "Packages/HybridRouterKit" */,
 			);
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -239,6 +239,7 @@
 			files = (
 				31E817D090FB2CC071C90B6D /* AppIcon.icon in Resources */,
 				E513A3FEF9215BCE00EC66E8 /* classifier_benchmark.json in Resources */,
+				7D981EF0DE2488E69D3A6EA5 /* quality_benchmark.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -261,6 +262,7 @@
 				529DD3CECA47CE1207474B77 /* ItineraryCards.swift in Sources */,
 				D169671AD8291E5F8AFF8848 /* MeasureRoutesView.swift in Sources */,
 				A29724AA347156C6ED0AE5E7 /* PlacesTool.swift in Sources */,
+				5CC9B639AB5132479D7B3F26 /* QualityEvalView.swift in Sources */,
 				7B1A64C6A3AEAAED2E5603B3 /* RoutingBenchmarkView.swift in Sources */,
 				7A6D76409900DF6EF96E8898 /* Scenario.swift in Sources */,
 				A85ED142CB286D27CA187F13 /* SettingsView.swift in Sources */,
@@ -276,6 +278,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 2G62DX7UQZ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -292,6 +295,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 2G62DX7UQZ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

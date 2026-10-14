@@ -97,6 +97,19 @@ final class AppModel {
         )
     }
 
+    /// A fresh session for the answer-quality benchmark, with the app's providers and the given
+    /// Claude tier (`.deep` for the Opus column and the judge).
+    func makeBenchmarkSession(instructions: String, claudeTier: ClaudeProvider.Tier) -> RoutedSession {
+        Self.makeSession(
+            instructions: instructions,
+            config: config,
+            auth: claudeAuth,
+            costTable: costTable,
+            simulatesAppleCloud: simulatesAppleCloud,
+            claudeTier: claudeTier
+        )
+    }
+
     func makeCoordinator(for scenario: any Scenario) -> TurnCoordinator {
         Self.makeCoordinator(scenario: scenario, network: network)
     }
@@ -214,17 +227,42 @@ final class AppModel {
         history: [Transcript.Entry],
         privatePromptIDs: Set<String> = []
     ) -> RoutedSession {
+        makeSession(
+            instructions: scenario.instructions,
+            tools: scenario.tools,
+            appleOnlyTools: scenario.appleOnlyTools,
+            config: config,
+            auth: auth,
+            costTable: costTable,
+            simulatesAppleCloud: simulatesAppleCloud,
+            history: history,
+            privatePromptIDs: privatePromptIDs
+        )
+    }
+
+    private static func makeSession(
+        instructions: String,
+        tools: [any Tool] = [],
+        appleOnlyTools: [any Tool] = [],
+        config: AppConfig,
+        auth: ClaudeAuth,
+        costTable: CostTable,
+        simulatesAppleCloud: Bool,
+        claudeTier: ClaudeProvider.Tier = .standard,
+        history: [Transcript.Entry] = [],
+        privatePromptIDs: Set<String> = []
+    ) -> RoutedSession {
         // The real entitlement always wins over the stand-in.
         let appleCloud: any ModelProvider = !config.isAppleCloudEnabled && simulatesAppleCloud
             ? SimulatedAppleCloudProvider()
             : AppleCloudProvider(isEnabled: config.isAppleCloudEnabled)
         return RoutedSession(
-            instructions: scenario.instructions,
-            tools: scenario.tools,
-            appleOnlyTools: scenario.appleOnlyTools,
+            instructions: instructions,
+            tools: tools,
+            appleOnlyTools: appleOnlyTools,
             onDevice: OnDeviceProvider(),
             appleCloud: appleCloud,
-            claude: ClaudeProvider(auth: auth),
+            claude: ClaudeProvider(auth: auth, tier: claudeTier),
             costTable: costTable,
             history: history,
             privatePromptIDs: privatePromptIDs

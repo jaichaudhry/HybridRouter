@@ -32,6 +32,8 @@ targets:
         buildPhase: resources
       - path: Evals/classifier_benchmark.json
         buildPhase: resources
+      - path: Evals/quality_benchmark.json
+        buildPhase: resources
     dependencies:
       - package: HybridRouterKit
         product: HybridRouterKit

@@ -1,0 +1,2 @@
+# Checkpoints are progress files for an unfinished run, not results.
+checkpoint-*.json

@@ -25,7 +25,7 @@ One shared conversation moves between them without losing history. Private messa
 - **Three model providers behind one conversation.** All three implement Apple's `LanguageModel` protocol, so a single `LanguageModelSession` with a Dynamic Profile switches models per turn and keeps one transcript.
 - **A router you can read and test.** Hard rules (privacy, offline, context size, images) run first; an on-device classifier labels everything else; failures escalate one route up. The rules are pure functions, and the routing, session and privacy code has 98% line coverage.
 - **Privacy enforced in code, not policy.** An on-device PrivacyGuard flags sensitive turns, and Claude only ever sees placeholders for them, even after escalations, follow-ups or a session rebuild. Tests check the request Claude actually receives.
-- **Evaluation-driven prompt tuning.** 50 hand-labeled prompts, measured on a Mac and an iPhone, plus an Apple Evaluations framework run. The device numbers showed the classifier needs different instructions per on-device model variant.
+- **Routing measured on answer quality, not just labels.** 150 held-out prompts are answered on every route and graded by Claude Opus (hand-checked against a person: 97% agreement), so the router is scored on quality versus cost against always-Claude, random and perfect routing. A 50-prompt labeled benchmark tuned the classifier and showed it needs different instructions per on-device model variant.
 - **Cost and latency on every reply.** Each badge shows the route and reason, and a line under each finished reply shows first-token time, tokens per second and cost; tapping either shows the full metrics. A session summary compares the cost with sending everything to Claude.
 - **Routing you can see.** Each route has its own color and symbol (teal On-device, indigo Apple Cloud, terracotta Claude, chosen for contrast and color blindness). The badge shows the router deciding, escalations stay visible as a struck-through trail, and a reply still waiting on a slower route can switch to on-device with one tap.
 - **Production details.** Swift 6 strict concurrency with zero warnings, Keychain storage, App Attest for shipped builds, gitleaks in a pre-commit hook and CI, Dynamic Type, VoiceOver and iPad layouts.
@@ -71,6 +71,35 @@ Each badge says why its reply went where it did ("Multi-step planning", "Kept pr
 - **Secret scanning:** gitleaks runs in a pre-commit hook and in CI.
 
 ## Results
+
+### Quality vs cost
+
+Does routing keep answers good while spending less? On an iPhone 17 Pro Max, each of 150 held-out prompts (chat, trip planning and pasted documents, none used while tuning the router) was answered on-device, by Claude Sonnet and by Claude Opus. Claude Opus 5.5 graded every answer, without knowing which model wrote it, as good enough or not. Each strategy is then scored on the answers it would have given:
+
+<p align="center">
+  <img src="docs/quality-pareto.svg" width="760" alt="Scatter of answers judged good enough against cost per 100 prompts. Always on-device: 62% at $0. Random routing with the router's mix: 84% at $0.45. HybridRouter: 91% at $0.61. Always Sonnet: 97% at $0.71. Always Opus: 100% at $1.51. Perfect routing: 99% at $0.42.">
+</p>
+
+| Strategy | Answers good enough | Cost per 100 prompts | Sent to Claude |
+|---|---|---|---|
+| **HybridRouter** | **91%** | **$0.61** | 63% |
+| Always on-device | 62% | $0 | 0% |
+| Always Claude Sonnet | 97% | $0.71 | 100% |
+| Always Claude Opus (reference) | 100% | $1.51 | 100% |
+| Random, same mix as the router | 84% | $0.45 | 63% |
+| Perfect routing (cheapest route that passed) | 99% | $0.42 | 38% |
+
+- **The router beats chance.** It closes 83% of the quality gap between always-on-device and always-Claude, 7 points above random routing with the same share of Claude.
+- **It doesn't yet save much against Sonnet alone:** 14% cheaper for 6 points less. Perfect routing would keep 99% for 41% less, so there's headroom.
+- **Against always-Opus it's 60% cheaper, but mostly because Sonnet costs half as much.** With Opus as the router's Claude tier (the same routing decisions, scored on the Opus answers), it would pass 93% at $1.28 per 100 prompts: 15% cheaper than always-Opus. So routing itself saves about 15% whichever Claude sits on top, and perfect routing would save 42% with Opus at no loss in quality.
+- **Most of the gap is over-routing.** 48 of the 150 prompts went to Claude when the on-device answer was already good enough, mostly summaries, rewrites, explainers and short code.
+- **The 9 quality misses are mostly prompts that look easy but aren't** for a small model: counting letters, date arithmetic, time zones, word counts and scaling a recipe.
+
+**Checking the judge.** A model grading models can be wrong or favor its own answers, so 40 verdicts, mixed across routes and passes and fails, were hand-checked blind to which model wrote each answer. The checker agreed on 35 and disagreed on 1, a borderline time-zone answer the judge failed as misleading: 97% of the calls they took a side on, or 88% counting the 4 they weren't sure about.
+
+Caveats: Apple Cloud isn't in this run, because the Private Cloud Compute entitlement is pending, so its turns went to Claude as in the shipped app. Costs are API list prices for answers only; the run cost $8.52 in total, judging included. Full answers, verdicts and every misrouted prompt are in [`Evals/results/`](Evals/results/2026-10-14-iphone-quality.md).
+
+### Routing accuracy
 
 Routing accuracy against 50 hand-labeled prompts in `Evals/classifier_benchmark.json`. Apple ships different on-device model variants, and a prompt tuned on one doesn't transfer to the other, so the classifier uses instructions tuned per variant:
 
@@ -245,7 +274,7 @@ While you wait for the entitlement, Debug builds have **Settings › Developer �
 Packages/HybridRouterKit   Router, privacy, providers, routed session, Claude auth, telemetry. No UI.
 Packages/ChatUI      Streaming chat, route badge, metrics, composer, compare mode.
 App/                 The iOS app: scenarios, Settings, on-device benchmarks and checks.
-Evals/               Routing cases, the 50-prompt classifier benchmark, the Apple evaluation.
+Evals/               Routing cases, the classifier benchmark, the answer-quality benchmark and its results, the Apple evaluation.
 Config/              Build settings; Secrets.xcconfig is yours and gitignored.
 ```
 
@@ -258,6 +287,12 @@ swift test --package-path Evals
 ```
 
 The router, privacy rules and shared session are tested with fake `LanguageModel`s running through Apple's real `LanguageModelSession`, so no device or network is needed. The evals run the real on-device classifier wherever Apple Intelligence is available and are skipped elsewhere, including CI.
+
+The answer-quality benchmark calls Claude, so it only runs when asked. On an iPhone, use **Settings › Developer › Answer quality**; on a Mac, with a key in `Config/Secrets.xcconfig` (about $9 for the full set, capped at $15):
+
+```sh
+HR_RUN_QUALITY_EVAL=1 swift test --package-path Evals --filter answerQuality
+```
 
 The project file is generated from `project.yml` with [XcodeGen](https://github.com/yonaskolb/XcodeGen). After changing `project.yml`, run `xcodegen generate`.
 
