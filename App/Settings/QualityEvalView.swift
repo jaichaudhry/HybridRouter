@@ -1,5 +1,6 @@
 import Charts
 import ChatUI
+import FoundationModels
 import HybridRouterKit
 import SwiftUI
 import UIKit
@@ -13,6 +14,7 @@ struct QualityEvalView: View {
     /// `.task(id:)` cancels a run when the screen closes, so paid requests stop too.
     @State private var runToken: UUID?
     @State private var runMode = QualityEvalModel.Mode.full
+    @State private var replayInstructions = OnDeviceClassifier.InstructionSet.tuned(for: SystemLanguageModel.default.variant).id
 
     var body: some View {
         List {
@@ -36,6 +38,45 @@ struct QualityEvalView: View {
                 }
             } footer: {
                 Text("Answers every prompt on each available route plus Claude Opus (and Muse Wonder, with a Meta key), and has Opus grade each answer. Calls are billed to your keys: about $9 for a full run, about $16 with Muse Wonder, and it stops before passing the cap. Keep the app open; the screen stays on while it runs, and progress is saved after every prompt.")
+            }
+
+            if !model.testCases.isEmpty {
+                Section {
+                    if !model.isRunning {
+                        Button(model.hasSavedTestProgress ? "Resume the test set" : "Run the test set") { start(.testSet) }
+                        if model.hasSavedTestProgress {
+                            Button("Start over", role: .destructive) { model.discardTestProgress() }
+                        }
+                    }
+                } header: {
+                    Text("Test set (\(model.testCases.count) prompts)")
+                } footer: {
+                    Text("Fresh prompts kept aside to confirm routing changes; never used for tuning. Answered on-device and by Claude Sonnet only, and graded by Opus: about $5 and 30 minutes. Run it once, then compare routings on it with Replay.")
+                }
+            }
+
+            if model.baseline != nil {
+                Section {
+                    Picker("Classifier instructions", selection: $replayInstructions) {
+                        ForEach(OnDeviceClassifier.InstructionSet.all) { set in
+                            Text(set.id).tag(set.id)
+                        }
+                    }
+                    if !model.isRunning {
+                        Button("Replay routing on the 0.2.0 results") { start(.replay) }
+                    }
+                    ForEach(model.comparisons, id: \.split) { item in
+                        LabeledContent(item.split == "heldout" ? "Held-out vs 0.2.0" : "Tuning vs 0.2.0") {
+                            Text(item.comparison.summary)
+                                .font(.caption)
+                                .multilineTextAlignment(.trailing)
+                        }
+                    }
+                } header: {
+                    Text("Replay routing")
+                } footer: {
+                    Text("Runs only the router over the saved answers, so a routing change is measured for free, in about two minutes. Intervals are 95% bootstrap ranges.")
+                }
             }
 
             // Only with the real entitlement: a stand-in says nothing about Apple Cloud.
@@ -99,7 +140,11 @@ struct QualityEvalView: View {
             guard runToken != nil else { return }
             switch runMode {
             case .full: await model.run(app: app)
+            case .testSet: await model.run(app: app, testSet: true)
             case .addAppleCloud: await model.addAppleCloud(app: app)
+            case .replay:
+                let set = OnDeviceClassifier.InstructionSet.all.first { $0.id == replayInstructions }
+                await model.replay(instructions: set)
             }
             runToken = nil
         }
@@ -194,11 +239,12 @@ private enum Format {
 @MainActor
 @Observable
 final class QualityEvalModel {
-    enum Mode { case full, addAppleCloud }
+    enum Mode { case full, testSet, addAppleCloud, replay }
 
     static let spendCap = 15.0
     private static let checkpoint = URL.cachesDirectory.appending(path: "quality-benchmark-checkpoint.json")
     private static let appleCloudCheckpoint = URL.cachesDirectory.appending(path: "quality-applecloud-checkpoint.json")
+    private static let testCheckpoint = URL.cachesDirectory.appending(path: "quality-testset-checkpoint.json")
     /// HybridRouter's published 0.2.0 results, bundled so people with the Private Cloud Compute
     /// entitlement can add Apple Cloud to them.
     private static let baselineName = "2026-10-14-iphone-quality-muse"
@@ -208,14 +254,25 @@ final class QualityEvalModel {
     private(set) var progress: QualityBenchmarkRunner.Progress?
     private(set) var result: QualityBenchmark.RunResult?
     private(set) var exportFile: URL?
+    /// The last replay compared with the 0.2.0 routing, per split.
+    private(set) var comparisons: [(split: String, comparison: QualityReplay.Comparison)] = []
+
+    /// The frozen test set for routing changes: answered on-device and by Sonnet only.
+    let testCases: [QualityBenchmark.Case]
 
     init() {
-        let url = Bundle.main.url(forResource: "quality_benchmark", withExtension: "json")
-        cases = url.flatMap { try? Data(contentsOf: $0) }.flatMap { try? QualityBenchmark.load($0) } ?? []
+        func load(_ name: String) -> [QualityBenchmark.Case] {
+            Bundle.main.url(forResource: name, withExtension: "json")
+                .flatMap { try? Data(contentsOf: $0) }
+                .flatMap { try? QualityBenchmark.load($0) } ?? []
+        }
+        cases = load("quality_benchmark")
+        testCases = load("quality_testset")
     }
 
     var hasSavedProgress: Bool { FileManager.default.fileExists(atPath: Self.checkpoint.path()) }
     var hasSavedAppleCloudProgress: Bool { FileManager.default.fileExists(atPath: Self.appleCloudCheckpoint.path()) }
+    var hasSavedTestProgress: Bool { FileManager.default.fileExists(atPath: Self.testCheckpoint.path()) }
 
     /// The bundled 0.2.0 results, or nil if missing from the bundle.
     var baseline: QualityBenchmark.RunResult? {
@@ -228,7 +285,8 @@ final class QualityEvalModel {
         guard let result else { return "" }
         return [
             "# Answer quality on \(result.device) (\(result.cases.count) prompts, \(Format.dollars(result.spent)))"
-                + (result.routerNote.map { "\n\n\($0)" } ?? ""),
+                + (result.routerNote.map { "\n\n\($0) Classifier: \(result.classifier)." } ?? "")
+                + comparisons.map { "\n\n\($0.split == "heldout" ? "Held-out" : "Tuning") vs 0.2.0 routing: \($0.comparison.summary)" }.joined(),
             QualityReport(result, split: "heldout").markdown(title: "Held-out"),
             QualityReport(result, split: "tuning").markdown(title: "Tuning"),
         ].joined(separator: "\n\n")
@@ -239,9 +297,17 @@ final class QualityEvalModel {
         guard result == nil else { return }
         if let data = try? Data(contentsOf: Self.appleCloudCheckpoint), let saved = try? QualityBenchmark.RunResult.load(data) {
             show(saved, suffix: "applecloud")
+        } else if let data = try? Data(contentsOf: Self.testCheckpoint), let saved = try? QualityBenchmark.RunResult.load(data) {
+            show(saved, suffix: "testset")
         } else if let data = try? Data(contentsOf: Self.checkpoint), let saved = try? QualityBenchmark.RunResult.load(data) {
             show(saved)
         }
+    }
+
+    func discardTestProgress() {
+        try? FileManager.default.removeItem(at: Self.testCheckpoint)
+        result = nil
+        exportFile = nil
     }
 
     func discardAppleCloudProgress() {
@@ -254,6 +320,26 @@ final class QualityEvalModel {
         try? FileManager.default.removeItem(at: Self.checkpoint)
         result = nil
         exportFile = nil
+    }
+
+    /// Replays routing with this iPhone's classifier over the bundled 0.2.0 answers. Free.
+    func replay(instructions: OnDeviceClassifier.InstructionSet?) async {
+        guard !isRunning, let baseline else { return }
+        isRunning = true
+        defer {
+            isRunning = false
+            progress = nil
+        }
+        let classifier = OnDeviceClassifier(instructionSet: instructions)
+        let replayed = await QualityReplay.reroute(baseline, with: Router(classifier: classifier)) { [weak self] done, total in
+            self?.progress = .init(done: done, total: total, spent: 0, current: "Routing prompt \(done + 1)")
+        }
+        var result = replayed
+        result.classifier = "on-device classifier, \(classifier.instructionSet.id) instructions (replayed on \(BenchmarkModel.deviceName))"
+        comparisons = ["heldout", "tuning"].compactMap { split in
+            QualityReplay.compare(result, to: baseline, split: split).map { (split, $0) }
+        }
+        show(result, suffix: "replay-\(classifier.instructionSet.id)")
     }
 
     /// Answers the bundled results' prompts on Apple Cloud, grades them, and adds the column.
@@ -287,7 +373,10 @@ final class QualityEvalModel {
         show(result, suffix: "applecloud")
     }
 
-    func run(app: AppModel) async {
+    /// - Parameter testSet: run the frozen test set, measuring only the routing rungs (no Opus
+    ///   or Muse answers), instead of the benchmark.
+    func run(app: AppModel, testSet: Bool = false) async {
+        let cases = testSet ? testCases : cases
         guard !isRunning, !cases.isEmpty else { return }
         isRunning = true
         UIApplication.shared.isIdleTimerDisabled = true
@@ -309,15 +398,16 @@ final class QualityEvalModel {
             },
             classifier: classifier,
             spendCap: Self.spendCap,
-            checkpoint: Self.checkpoint,
+            checkpoint: testSet ? Self.testCheckpoint : Self.checkpoint,
             device: BenchmarkModel.deviceName,
             classifierName: "on-device classifier, \(classifier.instructionSet.id) instructions",
-            judgeModelID: "claude-opus-5-5"
+            judgeModelID: "claude-opus-5-5",
+            only: testSet ? Set(QualityBenchmark.Column.rungs) : nil
         )
         let result = await runner.run(cases) { [weak self] progress in
             self?.progress = progress
         }
-        show(result)
+        show(result, suffix: testSet ? "testset" : nil)
     }
 
     private func show(_ result: QualityBenchmark.RunResult, suffix: String? = nil) {

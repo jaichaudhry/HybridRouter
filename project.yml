@@ -34,6 +34,8 @@ targets:
         buildPhase: resources
       - path: Evals/quality_benchmark.json
         buildPhase: resources
+      - path: Evals/quality_testset.json
+        buildPhase: resources
       # The published 0.2.0 results, so the app can add Apple Cloud to them.
       - path: Evals/results/2026-10-14-iphone-quality-muse.json
         buildPhase: resources

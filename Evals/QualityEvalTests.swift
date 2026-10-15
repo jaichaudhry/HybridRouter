@@ -103,6 +103,18 @@ struct QualityEvalTests {
         }
     }
 
+    /// The frozen test set: its own ids, its own split, and none of the benchmark's prompts.
+    @Test func testSetIsSeparateFromTheBenchmark() throws {
+        let url = try #require(Bundle.module.url(forResource: "quality_testset", withExtension: "json"))
+        let test = try QualityBenchmark.load(Data(contentsOf: url))
+        let benchmark = try Self.cases()
+        #expect(test.count == 150)
+        #expect(test.allSatisfy { $0.split == "test" })
+        #expect(Set(test.map(\.id)).count == test.count)
+        #expect(Set(test.map(\.id)).isDisjoint(with: benchmark.map(\.id)))
+        #expect(Set(test.map { $0.prompt.lowercased() }).isDisjoint(with: benchmark.map { $0.prompt.lowercased() }))
+    }
+
     @Test(.enabled(if: isRequested && apiKey != nil && SystemLanguageModel.default.isAvailable,
                    "Set HR_RUN_QUALITY_EVAL=1 and a Claude key (ANTHROPIC_API_KEY or Config/Secrets.xcconfig); needs the on-device model"))
     func answerQuality() async throws {
@@ -184,6 +196,36 @@ struct QualityEvalTests {
 
         let failures = result.cases.compactMap { $0.answer(.museWonder)?.failure }
         #expect(failures.isEmpty, "Muse Wonder failed on \(failures.count) prompts: \(Set(failures))")
+    }
+
+    /// Replays routing over a saved run's answers with this Mac's on-device classifier and
+    /// compares it with the run's own routing. Free: only the classifier runs. The Mac's
+    /// on-device model differs from recent iPhones', so treat its numbers as directional; the
+    /// iPhone replay (Settings › Developer › Answer quality) is the one that counts.
+    ///
+    ///     HR_REPLAY=1 HR_QUALITY_RESULTS=Evals/results/2026-10-14-iphone-quality-muse.json \
+    ///         HR_INSTRUCTIONS=advanced-b swift test --package-path Evals --filter routingReplay
+    @Test(.enabled(if: environment["HR_REPLAY"] == "1" && environment["HR_QUALITY_RESULTS"] != nil
+                   && SystemLanguageModel.default.isAvailable,
+                   "Set HR_REPLAY=1 and HR_QUALITY_RESULTS; needs the on-device model"))
+    func routingReplay() async throws {
+        let repo = URL(filePath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+        let path = try #require(Self.environment["HR_QUALITY_RESULTS"])
+        let input = path.hasPrefix("/") ? URL(filePath: path) : repo.appending(path: path)
+        let run = try QualityBenchmark.RunResult.load(Data(contentsOf: input))
+        let instructions = Self.environment["HR_INSTRUCTIONS"].flatMap { id in
+            OnDeviceClassifier.InstructionSet.all.first { $0.id == id }
+        }
+        let classifier = OnDeviceClassifier(instructionSet: instructions)
+        let replayed = await QualityReplay.reroute(run, with: Router(classifier: classifier))
+        print("Replayed with \(classifier.instructionSet.id) instructions on \(SystemLanguageModel.default.variant)")
+        for split in ["heldout", "tuning"] {
+            if let comparison = QualityReplay.compare(replayed, to: run, split: split) {
+                print("\(split): \(comparison.summary)")
+            }
+        }
+        print(QualityReport(replayed, split: "heldout").markdown(title: "Held-out, replayed"))
+        #expect(replayed.cases.count == run.cases.count)
     }
 
     /// Re-reports a saved run without calling any model: writes its Markdown summary next to it

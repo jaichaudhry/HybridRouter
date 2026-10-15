@@ -17,6 +17,13 @@ public final class QualityBenchmarkRunner {
         public let spent: Double
         /// The prompt being measured, or nil when the run has finished.
         public let current: String?
+
+        public init(done: Int, total: Int, spent: Double, current: String?) {
+            self.done = done
+            self.total = total
+            self.spent = spent
+            self.current = current
+        }
     }
 
     /// A fresh session whose `column.route` slot serves that column's model.
@@ -37,6 +44,8 @@ public final class QualityBenchmarkRunner {
     ///   - checkpoint: where to save progress after each prompt. An existing checkpoint with the
     ///     same columns is resumed.
     ///   - device, classifierName, judgeModelID: recorded in the result.
+    ///   - only: measure just these columns, e.g. to skip Opus on a test set. Others are listed
+    ///     as not measured. Nil measures every available one.
     public init(
         makeSession: @escaping SessionFactory,
         judge: any AnswerJudge,
@@ -47,7 +56,8 @@ public final class QualityBenchmarkRunner {
         device: String,
         classifierName: String,
         judgeModelID: String,
-        startedAt: Date = .now
+        startedAt: Date = .now,
+        only: Set<QualityBenchmark.Column>? = nil
     ) {
         self.makeSession = makeSession
         self.judge = judge
@@ -58,6 +68,10 @@ public final class QualityBenchmarkRunner {
         var columns: [QualityBenchmark.Column] = []
         var unmeasured: [String: String] = [:]
         for column in QualityBenchmark.Column.allCases {
+            if let only, !only.contains(column) {
+                unmeasured[column.rawValue] = "Not part of this run"
+                continue
+            }
             let session = makeSession(column)
             let provider = session.provider(for: column.route)
             if provider.isSimulated {
@@ -220,14 +234,7 @@ public final class QualityBenchmarkRunner {
 
     private func measure(_ benchmarkCase: QualityBenchmark.Case) async -> QualityBenchmark.CaseResult {
         // The router sees only measured rungs as available, matching the app as shipped.
-        var availability: [Route: ProviderAvailability] = [:]
-        for route in Route.allCases {
-            let column = QualityBenchmark.Column(rung: route)
-            availability[route] = result.columns.contains(column)
-                ? .available
-                : .unavailable(reason: result.unmeasured[column.rawValue] ?? "Not measured")
-        }
-        let input = RoutingInput(availability: availability, previousPrompt: benchmarkCase.previousPrompt)
+        let input = RoutingInput(availability: result.routerAvailability, previousPrompt: benchmarkCase.previousPrompt)
         let routing = await router.route(benchmarkCase.prompt, input: input)
         var routerLatency: TimeInterval?
         if case .routed(_, let run) = routing { routerLatency = run?.latency }

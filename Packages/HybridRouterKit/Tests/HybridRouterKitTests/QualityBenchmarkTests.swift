@@ -316,3 +316,69 @@ struct QualityBenchmarkRunnerTests {
         #expect(QualityReport(result).judgeErrors == 3)
     }
 }
+
+/// Replaying routing over saved answers, and comparing two routings.
+@MainActor
+struct QualityReplayTests {
+    private let costTable = CostTable(updated: "test", source: "test", models: [
+        "apple-on-device": .init(input: 0, cachedInput: 0, output: 0),
+        "claude-sonnet-5-5": .init(input: 15, cachedInput: 15, output: 15),
+    ])
+
+    private func run(_ classifier: FakeClassifier, prompts: Int = 4) async -> QualityBenchmark.RunResult {
+        let costTable = costTable
+        let runner = QualityBenchmarkRunner(
+            makeSession: { _ in
+                RoutedSession(instructions: "", onDevice: FakeProvider(route: .onDevice, reply: "device answer"),
+                              appleCloud: FakeProvider(route: .appleCloud, reply: "", availability: .unavailable(reason: "off")),
+                              claude: FakeProvider(route: .claude, reply: "claude answer"), costTable: costTable)
+            },
+            // On-device passes only for prompts 1 and 2.
+            judge: FakeAnswerJudge { answer, benchmarkCase in answer.hasPrefix("claude") || benchmarkCase.id <= 2 },
+            classifier: classifier, spendCap: 100, device: "test", classifierName: "fake", judgeModelID: "judge",
+            only: [.onDevice, .claude]
+        )
+        let cases = (1...prompts).map { QualityBenchmark.Case(id: $0, split: "heldout", group: "chat", task: "chat", difficulty: "easy", prompt: "Question \($0)") }
+        return await runner.run(cases)
+    }
+
+    @Test func onlyTheChosenColumnsAreMeasured() async {
+        let result = await run(.always("complex"))
+        #expect(result.columns == [.onDevice, .claude])
+        #expect(result.unmeasured["claudeDeep"] == "Not part of this run")
+    }
+
+    @Test func replayingChangesOnlyTheRoutersChoices() async throws {
+        let original = await run(.always("complex"))
+        let replayed = await QualityReplay.reroute(original, with: Router(classifier: FakeClassifier.always("simple")))
+        #expect(replayed.cases.allSatisfy { $0.routerRoute == .onDevice })
+        #expect(replayed.cases.map { $0.answers.map(\.text) } == original.cases.map { $0.answers.map(\.text) })
+        #expect(replayed.routerNote != nil)
+    }
+
+    @Test func comparisonsArePairedAndReproducible() async throws {
+        // Everything to Claude passes all four; everything on-device passes two, at no cost.
+        let cloud = await run(.always("complex"))
+        let device = await QualityReplay.reroute(cloud, with: Router(classifier: FakeClassifier.always("simple")))
+        let comparison = try #require(QualityReplay.compare(device, to: cloud))
+        #expect(comparison.count == 4)
+        #expect(comparison.changedRoutes == 4)
+        #expect(abs(comparison.passDelta - -50) < 1e-9)
+        #expect(abs(comparison.costChange - -1) < 1e-9)
+        #expect(comparison.passInterval.contains(-50))
+        #expect(QualityReplay.compare(device, to: cloud) == comparison)
+        #expect(comparison.summary.hasPrefix("-50.0 points"))
+
+        let same = try #require(QualityReplay.compare(cloud, to: cloud))
+        #expect(same.passDelta == 0 && same.passInterval == 0...0 && same.changedRoutes == 0)
+    }
+
+    @Test func replayCanTakeOneSplit() async {
+        var original = await run(.always("complex"))
+        original.cases[0] = QualityBenchmark.CaseResult(
+            case: .init(id: 1, split: "tuning", group: "chat", task: "chat", difficulty: "easy", prompt: "Question 1"),
+            routerRoute: .claude, routerReason: nil, routerLatency: nil, answers: original.cases[0].answers, judgments: original.cases[0].judgments)
+        let replayed = await QualityReplay.reroute(original, with: Router(classifier: FakeClassifier.always("simple")), split: "heldout")
+        #expect(replayed.cases.map(\.id) == [2, 3, 4])
+    }
+}
