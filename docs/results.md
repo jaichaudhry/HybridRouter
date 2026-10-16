@@ -14,18 +14,18 @@ Does routing keep answers good while spending less? On an iPhone 17 Pro Max, eac
 
 Numbers are for the router as it ships today, with the [exact-answer detector](#routing-improvements). The 0.2.0 router, measured before the detector, is kept for comparison.
 
-| Strategy | Answers good enough | Cost per 100 prompts | Sent to Claude |
+| Strategy | Answers good enough | Cost per 100 prompts | Stays on the phone |
 |---|---|---|---|
-| **HybridRouter** | **95%** | **$0.62** | 71% |
-| HybridRouter 0.2.0, before the detector | 91% | $0.61 | 63% |
-| Always on-device | 62% | $0 | 0% |
-| Always Claude Sonnet | 97% | $0.71 | 100% |
-| Always Claude Opus (reference) | 100% | $1.51 | 100% |
+| **HybridRouter** | **95%** | **$0.62** | **29%** |
+| HybridRouter 0.2.0, before the detector | 91% | $0.61 | 37% |
+| Always on-device | 62% | $0 | 100% |
+| Always Claude Sonnet | 97% | $0.71 | 0% |
+| Always Claude Opus (reference) | 100% | $1.51 | 0% |
 | Always Muse Wonder (Meta) | 98% | $1.88 | 0% |
-| Random, same mix as the router | 87% | $0.50 | 71% |
-| Perfect routing (cheapest route that passed) | 99% | $0.42 | 38% |
+| Random, same mix as the router | 87% | $0.50 | 29% |
+| Perfect routing (cheapest route that passed) | 99% | $0.42 | 62% |
 
-- **The router beats chance.** It closes 94% of the quality gap between always-on-device and always-Claude, 8 points above random routing with the same share of Claude.
+- **The router beats chance.** It closes 94% of the quality gap between always-on-device and always-Claude, 8 points above random routing that keeps the same share on the phone.
 - **Close to Sonnet quality for less:** 13% cheaper than always-Sonnet for 2 points less, while keeping 29% of messages on the phone. Perfect routing would keep 99% for 41% less than Sonnet, so there's still headroom.
 - **Against always-Opus it's 59% cheaper, but mostly because Sonnet costs half as much.** With Opus as the router's Claude tier (the same routing decisions, scored on the Opus answers), it would pass 98% at $1.32 per 100 prompts: 13% cheaper than always-Opus. So routing itself saves about 13% whichever Claude sits on top, and perfect routing would save 42% with Opus at no loss in quality.
 - **Muse Wonder matches the top tier but costs the most and answers slowest.** It passed 98%, between Sonnet and Opus, and got 4 prompts right that Sonnet missed. But it reasons at length before answering, so it costs more than Opus at the same list price ($1.88 per 100 prompts, 27% more output) and took a median 9.3 s to the first word, against 2.2 s for Sonnet; Meta's Anthropic-compatible endpoint sends the whole reply at once. With Muse as the router's cloud tier, the router would pass 97% at $1.58 per 100 prompts.

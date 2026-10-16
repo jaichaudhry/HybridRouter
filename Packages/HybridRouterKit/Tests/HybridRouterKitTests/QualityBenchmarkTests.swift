@@ -49,7 +49,7 @@ struct QualityReportTests {
         let router = try #require(report.result(for: .router))
         #expect(router.passRate == 0.5)
         #expect(abs(router.costPer100 - 0.5) < 1e-9)
-        #expect(router.claudeShare == 0.5)
+        #expect(router.onDeviceShare == 0.5)
 
         #expect(report.result(for: .alwaysOnDevice)?.passRate == 0.5)
         #expect(report.result(for: .alwaysOnDevice)?.costPer100 == 0)
@@ -67,7 +67,7 @@ struct QualityReportTests {
         let random = try #require(QualityReport(Self.run).result(for: .randomSameMix))
         #expect(abs(random.passRate - 0.625) < 1e-9)
         #expect(abs(random.costPer100 - 0.5) < 1e-9)
-        #expect(random.claudeShare == 0.5)
+        #expect(random.onDeviceShare == 0.5)
     }
 
     @Test func routerChoicesAreComparedWithTheOracle() {
@@ -191,7 +191,8 @@ struct QualityBenchmarkRunnerTests {
 
         let muse = try #require(QualityReport(extended).result(for: .alwaysMuseWonder))
         #expect(muse.passRate == 1)
-        #expect(muse.claudeShare == 0)
+        // Every Muse Wonder answer comes from the cloud, so nothing stays on the phone.
+        #expect(muse.onDeviceShare == 0)
         // The router and the oracle still choose among the routing rungs only.
         #expect(QualityReport(extended).result(for: .oracle) == QualityReport(original).result(for: .oracle))
     }
@@ -230,7 +231,8 @@ struct QualityBenchmarkRunnerTests {
         // The router now picks Apple Cloud, whose answers passed, at no cost.
         #expect(report.result(for: .router)?.passRate == 1)
         #expect(report.result(for: .router)?.costPer100 == 0)
-        #expect(report.result(for: .oracle)?.claudeShare == 0)
+        // Apple Cloud's answers passed and the on-device ones didn't, so nothing stays on-device.
+        #expect(report.result(for: .oracle)?.onDeviceShare == 0)
     }
 
     @Test func routingWithAppleCloudOnlyMovesTurnsItWouldHaveTaken() {

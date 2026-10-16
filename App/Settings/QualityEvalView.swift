@@ -201,7 +201,7 @@ private struct ReportSection: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(result.strategy.displayName)
                         .fontWeight(result.strategy == .router ? .semibold : .regular)
-                    Text("\(Format.percent(result.passRate)) passed · score \(String(format: "%.2f", result.meanScore)) · \(Format.dollars(result.costPer100)) per 100 · \(Format.percent(result.claudeShare)) to Claude")
+                    Text("\(Format.percent(result.passRate)) passed · score \(String(format: "%.2f", result.meanScore)) · \(Format.dollars(result.costPer100)) per 100 · \(Format.percent(result.onDeviceShare)) on the phone")
                         .font(.caption)
                         .monospacedDigit()
                         .foregroundStyle(.secondary)

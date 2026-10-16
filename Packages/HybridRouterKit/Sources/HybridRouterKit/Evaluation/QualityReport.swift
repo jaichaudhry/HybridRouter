@@ -38,8 +38,9 @@ public struct QualityReport: Sendable {
         public let meanScore: Double
         /// USD per 100 prompts.
         public let costPer100: Double
-        /// Share of prompts sent to Claude (Sonnet or Opus).
-        public let claudeShare: Double
+        /// Share of prompts answered on-device, so they stayed on the phone: free, private and
+        /// available offline. The same measure for every cloud model.
+        public let onDeviceShare: Double
     }
 
     /// How the router's choice compared with the oracle's.
@@ -99,7 +100,7 @@ public struct QualityReport: Sendable {
                 passRate: Double(picks.filter { $0.0.passes($0.1) }.count) / n,
                 meanScore: Double(picks.map { $0.0.score($0.1) }.reduce(0, +)) / n,
                 costPer100: picks.map { $0.0.answer($0.1)?.cost ?? 0 }.reduce(0, +) / n * 100,
-                claudeShare: Double(picks.filter { [.claude, .claudeDeep].contains($0.1) }.count) / n
+                onDeviceShare: Double(picks.filter { $0.1 == .onDevice }.count) / n
             )
         }
 
@@ -154,16 +155,16 @@ public struct QualityReport: Sendable {
         let routed = cases.compactMap(routerColumn)
         guard !routed.isEmpty, !cases.isEmpty else { return nil }
         let n = Double(cases.count)
-        var passRate = 0.0, meanScore = 0.0, costPer100 = 0.0, claudeShare = 0.0
+        var passRate = 0.0, meanScore = 0.0, costPer100 = 0.0, onDeviceShare = 0.0
         for rung in rungs {
             let share = Double(routed.filter { $0 == rung }.count) / Double(routed.count)
             guard share > 0 else { continue }
             passRate += share * Double(cases.filter { $0.passes(rung) }.count) / n
             meanScore += share * Double(cases.map { $0.score(rung) }.reduce(0, +)) / n
             costPer100 += share * cases.map { $0.answer(rung)?.cost ?? 0 }.reduce(0, +) / n * 100
-            if rung.route == .claude { claudeShare += share }
+            if rung == .onDevice { onDeviceShare += share }
         }
-        return StrategyResult(strategy: .randomSameMix, passRate: passRate, meanScore: meanScore, costPer100: costPer100, claudeShare: claudeShare)
+        return StrategyResult(strategy: .randomSameMix, passRate: passRate, meanScore: meanScore, costPer100: costPer100, onDeviceShare: onDeviceShare)
     }
 
     public func result(for strategy: Strategy) -> StrategyResult? {
@@ -174,11 +175,11 @@ public struct QualityReport: Sendable {
     public func markdown(title: String) -> String {
         func percent(_ value: Double) -> String { "\(Int((value * 100).rounded()))%" }
         var lines = ["### \(title) (\(count) prompts)", ""]
-        lines.append("| Strategy | Answers passed | Mean score | Cost per 100 prompts | Sent to Claude |")
+        lines.append("| Strategy | Answers passed | Mean score | Cost per 100 prompts | Stays on the phone |")
         lines.append("|---|---|---|---|---|")
         for result in strategies {
             let name = result.strategy == .router ? "**\(result.strategy.displayName)**" : result.strategy.displayName
-            lines.append("| \(name) | \(percent(result.passRate)) | \(String(format: "%.2f", result.meanScore)) | $\(String(format: "%.2f", result.costPer100)) | \(percent(result.claudeShare)) |")
+            lines.append("| \(name) | \(percent(result.passRate)) | \(String(format: "%.2f", result.meanScore)) | $\(String(format: "%.2f", result.costPer100)) | \(percent(result.onDeviceShare)) |")
         }
         lines.append("")
         let b = breakdown
