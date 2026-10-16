@@ -3,7 +3,7 @@
 HybridRouterKit is a Swift package (iOS 27, macOS 27) with no UI. Add this repository as a package dependency and pick the `HybridRouterKit` library:
 
 ```swift
-.package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.2.1")
+.package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.3.0")
 ```
 
 ```swift
