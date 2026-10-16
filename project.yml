@@ -39,6 +39,9 @@ targets:
       # The published 0.2.0 results, so the app can add Apple Cloud to them.
       - path: Evals/results/2026-10-14-iphone-quality-muse.json
         buildPhase: resources
+      # The test set's saved answers, so a routing change can be confirmed on it by replay.
+      - path: Evals/results/2026-10-15-iphone-quality-testset.json
+        buildPhase: resources
     dependencies:
       - package: HybridRouterKit
         product: HybridRouterKit

@@ -15,6 +15,8 @@ struct QualityEvalView: View {
     @State private var runToken: UUID?
     @State private var runMode = QualityEvalModel.Mode.full
     @State private var replayInstructions = OnDeviceClassifier.InstructionSet.tuned(for: SystemLanguageModel.default.variant).id
+    @State private var replayDetectsExactAnswers = false
+    @State private var replayOnTestSet = false
 
     var body: some View {
         List {
@@ -57,16 +59,24 @@ struct QualityEvalView: View {
 
             if model.baseline != nil {
                 Section {
-                    Picker("Classifier instructions", selection: $replayInstructions) {
+                    Picker("Classifier", selection: $replayInstructions) {
                         ForEach(OnDeviceClassifier.InstructionSet.all) { set in
                             Text(set.id).tag(set.id)
                         }
+                        Text(NeedsClassifier.instructionsID).tag(NeedsClassifier.instructionsID)
+                    }
+                    Toggle("Exact-answer detector", isOn: $replayDetectsExactAnswers)
+                    if model.testBaseline != nil {
+                        Picker("Prompts", selection: $replayOnTestSet) {
+                            Text("Development (175)").tag(false)
+                            Text("Test set (150)").tag(true)
+                        }
                     }
                     if !model.isRunning {
-                        Button("Replay routing on the 0.2.0 results") { start(.replay) }
+                        Button("Replay routing") { start(.replay) }
                     }
                     ForEach(model.comparisons, id: \.split) { item in
-                        LabeledContent(item.split == "heldout" ? "Held-out vs 0.2.0" : "Tuning vs 0.2.0") {
+                        LabeledContent("\(QualityEvalModel.splitName(item.split)) vs saved routing") {
                             Text(item.comparison.summary)
                                 .font(.caption)
                                 .multilineTextAlignment(.trailing)
@@ -75,7 +85,7 @@ struct QualityEvalView: View {
                 } header: {
                     Text("Replay routing")
                 } footer: {
-                    Text("Runs only the router over the saved answers, so a routing change is measured for free, in about two minutes. Intervals are 95% bootstrap ranges.")
+                    Text("Runs only the router over saved answers, so a routing change is measured for free, in about two minutes, against the routing those answers were saved with. Intervals are 95% bootstrap ranges. Tune on the development prompts; use the test set once, to confirm.")
                 }
             }
 
@@ -115,10 +125,10 @@ struct QualityEvalView: View {
                         }
                     }
                 }
-                ForEach(["heldout", "tuning"], id: \.self) { split in
+                ForEach(["heldout", "tuning", "test"], id: \.self) { split in
                     let report = QualityReport(run, split: split)
                     if report.count > 0 {
-                        ReportSection(report: report, title: split == "heldout" ? "Held-out" : "Tuning")
+                        ReportSection(report: report, title: QualityEvalModel.splitName(split))
                     }
                 }
                 Section {
@@ -143,8 +153,11 @@ struct QualityEvalView: View {
             case .testSet: await model.run(app: app, testSet: true)
             case .addAppleCloud: await model.addAppleCloud(app: app)
             case .replay:
-                let set = OnDeviceClassifier.InstructionSet.all.first { $0.id == replayInstructions }
-                await model.replay(instructions: set)
+                let classifier: any RouteClassifier = replayInstructions == NeedsClassifier.instructionsID
+                    ? NeedsClassifier()
+                    : OnDeviceClassifier(instructionSet: OnDeviceClassifier.InstructionSet.all.first { $0.id == replayInstructions })
+                await model.replay(classifier: classifier, name: replayInstructions,
+                                   detectsExactAnswers: replayDetectsExactAnswers, onTestSet: replayOnTestSet)
             }
             runToken = nil
         }
@@ -275,21 +288,28 @@ final class QualityEvalModel {
     var hasSavedTestProgress: Bool { FileManager.default.fileExists(atPath: Self.testCheckpoint.path()) }
 
     /// The bundled 0.2.0 results, or nil if missing from the bundle.
-    var baseline: QualityBenchmark.RunResult? {
-        Bundle.main.url(forResource: Self.baselineName, withExtension: "json")
+    var baseline: QualityBenchmark.RunResult? { Self.bundledRun(Self.baselineName) }
+
+    /// The bundled test-set results (on-device and Sonnet answers), for confirming a routing change.
+    var testBaseline: QualityBenchmark.RunResult? { Self.bundledRun("2026-10-15-iphone-quality-testset") }
+
+    private static func bundledRun(_ name: String) -> QualityBenchmark.RunResult? {
+        Bundle.main.url(forResource: name, withExtension: "json")
             .flatMap { try? Data(contentsOf: $0) }
             .flatMap { try? QualityBenchmark.RunResult.load($0) }
     }
 
     var markdown: String {
         guard let result else { return "" }
-        return [
+        return ([
             "# Answer quality on \(result.device) (\(result.cases.count) prompts, \(Format.dollars(result.spent)))"
                 + (result.routerNote.map { "\n\n\($0) Classifier: \(result.classifier)." } ?? "")
-                + comparisons.map { "\n\n\($0.split == "heldout" ? "Held-out" : "Tuning") vs 0.2.0 routing: \($0.comparison.summary)" }.joined(),
-            QualityReport(result, split: "heldout").markdown(title: "Held-out"),
-            QualityReport(result, split: "tuning").markdown(title: "Tuning"),
-        ].joined(separator: "\n\n")
+                + comparisons.map { "\n\n\(Self.splitName($0.split)) vs saved routing: \($0.comparison.summary)" }.joined(),
+        ] + ["heldout", "tuning", "test"].compactMap { split in
+            let report = QualityReport(result, split: split)
+            return report.count > 0 ? report.markdown(title: Self.splitName(split)) : nil
+        })
+        .joined(separator: "\n\n")
     }
 
     /// Shows results saved by an earlier, unfinished or finished run.
@@ -323,23 +343,35 @@ final class QualityEvalModel {
     }
 
     /// Replays routing with this iPhone's classifier over the bundled 0.2.0 answers. Free.
-    func replay(instructions: OnDeviceClassifier.InstructionSet?) async {
-        guard !isRunning, let baseline else { return }
+    /// Replays routing with this iPhone's classifier over saved answers: the 0.2.0 development
+    /// results, or the frozen test set. Free: only the on-device classifier runs.
+    func replay(classifier: any RouteClassifier, name: String, detectsExactAnswers: Bool, onTestSet: Bool) async {
+        guard !isRunning, let saved = onTestSet ? testBaseline : baseline else { return }
         isRunning = true
         defer {
             isRunning = false
             progress = nil
         }
-        let classifier = OnDeviceClassifier(instructionSet: instructions)
-        let replayed = await QualityReplay.reroute(baseline, with: Router(classifier: classifier)) { [weak self] done, total in
+        let router = Router(classifier: classifier, detectsExactAnswers: detectsExactAnswers)
+        let replayed = await QualityReplay.reroute(saved, with: router) { [weak self] done, total in
             self?.progress = .init(done: done, total: total, spent: 0, current: "Routing prompt \(done + 1)")
         }
         var result = replayed
-        result.classifier = "on-device classifier, \(classifier.instructionSet.id) instructions (replayed on \(BenchmarkModel.deviceName))"
-        comparisons = ["heldout", "tuning"].compactMap { split in
-            QualityReplay.compare(result, to: baseline, split: split).map { (split, $0) }
+        let detector = detectsExactAnswers ? " + exact-answer detector" : ""
+        result.classifier = "on-device classifier, \(name) instructions\(detector) (replayed on \(BenchmarkModel.deviceName))"
+        comparisons = (onTestSet ? ["test"] : ["heldout", "tuning"]).compactMap { split in
+            QualityReplay.compare(result, to: saved, split: split).map { (split, $0) }
         }
-        show(result, suffix: "replay-\(classifier.instructionSet.id)")
+        show(result, suffix: "replay-\(name)\(detectsExactAnswers ? "-exact" : "")\(onTestSet ? "-testset" : "")")
+    }
+
+    static func splitName(_ split: String) -> String {
+        switch split {
+        case "heldout": "Held-out"
+        case "tuning": "Tuning"
+        case "test": "Test set"
+        default: split
+        }
     }
 
     /// Answers the bundled results' prompts on Apple Cloud, grades them, and adds the column.
@@ -400,8 +432,9 @@ final class QualityEvalModel {
             spendCap: Self.spendCap,
             checkpoint: testSet ? Self.testCheckpoint : Self.checkpoint,
             device: BenchmarkModel.deviceName,
-            classifierName: "on-device classifier, \(classifier.instructionSet.id) instructions",
+            classifierName: "on-device classifier, \(classifier.instructionSet.id) instructions + exact-answer detector",
             judgeModelID: "claude-opus-5-5",
+            detectsExactAnswers: true,
             only: testSet ? Set(QualityBenchmark.Column.rungs) : nil
         )
         let result = await runner.run(cases) { [weak self] progress in

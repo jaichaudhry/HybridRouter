@@ -129,3 +129,56 @@ public struct OnDeviceClassifier: RouteClassifier {
         return response.content
     }
 }
+
+/// Labels what a turn needs rather than how complex it sounds, then maps that to the
+/// complexity the router uses. The complexity labels hardly predict when the on-device model
+/// fails (AUROC 0.57 on the development prompts); "needs" does better because it asks about
+/// the small model's known weak spots directly. Experimental: compare with Replay first.
+public struct NeedsClassifier: RouteClassifier {
+    @Generable
+    struct Needs {
+        @Guide(description: "What the request needs", .anyOf(NeedsClassifier.categories.map(\.label)))
+        var needs: String
+    }
+
+    /// Each label and the router classification it maps to.
+    static let categories: [(label: String, classification: RouteClassification)] = [
+        ("general knowledge or writing", RouteClassification(complexity: "simple", task: "chat")),
+        ("specific real places, prices, rules or facts", RouteClassification(complexity: "simple", task: "chat")),
+        ("long multi-part plan", RouteClassification(complexity: "moderate", task: "plan")),
+        ("judgment between options", RouteClassification(complexity: "complex", task: "reason")),
+        ("exact arithmetic, counting or dates", RouteClassification(complexity: "complex", task: "reason")),
+        ("code", RouteClassification(complexity: "complex", task: "code")),
+    ]
+
+    public static let instructionsID = "needs-a"
+
+    static let instructions = """
+        Decide what the user's message needs from an assistant. A small on-device assistant is good at \
+        everyday explanations, rewriting, summarizing pasted text, extracting from pasted text, short lists \
+        and simple code. It makes mistakes with exact arithmetic, counting letters or words, dates and time \
+        zones, specific real-world facts (places, prices, laws, schedules), long detailed itineraries, and \
+        long or tricky code.
+        """
+
+    private let model: SystemLanguageModel
+
+    public init(model: SystemLanguageModel = .default) {
+        self.model = model
+    }
+
+    public func prewarm() async {
+        _ = try? await classify("Hi", previous: nil)
+    }
+
+    public func classify(_ prompt: String, previous: String?) async throws -> RouteClassification {
+        let session = LanguageModelSession(model: model, instructions: Self.instructions)
+        let response = try await session.respond(
+            to: OnDeviceClassifier.classifierPrompt(prompt, previous: previous),
+            generating: Needs.self,
+            options: GenerationOptions(samplingMode: .greedy)
+        )
+        return Self.categories.first { $0.label == response.content.needs }?.classification
+            ?? RouteClassification(complexity: "moderate", task: "chat")
+    }
+}

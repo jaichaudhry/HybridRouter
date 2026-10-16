@@ -25,6 +25,9 @@ public struct RoutingInput: Equatable, Sendable {
     public var namedRoute: Route?
     /// Route names for reasons, with the cloud route named for the model serving it.
     public var labels: RouteLabels
+    /// The kind of exact answer the message asks for (counting, arithmetic, …), if the router
+    /// checks for one. See ``ExactAnswerDetector``.
+    public var exactAnswer: ExactAnswerDetector.Kind?
 
     public init(
         override: Route? = nil,
@@ -38,7 +41,8 @@ public struct RoutingInput: Equatable, Sendable {
         followsUpOn: Route? = nil,
         previousPrompt: String? = nil,
         namedRoute: Route? = nil,
-        labels: RouteLabels = .standard
+        labels: RouteLabels = .standard,
+        exactAnswer: ExactAnswerDetector.Kind? = nil
     ) {
         self.override = override
         self.privacyReason = privacyReason
@@ -52,6 +56,7 @@ public struct RoutingInput: Equatable, Sendable {
         self.previousPrompt = previousPrompt
         self.namedRoute = namedRoute
         self.labels = labels
+        self.exactAnswer = exactAnswer
     }
 
     public var isPrivate: Bool { privacyReason != nil }
@@ -164,6 +169,12 @@ public enum RoutingRules {
         // A bare follow-up ("Why?") stays with the model that gave the previous reply.
         if let previous = input.followsUpOn, fitting.contains(previous) {
             return .decided(RouteDecision(route: previous, reason: "Follow-up", source: .rule))
+        }
+
+        // A question with one exact answer (counting, arithmetic, dates, conversions) goes to
+        // the cloud model: the on-device model gets about half of these wrong.
+        if let exact = input.exactAnswer, fitting.contains(.claude) {
+            return .decided(RouteDecision(route: .claude, reason: "Needs an exact answer (\(exact.label))", source: .rule))
         }
 
         // Only one route is big enough: no choice left for the classifier.

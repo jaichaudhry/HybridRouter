@@ -39,12 +39,21 @@ public struct Router: Sendable {
     /// Nil waits as long as it takes, for measuring the classifier itself: the on-device model
     /// answers one request at a time, so concurrent eval cases queue past any short limit.
     public var classifierTimeout: Duration?
+    /// Sends questions with one exact answer to the cloud model before the classifier runs.
+    /// See ``ExactAnswerDetector``.
+    public var detectsExactAnswers: Bool
     private let classifier: any RouteClassifier
 
-    public init(classifier: any RouteClassifier, mapping: ComplexityMapping = .standard, classifierTimeout: Duration? = .seconds(4)) {
+    public init(
+        classifier: any RouteClassifier,
+        mapping: ComplexityMapping = .standard,
+        classifierTimeout: Duration? = .seconds(4),
+        detectsExactAnswers: Bool = false
+    ) {
         self.classifier = classifier
         self.mapping = mapping
         self.classifierTimeout = classifierTimeout
+        self.detectsExactAnswers = detectsExactAnswers
     }
 
     /// Warms the classifier so the first turn routes as fast as later ones.
@@ -58,6 +67,10 @@ public struct Router: Sendable {
     ///   - classifyDecidedTurns: also classify turns a rule settled, to choose a structured
     ///     output (e.g. a receipt for a scanned image). It never changes the route.
     public func route(_ prompt: String, input: RoutingInput, classifyDecidedTurns: Bool = false) async -> RoutingResult {
+        var input = input
+        if detectsExactAnswers, input.exactAnswer == nil {
+            input.exactAnswer = ExactAnswerDetector.kind(of: prompt)
+        }
         let allowed: [Route]
         switch RoutingRules.evaluate(input) {
         case .decided(let decision):

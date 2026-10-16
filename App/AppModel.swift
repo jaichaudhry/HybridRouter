@@ -266,7 +266,9 @@ final class AppModel {
 
     private static func makeCoordinator(scenario: any Scenario, network: NetworkMonitor) -> TurnCoordinator {
         TurnCoordinator(
-            router: Router(classifier: OnDeviceClassifier(), mapping: scenario.mapping),
+            // The exact-answer detector: +4 points on held-out prompts, +6 on the test set, for
+            // 3-4% more cost (README › Routing improvements).
+            router: Router(classifier: OnDeviceClassifier(), mapping: scenario.mapping, detectsExactAnswers: true),
             estimator: OnDeviceTokenEstimator(),
             isOnline: { network.isOnline }
         )

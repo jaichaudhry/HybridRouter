@@ -44,6 +44,7 @@ public final class QualityBenchmarkRunner {
     ///   - checkpoint: where to save progress after each prompt. An existing checkpoint with the
     ///     same columns is resumed.
     ///   - device, classifierName, judgeModelID: recorded in the result.
+    ///   - detectsExactAnswers: route with the exact-answer detector, as the app does.
     ///   - only: measure just these columns, e.g. to skip Opus on a test set. Others are listed
     ///     as not measured. Nil measures every available one.
     public init(
@@ -57,11 +58,12 @@ public final class QualityBenchmarkRunner {
         classifierName: String,
         judgeModelID: String,
         startedAt: Date = .now,
+        detectsExactAnswers: Bool = false,
         only: Set<QualityBenchmark.Column>? = nil
     ) {
         self.makeSession = makeSession
         self.judge = judge
-        self.router = Router(classifier: classifier, mapping: mapping)
+        self.router = Router(classifier: classifier, mapping: mapping, detectsExactAnswers: detectsExactAnswers)
         self.spendCap = spendCap
         self.checkpoint = checkpoint
 

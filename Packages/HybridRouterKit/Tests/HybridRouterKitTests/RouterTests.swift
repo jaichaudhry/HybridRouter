@@ -137,3 +137,61 @@ struct RouteClassificationTests {
         #expect(RouteClassification(complexity: "simple", task: "other").reason == "Quick request")
     }
 }
+
+struct ExactAnswerTests {
+    private let everything = RoutingInput(availability: [.onDevice: .available, .appleCloud: .available, .claude: .available])
+
+    @Test(arguments: [
+        ("How many r's are in the word 'strawberry'?", ExactAnswerDetector.Kind.counting),
+        ("Count the words in this sentence: 'The quick brown fox.'", .counting),
+        ("Spell 'necessary' backwards.", .counting),
+        ("What's the 5th word in this sentence?", .counting),
+        ("What's 17 × 24?", .arithmetic),
+        ("What's 18% of 350?", .arithmetic),
+        ("Four friends are splitting the trip. Who owes what?", .arithmetic),
+        ("If today is Tuesday, what day of the week will it be 100 days from now?", .datesAndTimes),
+        ("If I leave Seattle at 9 am on a 10-hour flight, what local time will I land?", .datesAndTimes),
+        ("Convert 72 degrees Fahrenheit to Celsius.", .conversions),
+        ("Scale this recipe from 4 servings to 6", .conversions),
+    ])
+    func spotsQuestionsWithOneExactAnswer(prompt: String, kind: ExactAnswerDetector.Kind) {
+        #expect(ExactAnswerDetector.kind(of: prompt) == kind)
+    }
+
+    @Test(arguments: [
+        "Write a haiku about Monday mornings",
+        "Convert this JavaScript to Swift: const evens = nums.filter(n => n % 2 === 0)",
+        "Explain how a credit score works",
+        "Plan a 3-day trip to Lisbon",
+        "Summarize these meeting notes in three bullets",
+    ])
+    func leavesOtherPromptsAlone(prompt: String) {
+        #expect(ExactAnswerDetector.kind(of: prompt) == nil)
+    }
+
+    @Test func anExactAnswerGoesToTheCloud() {
+        var input = everything
+        input.exactAnswer = .counting
+        #expect(RoutingRules.evaluate(input) == .decided(RouteDecision(route: .claude, reason: "Needs an exact answer (counting)", source: .rule)))
+    }
+
+    @Test func privacyAndAvailabilityStillWin() {
+        var privateTurn = everything
+        privateTurn.exactAnswer = .arithmetic
+        privateTurn.privacyReason = "card number"
+        guard case .decided(let decision) = RoutingRules.evaluate(privateTurn) else { Issue.record("expected a decision"); return }
+        #expect(decision.route != .claude)
+
+        var noCloud = RoutingInput(availability: [.onDevice: .available, .appleCloud: .available, .claude: .unavailable(reason: "off")])
+        noCloud.exactAnswer = .arithmetic
+        #expect(RoutingRules.evaluate(noCloud) == .open(allowed: [.onDevice, .appleCloud]))
+    }
+
+    @Test func theRouterChecksOnlyWhenAsked() async {
+        let prompt = "What's 17 × 24?"
+        let off = await Router(classifier: FakeClassifier.always("simple")).route(prompt, input: everything)
+        #expect(off.decision?.route == .onDevice)
+        let on = await Router(classifier: FakeClassifier.always("simple"), detectsExactAnswers: true).route(prompt, input: everything)
+        #expect(on.decision == RouteDecision(route: .claude, reason: "Needs an exact answer (arithmetic)", source: .rule))
+    }
+}

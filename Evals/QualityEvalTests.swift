@@ -205,6 +205,8 @@ struct QualityEvalTests {
     ///
     ///     HR_REPLAY=1 HR_QUALITY_RESULTS=Evals/results/2026-10-14-iphone-quality-muse.json \
     ///         HR_INSTRUCTIONS=advanced-b swift test --package-path Evals --filter routingReplay
+    ///
+    /// `HR_INSTRUCTIONS=needs-a` uses ``NeedsClassifier``; `HR_EXACT=1` adds the exact-answer detector.
     @Test(.enabled(if: environment["HR_REPLAY"] == "1" && environment["HR_QUALITY_RESULTS"] != nil
                    && SystemLanguageModel.default.isAvailable,
                    "Set HR_REPLAY=1 and HR_QUALITY_RESULTS; needs the on-device model"))
@@ -213,13 +215,14 @@ struct QualityEvalTests {
         let path = try #require(Self.environment["HR_QUALITY_RESULTS"])
         let input = path.hasPrefix("/") ? URL(filePath: path) : repo.appending(path: path)
         let run = try QualityBenchmark.RunResult.load(Data(contentsOf: input))
-        let instructions = Self.environment["HR_INSTRUCTIONS"].flatMap { id in
-            OnDeviceClassifier.InstructionSet.all.first { $0.id == id }
-        }
-        let classifier = OnDeviceClassifier(instructionSet: instructions)
-        let replayed = await QualityReplay.reroute(run, with: Router(classifier: classifier))
-        print("Replayed with \(classifier.instructionSet.id) instructions on \(SystemLanguageModel.default.variant)")
-        for split in ["heldout", "tuning"] {
+        let id = Self.environment["HR_INSTRUCTIONS"]
+        let classifier: any RouteClassifier = id == NeedsClassifier.instructionsID
+            ? NeedsClassifier()
+            : OnDeviceClassifier(instructionSet: OnDeviceClassifier.InstructionSet.all.first { $0.id == id })
+        let exact = Self.environment["HR_EXACT"] == "1"
+        let replayed = await QualityReplay.reroute(run, with: Router(classifier: classifier, detectsExactAnswers: exact))
+        print("Replayed with \(id ?? "default") instructions\(exact ? " + exact-answer detector" : "") on \(SystemLanguageModel.default.variant)")
+        for split in ["heldout", "tuning", "test"] {
             if let comparison = QualityReplay.compare(replayed, to: run, split: split) {
                 print("\(split): \(comparison.summary)")
             }

@@ -59,7 +59,7 @@ The app has three scenarios, picked from the title bar. It opens in Chat, then r
 For each turn:
 
 1. **PrivacyGuard** checks the message on-device: the Private toggle, scanned documents, card numbers (Luhn-checked), ID numbers, phone numbers, emails, addresses and health terms.
-2. **Hard rules** settle the obvious cases, in order: your route override, privacy (never Claude), offline (on-device only), context fit (only models big enough for the conversation), images (a model that can see them), a model you name in the message ("ask Claude"), and bare follow-ups like "Why?" (stay with the model that answered). Each model is also told it shares the conversation with the other two, so it doesn't deny that Claude exists when you ask for it.
+2. **Hard rules** settle the obvious cases, in order: your route override, privacy (never Claude), offline (on-device only), context fit (only models big enough for the conversation), images (a model that can see them), a model you name in the message ("ask Claude"), bare follow-ups like "Why?" (stay with the model that answered), and questions with one exact answer, such as counting letters, arithmetic, date maths or unit conversions (go to the cloud model, which gets them right far more often). Each model is also told it shares the conversation with the other two, so it doesn't deny that Claude exists when you ask for it.
 3. **The on-device classifier** labels everything else as simple, moderate or complex, which maps to on-device, Apple Cloud or Claude. Each scenario can change the mapping, and each on-device model variant gets its own tuned instructions.
 4. **Escalation** retries a failed reply one route up: context too long, timeout, rate limit, decode failure, or an empty or cut-off reply. A private turn never escalates to Claude.
 
@@ -102,6 +102,21 @@ Does routing keep answers good while spending less? On an iPhone 17 Pro Max, eac
 **Checking the judge.** A model grading models can be wrong or favor its own answers, so 40 verdicts, mixed across routes and passes and fails, were hand-checked blind to which model wrote each answer. The checker agreed on 35 and disagreed on 1, a borderline time-zone answer the judge failed as misleading: 97% of the calls they took a side on, or 88% counting the 4 they weren't sure about.
 
 Caveats: Apple Cloud isn't in this run, because the Private Cloud Compute entitlement is pending, so its turns went to Claude as in the shipped app. If your team has the entitlement, you can add Apple Cloud to these results in about 15 minutes (Settings › Developer › Answer quality › Add Apple Cloud): see [issue #1](https://github.com/jaichaudhry/HybridRouter/issues/1). Muse Wonder was added afterwards from a Mac (its answers don't depend on the device) and graded by the same judge; the hand check above predates it, and a Claude judge may favor Claude-style answers. Its first pass exposed an app bug: told it was one of three models, Muse signed replies "I'm Muse Wonder", which the judge failed as an invented identity. The note now says to mention the model only when asked, and Muse was re-run; the other models had almost never repeated it (Sonnet once in 175 answers, Opus never), so they weren't. Costs are API list prices for answers only; the runs reported here cost $13.46 in total, judging included. Full answers, verdicts and every misrouted prompt are in [`Evals/results/`](Evals/results/2026-10-14-iphone-quality-muse.md).
+
+### Routing improvements
+
+The benchmark above measured routing as of 0.2.0. Every prompt there has been answered on every route and graded, so a routing change can be measured for free by replaying only the router over the saved answers (**Settings › Developer › Answer quality › Replay routing**). Changes are tuned on those 175 development prompts, then confirmed once on [150 fresh test prompts](Evals/quality_testset.json) answered on the same iPhone.
+
+| On an iPhone 17 Pro Max | Held-out (150) | Test set (150) |
+|---|---|---|
+| 0.2.0 router | 91% at $0.61 per 100 | 89% at $0.38 per 100 |
+| **+ exact-answer detector** (now on) | **95%, +4.0 points (+1.3 to +7.3), 3% dearer** | **95%, +6.0 points (+2.7 to +10.0), 4% dearer** |
+| "What does it need?" classifier + detector (experimental) | 87%, −4.7 points (−10.7 to +1.3), 28% cheaper | 89%, +0.0 points (−6.0 to +6.0), 23% cheaper |
+
+Intervals are 95% paired bootstrap ranges.
+- **The exact-answer detector** is a few lines of pattern matching that runs before the classifier and sends counting, arithmetic, date and conversion questions to the cloud model. The classifier labels these "simple" because they sound easy, yet the on-device model got about half of them wrong (miscounted letters in "Mississippi", the wrong weekday 45 days after a Friday). It's on in the app and opt-in in HybridRouterKit (`Router(detectsExactAnswers: true)`).
+- **The "what does it need?" classifier** asks the on-device model what a prompt needs instead of how complex it sounds. It's consistently cheaper, but its effect on quality is unclear, so it stays an experiment, a candidate for a future "save money" setting.
+- **What didn't work:** asking the on-device model to check its own answers. It called 94% of them trustworthy, wrong ones included. Learned routers on 175 examples weren't better than the classifier either. Details are in [`Evals/results/2026-10-15-routing-replays.md`](Evals/results/2026-10-15-routing-replays.md).
 
 ### Routing accuracy
 
