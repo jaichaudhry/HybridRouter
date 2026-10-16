@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 700" width="960" height="700" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
   <title>HybridRouter architecture</title>
-  <desc>Scenarios in the app use ChatUI, which runs each turn through HybridRouterKit. HybridRouterKit checks privacy, applies hard rules, asks the on-device classifier, and escalates on failure. One shared LanguageModelSession switches between the on-device model, Apple Private Cloud Compute and Claude, withholding private turns from Claude.</desc>
+  <desc>Scenarios in the app use ChatUI, which runs each turn through HybridRouterKit. HybridRouterKit checks privacy, applies hard rules, asks the on-device classifier, and escalates on failure. One shared LanguageModelSession switches between the on-device model, Apple Private Cloud Compute and a cloud model (Claude or Muse Wonder), withholding private turns from the cloud model.</desc>
   <style>
     .bg { fill: #ffffff; }
     .panel { fill: #f6f8fa; stroke: #d0d7de; }
@@ -14,19 +14,6 @@
     .cloud { fill: #ecedfc; stroke: #5157e0; }
     .claude { fill: #f8eae4; stroke: #b04e2c; }
     .private { fill: #fff8e1; stroke: #bf8700; }
-    @media (prefers-color-scheme: dark) {
-      .bg { fill: #0d1117; }
-      .panel { fill: #161b22; stroke: #30363d; }
-      .box { fill: #0d1117; stroke: #30363d; }
-      .title, .label { fill: #e6edf3; }
-      .note { fill: #9198a1; }
-      .arrow { stroke: #9198a1; }
-      .head { fill: #9198a1; }
-      .device { fill: #0e2526; stroke: #3fd0c8; }
-      .cloud { fill: #1a1b33; stroke: #7880ff; }
-      .claude { fill: #2b1a13; stroke: #e07b56; }
-      .private { fill: #2a2210; stroke: #d29922; }
-    }
   </style>
   <defs>
     <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -49,7 +36,7 @@
   <text class="label" x="677" y="63" text-anchor="middle">Chat</text>
   <rect class="box" x="748" y="34" width="172" height="48" rx="8"/>
   <text class="label" x="834" y="56" text-anchor="middle">Settings</text>
-  <text class="note" x="834" y="72" text-anchor="middle">Claude key, benchmarks</text>
+  <text class="note" x="834" y="72" text-anchor="middle">keys, models, benchmarks</text>
 
   <path class="arrow" d="M 480 100 L 480 122"/>
 
@@ -74,14 +61,14 @@
 
   <rect class="box" x="270" y="282" width="650" height="66" rx="8"/>
   <text class="label" x="290" y="306">TurnCoordinator</text>
-  <text class="note" x="290" y="328">route the turn → stream the reply → on failure, retry one route up (never Claude if private)</text>
+  <text class="note" x="290" y="328">route the turn → stream the reply → on failure, retry one route up (never the cloud model if private)</text>
 
   <path class="arrow" d="M 420 348 L 420 372"/>
   <path class="arrow" d="M 760 348 L 760 372"/>
 
   <rect class="box" x="270" y="374" width="320" height="76" rx="8"/>
   <text class="label" x="290" y="398">Router</text>
-  <text class="note" x="290" y="418">1. Rules: override, privacy, offline, context fit, image</text>
+  <text class="note" x="290" y="418">1. Rules: privacy, context, images, exact answers</text>
   <text class="note" x="290" y="436">2. On-device classifier: simple / moderate / complex</text>
 
   <rect class="box" x="610" y="374" width="310" height="76" rx="8"/>
@@ -98,7 +85,7 @@
 
   <rect class="box" x="40" y="474" width="880" height="62" rx="8"/>
   <text class="label" x="60" y="498">RoutedSession: one LanguageModelSession, one shared transcript</text>
-  <text class="note" x="60" y="518">Dynamic Profile switches the model per turn · history transform shows Claude placeholders for private turns</text>
+  <text class="note" x="60" y="518">Dynamic Profile switches the model per turn · history transform gives the cloud model placeholders for private turns</text>
 
   <path class="arrow" d="M 175 536 L 175 588"/>
   <path class="arrow" d="M 480 536 L 480 588"/>
@@ -116,7 +103,7 @@
   <text class="note" x="480" y="658" text-anchor="middle">32K context · private · daily quota</text>
 
   <rect class="claude" x="650" y="590" width="270" height="88" rx="10"/>
-  <text class="title" x="785" y="618" text-anchor="middle">Claude</text>
-  <text class="note" x="785" y="640" text-anchor="middle">ClaudeForFoundationModels</text>
-  <text class="note" x="785" y="658" text-anchor="middle">Sonnet 5.5 · Opus 5.5 · 1M context</text>
+  <text class="title" x="785" y="618" text-anchor="middle">Cloud model</text>
+  <text class="note" x="785" y="640" text-anchor="middle">Claude Sonnet 5.5 / Opus 5.5</text>
+  <text class="note" x="785" y="658" text-anchor="middle">or Meta Muse Wonder · paid</text>
 </svg>

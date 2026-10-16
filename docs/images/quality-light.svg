@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 470" width="760" height="470" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>Answer quality versus cost</title>
+  <desc>Share of answers judged good enough against cost per 100 prompts for HybridRouter and fixed strategies. HybridRouter: 95% at $0.62; Always on-device: 62% at $0.00; Always Sonnet: 97% at $0.71; Always Opus: 100% at $1.51; Always Muse Wonder: 98% at $1.88; Random, same mix: 87% at $0.50; Perfect routing: 99% at $0.42.</desc>
+  <style>
+    .bg { fill: #ffffff; }
+    .grid { stroke: #eaeef2; stroke-width: 1; }
+    .tick { fill: #59636e; font-size: 12px; }
+    .axis { fill: #1f2328; font-size: 13px; font-weight: 600; }
+    .name { fill: #1f2328; font-size: 13px; }
+    .strong { font-weight: 700; }
+    .detail { fill: #59636e; font-size: 12px; }
+    .point { fill: #59636e; }
+    .router { fill: #b04e2c; stroke: #ffffff; stroke-width: 2; }
+    .oracle { fill: #ffffff; stroke: #007c80; stroke-width: 2; }
+      </style>
+  <rect class="bg" x="0" y="0" width="760" height="470"/>
+  <line class="grid" x1="70.0" y1="380.0" x2="730.0" y2="380.0"/>
+  <text class="tick" x="60.0" y="384.0" text-anchor="end">50%</text>
+  <line class="grid" x1="70.0" y1="312.0" x2="730.0" y2="312.0"/>
+  <text class="tick" x="60.0" y="316.0" text-anchor="end">60%</text>
+  <line class="grid" x1="70.0" y1="244.0" x2="730.0" y2="244.0"/>
+  <text class="tick" x="60.0" y="248.0" text-anchor="end">70%</text>
+  <line class="grid" x1="70.0" y1="176.0" x2="730.0" y2="176.0"/>
+  <text class="tick" x="60.0" y="180.0" text-anchor="end">80%</text>
+  <line class="grid" x1="70.0" y1="108.0" x2="730.0" y2="108.0"/>
+  <text class="tick" x="60.0" y="112.0" text-anchor="end">90%</text>
+  <line class="grid" x1="70.0" y1="40.0" x2="730.0" y2="40.0"/>
+  <text class="tick" x="60.0" y="44.0" text-anchor="end">100%</text>
+  <line class="grid" x1="70.0" y1="40.0" x2="70.0" y2="380.0"/>
+  <text class="tick" x="70.0" y="400.0" text-anchor="middle">$0.00</text>
+  <line class="grid" x1="149.8" y1="40.0" x2="149.8" y2="380.0"/>
+  <text class="tick" x="149.8" y="400.0" text-anchor="middle">$0.25</text>
+  <line class="grid" x1="229.6" y1="40.0" x2="229.6" y2="380.0"/>
+  <text class="tick" x="229.6" y="400.0" text-anchor="middle">$0.50</text>
+  <line class="grid" x1="309.4" y1="40.0" x2="309.4" y2="380.0"/>
+  <text class="tick" x="309.4" y="400.0" text-anchor="middle">$0.75</text>
+  <line class="grid" x1="389.3" y1="40.0" x2="389.3" y2="380.0"/>
+  <text class="tick" x="389.3" y="400.0" text-anchor="middle">$1.00</text>
+  <line class="grid" x1="469.1" y1="40.0" x2="469.1" y2="380.0"/>
+  <text class="tick" x="469.1" y="400.0" text-anchor="middle">$1.25</text>
+  <line class="grid" x1="548.9" y1="40.0" x2="548.9" y2="380.0"/>
+  <text class="tick" x="548.9" y="400.0" text-anchor="middle">$1.50</text>
+  <line class="grid" x1="628.7" y1="40.0" x2="628.7" y2="380.0"/>
+  <text class="tick" x="628.7" y="400.0" text-anchor="middle">$1.75</text>
+  <line class="grid" x1="708.5" y1="40.0" x2="708.5" y2="380.0"/>
+  <text class="tick" x="708.5" y="400.0" text-anchor="middle">$2.00</text>
+  <text class="axis" x="400.0" y="426.0" text-anchor="middle">Cost per 100 prompts (USD)</text>
+  <text class="axis" transform="translate(18 210.0) rotate(-90)" text-anchor="middle">Answers judged good enough</text>
+  <circle class="router" cx="269.1" cy="71.7" r="9.0"/>
+  <circle class="point" cx="70.0" cy="298.4" r="6.5"/>
+  <circle class="point" cx="295.5" cy="58.1" r="6.5"/>
+  <circle class="point" cx="551.1" cy="40.0" r="6.5"/>
+  <circle class="point" cx="670.0" cy="53.6" r="6.5"/>
+  <circle class="point" cx="230.9" cy="127.0" r="6.5"/>
+  <circle class="oracle" cx="204.3" cy="49.1" r="6.5"/>
+  <text class="name strong" x="225.9" y="96.7" text-anchor="start">HybridRouter</text>
+  <text class="detail" x="225.9" y="111.7" text-anchor="start">95% · $0.62</text>
+  <text class="name" x="84.0" y="296.4" text-anchor="start">Always on-device</text>
+  <text class="detail" x="84.0" y="311.4" text-anchor="start">62% · $0.00</text>
+  <text class="name" x="309.5" y="56.1" text-anchor="start">Always Sonnet</text>
+  <text class="detail" x="309.5" y="71.1" text-anchor="start">97% · $0.71</text>
+  <text class="name" x="565.1" y="38.0" text-anchor="start">Always Opus</text>
+  <text class="detail" x="565.1" y="53.0" text-anchor="start">100% · $1.51</text>
+  <text class="name" x="605.2" y="78.6" text-anchor="start">Always Muse Wonder</text>
+  <text class="detail" x="605.2" y="93.6" text-anchor="start">98% · $1.88</text>
+  <text class="name" x="216.9" y="125.0" text-anchor="end">Random, same mix</text>
+  <text class="detail" x="216.9" y="140.0" text-anchor="end">87% · $0.50</text>
+  <text class="name" x="190.3" y="47.1" text-anchor="end">Perfect routing</text>
+  <text class="detail" x="190.3" y="62.1" text-anchor="end">99% · $0.42</text>
+  <text class="detail" x="70.0" y="458.0">150 held-out prompts, on-device answers from an iPhone 17 Pro Max; every answer graded by Claude Opus 5.5.</text>
+</svg>

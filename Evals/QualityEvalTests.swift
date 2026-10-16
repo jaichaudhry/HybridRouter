@@ -231,8 +231,8 @@ struct QualityEvalTests {
         #expect(replayed.cases.count == run.cases.count)
     }
 
-    /// Re-reports a saved run without calling any model: writes its Markdown summary next to it
-    /// and the held-out chart to docs/quality-pareto.svg.
+    /// Draws the held-out quality chart from a saved run, without calling any model, as
+    /// docs/images/quality-light.svg and quality-dark.svg.
     ///
     ///     HR_QUALITY_RESULTS=Evals/results/2026-10-14-iphone-quality.json HR_QUALITY_DEVICE="iPhone 17 Pro Max" \
     ///         swift test --package-path Evals --filter qualityChart
@@ -247,16 +247,12 @@ struct QualityEvalTests {
         let heldOut = QualityReport(run, split: "heldout")
         #expect(heldOut.count > 0)
 
-        let markdown = [
-            "# Answer quality on \(run.device) (\(run.cases.count) prompts, $\(String(format: "%.2f", run.spent)))",
-            heldOut.markdown(title: "Held-out"),
-            QualityReport(run, split: "tuning").markdown(title: "Tuning"),
-        ].joined(separator: "\n\n")
-        try markdown.write(to: file.deletingPathExtension().appendingPathExtension("md"), atomically: true, encoding: .utf8)
-
         let device = Self.environment["HR_QUALITY_DEVICE"] ?? run.device
         let caption = "\(heldOut.count) held-out prompts, on-device answers from an \(device); every answer graded by Claude Opus 5.5."
-        try QualityChart.svg(heldOut, caption: caption)
-            .write(to: repo.appending(path: "docs/quality-pareto.svg"), atomically: true, encoding: .utf8)
+        let svg = QualityChart.svg(heldOut, caption: caption)
+        for (name, dark) in [("light", false), ("dark", true)] {
+            try QualityChart.themed(svg, dark: dark)
+                .write(to: repo.appending(path: "docs/images/quality-\(name).svg"), atomically: true, encoding: .utf8)
+        }
     }
 }

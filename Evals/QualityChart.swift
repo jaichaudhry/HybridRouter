@@ -1,9 +1,19 @@
 import Foundation
 import HybridRouterKit
 
-/// Draws a quality-vs-cost chart (one point per strategy) as an SVG that follows the reader's
-/// light or dark theme, in the style of docs/architecture.svg.
+/// Draws a quality-vs-cost chart (one point per strategy) as an SVG, in the style of the
+/// architecture diagram.
 enum QualityChart {
+    /// One theme of `svg`. Safari doesn't apply `prefers-color-scheme` inside an SVG shown with
+    /// `<img>`, so the README picks a light or dark file with `<picture>` instead.
+    static func themed(_ svg: String, dark: Bool) -> String {
+        guard let start = svg.range(of: "@media (prefers-color-scheme: dark) {"),
+              let end = svg.range(of: "\n    }\n", range: start.upperBound..<svg.endIndex) else { return svg }
+        let darkRules = String(svg[start.upperBound..<end.lowerBound])
+        // Later rules win, so the dark file keeps the light rules and appends the dark ones.
+        return svg.replacingCharacters(in: start.lowerBound..<end.upperBound, with: dark ? darkRules + "\n" : "")
+    }
+
     static func svg(_ report: QualityReport, caption: String) -> String {
         let width = 760.0, height = 470.0
         let plot = (left: 70.0, top: 40.0, right: 730.0, bottom: 380.0)
@@ -27,37 +37,44 @@ enum QualityChart {
         body.append(#"<text class="axis" x="\#(f((plot.left + plot.right) / 2))" y="\#(f(plot.bottom + 46))" text-anchor="middle">Cost per 100 prompts (USD)</text>"#)
         body.append(#"<text class="axis" transform="translate(18 \#(f((plot.top + plot.bottom) / 2))) rotate(-90)" text-anchor="middle">Answers judged good enough</text>"#)
 
-        // Points, labelled to the right except where that would leave the plot; a label that
-        // would overlap one already placed goes below its point instead.
-        var placed: [(minX: Double, maxX: Double, minY: Double, maxY: Double)] = []
-        for result in report.strategies {
-            let px = x(result.costPer100), py = y(result.passRate)
-            let leftLabel = result.strategy == .oracle || px > plot.right - 200
-            let (cls, r) = switch result.strategy {
+        // Points first, then labels: each label takes the first of right, left, below or above
+        // its point that stays inside the plot and clear of every point and earlier label.
+        typealias Box = (minX: Double, maxX: Double, minY: Double, maxY: Double)
+        func overlaps(_ a: Box, _ b: Box) -> Bool {
+            a.minX < b.maxX && b.minX < a.maxX && a.minY < b.maxY && b.minY < a.maxY
+        }
+        let points = report.strategies.map { (result: $0, px: x($0.costPer100), py: y($0.passRate)) }
+        var placed: [Box] = points.map { ($0.px - 10, $0.px + 10, $0.py - 10, $0.py + 10) }
+        for point in points {
+            let (cls, r) = switch point.result.strategy {
             case .router: ("router", 9.0)
             case .oracle: ("oracle", 6.5)
             default: ("point", 6.5)
             }
-            body.append(#"<circle class="\#(cls)" cx="\#(f(px))" cy="\#(f(py))" r="\#(f(r))"/>"#)
-            let lx = leftLabel ? px - 14 : px + 14
-            let anchor = leftLabel ? "end" : "start"
-            let name = label(result.strategy)
-            let detail = "\(Int((result.passRate * 100).rounded()))% · $\(String(format: "%.2f", result.costPer100))"
-            // Roughly 7 px per character at 13 px.
-            let width = Double(max(name.count, detail.count)) * 7
-            func box(_ top: Double) -> (minX: Double, maxX: Double, minY: Double, maxY: Double) {
-                (leftLabel ? lx - width : lx, leftLabel ? lx : lx + width, top, top + 32)
-            }
-            var top = py - 15
-            if placed.contains(where: { other in
-                let mine = box(top)
-                return mine.minX < other.maxX && other.minX < mine.maxX && mine.minY < other.maxY && other.minY < mine.maxY
-            }) {
-                top = py + 12
-            }
-            placed.append(box(top))
-            body.append(#"<text class="\#(result.strategy == .router ? "name strong" : "name")" x="\#(f(lx))" y="\#(f(top + 13))" text-anchor="\#(anchor)">\#(name)</text>"#)
-            body.append(#"<text class="detail" x="\#(f(lx))" y="\#(f(top + 28))" text-anchor="\#(anchor)">\#(detail)</text>"#)
+            body.append(#"<circle class="\#(cls)" cx="\#(f(point.px))" cy="\#(f(point.py))" r="\#(f(r))"/>"#)
+        }
+        for (index, point) in points.enumerated() {
+            let (px, py) = (point.px, point.py)
+            let name = label(point.result.strategy)
+            let detail = "\(Int((point.result.passRate * 100).rounded()))% · $\(String(format: "%.2f", point.result.costPer100))"
+            // Roughly 7 px per character at 13 px; two lines, 32 px tall.
+            let width = Double(max(name.count, detail.count)) * 7.2
+            // (text x, anchor, box): right, left, below and above the point.
+            let candidates: [(x: Double, anchor: String, box: Box)] = [
+                (px + 14, "start", (px + 14, px + 14 + width, py - 15, py + 17)),
+                (px - 14, "end", (px - 14 - width, px - 14, py - 15, py + 17)),
+                (px - width / 2, "start", (px - width / 2, px + width / 2, py + 12, py + 44)),
+                (px - width / 2, "start", (px - width / 2, px + width / 2, py - 46, py - 14)),
+            ]
+            let others = placed.enumerated().filter { $0.offset != index }.map(\.element)
+            let fits = candidates.first { candidate in
+                candidate.box.minX >= plot.left && candidate.box.maxX <= plot.right + 20
+                    && candidate.box.minY >= plot.top - 30 && candidate.box.maxY <= plot.bottom
+                    && !others.contains { overlaps(candidate.box, $0) }
+            } ?? candidates[0]
+            placed.append(fits.box)
+            body.append(#"<text class="\#(point.result.strategy == .router ? "name strong" : "name")" x="\#(f(fits.x))" y="\#(f(fits.box.minY + 13))" text-anchor="\#(fits.anchor)">\#(name)</text>"#)
+            body.append(#"<text class="detail" x="\#(f(fits.x))" y="\#(f(fits.box.minY + 28))" text-anchor="\#(fits.anchor)">\#(detail)</text>"#)
         }
         body.append(#"<text class="detail" x="\#(f(plot.left))" y="\#(f(height - 12))">\#(escape(caption))</text>"#)
 

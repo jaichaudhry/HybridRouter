@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 700" width="960" height="700" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>HybridRouter architecture</title>
+  <desc>Scenarios in the app use ChatUI, which runs each turn through HybridRouterKit. HybridRouterKit checks privacy, applies hard rules, asks the on-device classifier, and escalates on failure. One shared LanguageModelSession switches between the on-device model, Apple Private Cloud Compute and a cloud model (Claude or Muse Wonder), withholding private turns from the cloud model.</desc>
+  <style>
+    .bg { fill: #ffffff; }
+    .panel { fill: #f6f8fa; stroke: #d0d7de; }
+    .box { fill: #ffffff; stroke: #d0d7de; }
+    .title { fill: #1f2328; font-weight: 600; font-size: 15px; }
+    .label { fill: #1f2328; font-size: 13px; }
+    .note { fill: #59636e; font-size: 12px; }
+    .arrow { stroke: #59636e; stroke-width: 1.5; fill: none; marker-end: url(#head); }
+    .head { fill: #59636e; }
+    .device { fill: #e3f2f1; stroke: #007c80; }
+    .cloud { fill: #ecedfc; stroke: #5157e0; }
+    .claude { fill: #f8eae4; stroke: #b04e2c; }
+    .private { fill: #fff8e1; stroke: #bf8700; }
+      .bg { fill: #0d1117; }
+      .panel { fill: #161b22; stroke: #30363d; }
+      .box { fill: #0d1117; stroke: #30363d; }
+      .title, .label { fill: #e6edf3; }
+      .note { fill: #9198a1; }
+      .arrow { stroke: #9198a1; }
+      .head { fill: #9198a1; }
+      .device { fill: #0e2526; stroke: #3fd0c8; }
+      .cloud { fill: #1a1b33; stroke: #7880ff; }
+      .claude { fill: #2b1a13; stroke: #e07b56; }
+      .private { fill: #2a2210; stroke: #d29922; }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path class="head" d="M 0 0 L 10 5 L 0 10 z"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="960" height="700"/>
+
+  <!-- App -->
+  <rect class="panel" x="20" y="16" width="920" height="84" rx="12"/>
+  <text class="title" x="40" y="42">App</text>
+  <text class="note" x="40" y="62">Scenarios are configuration:</text>
+  <text class="note" x="40" y="78">instructions, tools, schemas, prompts</text>
+  <rect class="box" x="270" y="34" width="150" height="48" rx="8"/>
+  <text class="label" x="345" y="63" text-anchor="middle">Trip Planner</text>
+  <rect class="box" x="436" y="34" width="170" height="48" rx="8"/>
+  <text class="label" x="521" y="63" text-anchor="middle">Document Helper</text>
+  <rect class="box" x="622" y="34" width="110" height="48" rx="8"/>
+  <text class="label" x="677" y="63" text-anchor="middle">Chat</text>
+  <rect class="box" x="748" y="34" width="172" height="48" rx="8"/>
+  <text class="label" x="834" y="56" text-anchor="middle">Settings</text>
+  <text class="note" x="834" y="72" text-anchor="middle">keys, models, benchmarks</text>
+
+  <path class="arrow" d="M 480 100 L 480 122"/>
+
+  <!-- ChatUI -->
+  <rect class="panel" x="20" y="124" width="920" height="70" rx="12"/>
+  <text class="title" x="40" y="152">ChatUI</text>
+  <text class="note" x="40" y="172">No scenario code</text>
+  <text class="label" x="200" y="164">ChatModel · streaming chat · route badge · metrics · composer (Private, attach) · compare mode</text>
+
+  <path class="arrow" d="M 480 194 L 480 216"/>
+
+  <!-- HybridRouterKit -->
+  <rect class="panel" x="20" y="218" width="920" height="330" rx="12"/>
+  <text class="title" x="40" y="246">HybridRouterKit</text>
+  <text class="note" x="40" y="264">No UI · tested on a Mac with fake models</text>
+
+  <rect class="private" x="40" y="282" width="190" height="66" rx="8"/>
+  <text class="label" x="135" y="308" text-anchor="middle">PrivacyGuard</text>
+  <text class="note" x="135" y="328" text-anchor="middle">on-device PII &amp; health check</text>
+
+  <path class="arrow" d="M 230 315 L 268 315"/>
+
+  <rect class="box" x="270" y="282" width="650" height="66" rx="8"/>
+  <text class="label" x="290" y="306">TurnCoordinator</text>
+  <text class="note" x="290" y="328">route the turn → stream the reply → on failure, retry one route up (never the cloud model if private)</text>
+
+  <path class="arrow" d="M 420 348 L 420 372"/>
+  <path class="arrow" d="M 760 348 L 760 372"/>
+
+  <rect class="box" x="270" y="374" width="320" height="76" rx="8"/>
+  <text class="label" x="290" y="398">Router</text>
+  <text class="note" x="290" y="418">1. Rules: privacy, context, images, exact answers</text>
+  <text class="note" x="290" y="436">2. On-device classifier: simple / moderate / complex</text>
+
+  <rect class="box" x="610" y="374" width="310" height="76" rx="8"/>
+  <text class="label" x="630" y="398">Escalation policy</text>
+  <text class="note" x="630" y="418">timeout, context, empty or cut-off reply</text>
+  <text class="note" x="630" y="436">→ next route up</text>
+
+  <rect class="box" x="40" y="374" width="210" height="76" rx="8"/>
+  <text class="label" x="60" y="398">Telemetry</text>
+  <text class="note" x="60" y="418">latency, tokens, cost per step</text>
+  <text class="note" x="60" y="436">prices from prices.json</text>
+
+  <path class="arrow" d="M 595 450 L 595 472"/>
+
+  <rect class="box" x="40" y="474" width="880" height="62" rx="8"/>
+  <text class="label" x="60" y="498">RoutedSession: one LanguageModelSession, one shared transcript</text>
+  <text class="note" x="60" y="518">Dynamic Profile switches the model per turn · history transform gives the cloud model placeholders for private turns</text>
+
+  <path class="arrow" d="M 175 536 L 175 588"/>
+  <path class="arrow" d="M 480 536 L 480 588"/>
+  <path class="arrow" d="M 785 536 L 785 588"/>
+
+  <!-- Providers -->
+  <rect class="device" x="40" y="590" width="270" height="88" rx="10"/>
+  <text class="title" x="175" y="618" text-anchor="middle">On-device</text>
+  <text class="note" x="175" y="640" text-anchor="middle">SystemLanguageModel</text>
+  <text class="note" x="175" y="658" text-anchor="middle">free · private · offline · OCR tools</text>
+
+  <rect class="cloud" x="345" y="590" width="270" height="88" rx="10"/>
+  <text class="title" x="480" y="618" text-anchor="middle">Apple Cloud</text>
+  <text class="note" x="480" y="640" text-anchor="middle">Private Cloud Compute</text>
+  <text class="note" x="480" y="658" text-anchor="middle">32K context · private · daily quota</text>
+
+  <rect class="claude" x="650" y="590" width="270" height="88" rx="10"/>
+  <text class="title" x="785" y="618" text-anchor="middle">Cloud model</text>
+  <text class="note" x="785" y="640" text-anchor="middle">Claude Sonnet 5.5 / Opus 5.5</text>
+  <text class="note" x="785" y="658" text-anchor="middle">or Meta Muse Wonder · paid</text>
+</svg>
