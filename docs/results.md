@@ -12,32 +12,33 @@ Does routing keep answers good while spending less? On an iPhone 17 Pro Max, eac
   </picture>
 </p>
 
-The chart shows the router as it ships today, with the [exact-answer detector](#routing-improvements). The table and notes below are the 0.2.0 run, before the detector, as originally measured.
+Numbers are for the router as it ships today, with the [exact-answer detector](#routing-improvements). The 0.2.0 router, measured before the detector, is kept for comparison.
 
 | Strategy | Answers good enough | Cost per 100 prompts | Sent to Claude |
 |---|---|---|---|
-| **HybridRouter** | **91%** | **$0.61** | 63% |
+| **HybridRouter** | **95%** | **$0.62** | 71% |
+| HybridRouter 0.2.0, before the detector | 91% | $0.61 | 63% |
 | Always on-device | 62% | $0 | 0% |
 | Always Claude Sonnet | 97% | $0.71 | 100% |
 | Always Claude Opus (reference) | 100% | $1.51 | 100% |
 | Always Muse Wonder (Meta) | 98% | $1.88 | 0% |
-| Random, same mix as the router | 84% | $0.45 | 63% |
+| Random, same mix as the router | 87% | $0.50 | 71% |
 | Perfect routing (cheapest route that passed) | 99% | $0.42 | 38% |
 
-- **The router beats chance.** It closes 83% of the quality gap between always-on-device and always-Claude, 7 points above random routing with the same share of Claude.
-- **It doesn't yet save much against Sonnet alone:** 14% cheaper for 6 points less. Perfect routing would keep 99% for 41% less, so there's headroom.
-- **Against always-Opus it's 60% cheaper, but mostly because Sonnet costs half as much.** With Opus as the router's Claude tier (the same routing decisions, scored on the Opus answers), it would pass 93% at $1.28 per 100 prompts: 15% cheaper than always-Opus. So routing itself saves about 15% whichever Claude sits on top, and perfect routing would save 42% with Opus at no loss in quality.
-- **Muse Wonder matches the top tier but costs the most and answers slowest.** It passed 98%, between Sonnet and Opus, and got 4 prompts right that Sonnet missed. But it reasons at length before answering, so it costs more than Opus at the same list price ($1.88 per 100 prompts, 27% more output) and took a median 9.3 s to the first word, against 2.2 s for Sonnet; Meta's Anthropic-compatible endpoint sends the whole reply at once. With Muse as the router's cloud tier, the router would pass 92% at $1.51 per 100 prompts.
-- **Most of the gap is over-routing.** 48 of the 150 prompts went to Claude when the on-device answer was already good enough, mostly summaries, rewrites, explainers and short code.
-- **The 9 quality misses are mostly prompts that look easy but aren't** for a small model: counting letters, date arithmetic, time zones, word counts and scaling a recipe.
+- **The router beats chance.** It closes 94% of the quality gap between always-on-device and always-Claude, 8 points above random routing with the same share of Claude.
+- **Close to Sonnet quality for less:** 13% cheaper than always-Sonnet for 2 points less, while keeping 29% of messages on the phone. Perfect routing would keep 99% for 41% less than Sonnet, so there's still headroom.
+- **Against always-Opus it's 59% cheaper, but mostly because Sonnet costs half as much.** With Opus as the router's Claude tier (the same routing decisions, scored on the Opus answers), it would pass 98% at $1.32 per 100 prompts: 13% cheaper than always-Opus. So routing itself saves about 13% whichever Claude sits on top, and perfect routing would save 42% with Opus at no loss in quality.
+- **Muse Wonder matches the top tier but costs the most and answers slowest.** It passed 98%, between Sonnet and Opus, and got 4 prompts right that Sonnet missed. But it reasons at length before answering, so it costs more than Opus at the same list price ($1.88 per 100 prompts, 27% more output) and took a median 9.3 s to the first word, against 2.2 s for Sonnet; Meta's Anthropic-compatible endpoint sends the whole reply at once. With Muse as the router's cloud tier, the router would pass 97% at $1.58 per 100 prompts.
+- **Most of the remaining gap is over-routing.** 53 of the 150 prompts went to Claude when the on-device answer was already good enough, mostly summaries, rewrites, explainers and short code.
+- **Few quality misses are left.** The router kept 3 prompts on-device that then failed, down from 9 before the detector, which sends counting, date and arithmetic questions to the cloud.
 
 **Checking the judge.** A model grading models can be wrong or favor its own answers, so 40 verdicts, mixed across routes and passes and fails, were hand-checked blind to which model wrote each answer. The checker agreed on 35 and disagreed on 1, a borderline time-zone answer the judge failed as misleading: 97% of the calls they took a side on, or 88% counting the 4 they weren't sure about.
 
-Caveats: Apple Cloud isn't in this run, because the Private Cloud Compute entitlement is pending, so its turns went to Claude as in the shipped app. If your team has the entitlement, you can add Apple Cloud to these results in about 15 minutes (Settings › Developer › Answer quality › Add Apple Cloud): see [issue #1](https://github.com/jaichaudhry/HybridRouter/issues/1). Muse Wonder was added afterwards from a Mac (its answers don't depend on the device) and graded by the same judge; the hand check above predates it, and a Claude judge may favor Claude-style answers. Its first pass exposed an app bug: told it was one of three models, Muse signed replies "I'm Muse Wonder", which the judge failed as an invented identity. The note now says to mention the model only when asked, and Muse was re-run; the other models had almost never repeated it (Sonnet once in 175 answers, Opus never), so they weren't. Costs are API list prices for answers only; the runs reported here cost $13.46 in total, judging included. Full answers, verdicts and every misrouted prompt are in [`Evals/results/`](../Evals/results/2026-10-14-iphone-quality-muse.md).
+Caveats: Apple Cloud isn't in this run, because the Private Cloud Compute entitlement is pending, so its turns went to Claude as in the shipped app. If your team has the entitlement, you can add Apple Cloud to these results in about 15 minutes (Settings › Developer › Answer quality › Add Apple Cloud): see [issue #1](https://github.com/jaichaudhry/HybridRouter/issues/1). Muse Wonder was added afterwards from a Mac (its answers don't depend on the device) and graded by the same judge; the hand check above predates it, and a Claude judge may favor Claude-style answers. Its first pass exposed an app bug: told it was one of three models, Muse signed replies "I'm Muse Wonder", which the judge failed as an invented identity. The note now says to mention the model only when asked, and Muse was re-run; the other models had almost never repeated it (Sonnet once in 175 answers, Opus never), so they weren't. Costs are API list prices for answers only; the runs reported here cost $13.46 in total, judging included. Full answers, verdicts and every misrouted prompt are in [`Evals/results/`](../Evals/results/2026-10-14-iphone-quality-muse.md); the current router's choices are in `2026-10-15-iphone-quality-with-detector.json`, the 0.2.0 routing plus the exact-answer rule, which matches the iPhone replays exactly.
 
 ## Routing improvements
 
-The benchmark above measured routing as of 0.2.0. Every prompt there has been answered on every route and graded, so a routing change can be measured for free by replaying only the router over the saved answers (**Settings › Developer › Answer quality › Replay routing**). Changes are tuned on those 175 development prompts, then confirmed once on [150 fresh test prompts](../Evals/quality_testset.json) answered on the same iPhone.
+The benchmark ran once, with the 0.2.0 router. Every prompt there was answered on every route and graded, so a routing change can be measured for free by replaying only the router over the saved answers (**Settings › Developer › Answer quality › Replay routing**). Changes are tuned on those 175 development prompts, then confirmed once on [150 fresh test prompts](../Evals/quality_testset.json) answered on the same iPhone.
 
 | On an iPhone 17 Pro Max | Held-out (150) | Test set (150) |
 |---|---|---|
