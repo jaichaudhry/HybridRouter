@@ -342,7 +342,6 @@ final class QualityEvalModel {
         exportFile = nil
     }
 
-    /// Replays routing with this iPhone's classifier over the bundled 0.2.0 answers. Free.
     /// Replays routing with this iPhone's classifier over saved answers: the 0.2.0 development
     /// results, or the frozen test set. Free: only the on-device classifier runs.
     func replay(classifier: any RouteClassifier, name: String, detectsExactAnswers: Bool, onTestSet: Bool) async {
@@ -445,7 +444,8 @@ final class QualityEvalModel {
 
     private func show(_ result: QualityBenchmark.RunResult, suffix: String? = nil) {
         self.result = result
-        let stamp = ISO8601DateFormatter.string(from: result.startedAt, timeZone: .current, formatOptions: [.withFullDate])
+        // Today's date: a replay or an added column reuses an earlier run's prompts and start date.
+        let stamp = ISO8601DateFormatter.string(from: .now, timeZone: .current, formatOptions: [.withFullDate])
         let file = URL.temporaryDirectory.appending(path: "\(stamp)-iphone-quality\(suffix.map { "-\($0)" } ?? "").json")
         if let data = try? result.encoded(), (try? data.write(to: file)) != nil {
             exportFile = file
