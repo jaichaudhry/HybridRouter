@@ -4,9 +4,9 @@ import Testing
 @testable import HybridRouterKit
 
 struct RouterTests {
-    private let everything = RoutingInput(availability: [.onDevice: .available, .appleCloud: .available, .claude: .available])
+    private let everything = RoutingInput(availability: [.onDevice: .available, .appleCloud: .available, .cloud: .available])
 
-    @Test(arguments: [("simple", Route.onDevice), ("moderate", .appleCloud), ("complex", .claude)])
+    @Test(arguments: [("simple", Route.onDevice), ("moderate", .appleCloud), ("complex", .cloud)])
     func classifierComplexityPicksTheRoute(complexity: String, expected: Route) async {
         let router = Router(classifier: FakeClassifier.always(complexity, task: "plan"))
         let result = await router.route("Hi", input: everything)
@@ -108,24 +108,24 @@ struct RouterTests {
         let simple = RouteClassification(complexity: "simple", task: "chat")
         var input = everything
         input.availability[.onDevice] = .unavailable(reason: "off")
-        let decision = Router.decide(ClassifierRun(classification: simple, latency: 0), mapping: .standard, allowed: [.appleCloud, .claude], input: input)
+        let decision = Router.decide(ClassifierRun(classification: simple, latency: 0), mapping: .standard, allowed: [.appleCloud, .cloud], input: input)
         #expect(decision == RouteDecision(route: .appleCloud, reason: "Quick conversation (On-device unavailable)", source: .classifier))
     }
 
     @Test func longConversationsStillReachClaudeForComplexTurns() async {
         var input = everything
         input.estimatedTokens = 10_000
-        input.contextBudgets = [.onDevice: 3_686, .appleCloud: 29_491, .claude: 900_000]
+        input.contextBudgets = [.onDevice: 3_686, .appleCloud: 29_491, .cloud: 900_000]
         let complex = await Router(classifier: FakeClassifier.always("complex", task: "reason")).route("Realistic?", input: input)
-        #expect(complex.decision == RouteDecision(route: .claude, reason: "Complex reasoning", source: .classifier))
+        #expect(complex.decision == RouteDecision(route: .cloud, reason: "Complex reasoning", source: .classifier))
         let simple = await Router(classifier: FakeClassifier.always("simple")).route("Thanks", input: input)
-        #expect(simple.decision == RouteDecision(route: .appleCloud, reason: "Quick conversation (too long for On-device)", source: .classifier))
+        #expect(simple.decision == RouteDecision(route: .appleCloud, reason: "Quick conversation (chat too long for On-device)", source: .classifier, tooLongFor: .onDevice))
     }
 
     @Test func scenariosCanRemapComplexity() async {
-        let mapping = ComplexityMapping(simple: .onDevice, moderate: .claude, complex: .claude)
+        let mapping = ComplexityMapping(simple: .onDevice, moderate: .cloud, complex: .cloud)
         let router = Router(classifier: FakeClassifier.always("moderate"), mapping: mapping)
-        #expect(await router.route("Plan", input: everything).decision?.route == .claude)
+        #expect(await router.route("Plan", input: everything).decision?.route == .cloud)
     }
 }
 
@@ -139,7 +139,7 @@ struct RouteClassificationTests {
 }
 
 struct ExactAnswerTests {
-    private let everything = RoutingInput(availability: [.onDevice: .available, .appleCloud: .available, .claude: .available])
+    private let everything = RoutingInput(availability: [.onDevice: .available, .appleCloud: .available, .cloud: .available])
 
     @Test(arguments: [
         ("How many r's are in the word 'strawberry'?", ExactAnswerDetector.Kind.counting),
@@ -172,7 +172,7 @@ struct ExactAnswerTests {
     @Test func anExactAnswerGoesToTheCloud() {
         var input = everything
         input.exactAnswer = .counting
-        #expect(RoutingRules.evaluate(input) == .decided(RouteDecision(route: .claude, reason: "Needs an exact answer (counting)", source: .rule)))
+        #expect(RoutingRules.evaluate(input) == .decided(RouteDecision(route: .cloud, reason: "Needs an exact answer (counting)", source: .rule)))
     }
 
     @Test func privacyAndAvailabilityStillWin() {
@@ -180,9 +180,9 @@ struct ExactAnswerTests {
         privateTurn.exactAnswer = .arithmetic
         privateTurn.privacyReason = "card number"
         guard case .decided(let decision) = RoutingRules.evaluate(privateTurn) else { Issue.record("expected a decision"); return }
-        #expect(decision.route != .claude)
+        #expect(decision.route != .cloud)
 
-        var noCloud = RoutingInput(availability: [.onDevice: .available, .appleCloud: .available, .claude: .unavailable(reason: "off")])
+        var noCloud = RoutingInput(availability: [.onDevice: .available, .appleCloud: .available, .cloud: .unavailable(reason: "off")])
         noCloud.exactAnswer = .arithmetic
         #expect(RoutingRules.evaluate(noCloud) == .open(allowed: [.onDevice, .appleCloud]))
     }
@@ -192,6 +192,45 @@ struct ExactAnswerTests {
         let off = await Router(classifier: FakeClassifier.always("simple")).route(prompt, input: everything)
         #expect(off.decision?.route == .onDevice)
         let on = await Router(classifier: FakeClassifier.always("simple"), detectsExactAnswers: true).route(prompt, input: everything)
-        #expect(on.decision == RouteDecision(route: .claude, reason: "Needs an exact answer (arithmetic)", source: .rule))
+        #expect(on.decision == RouteDecision(route: .cloud, reason: "Needs an exact answer (arithmetic)", source: .rule))
+    }
+
+    @Test func aSingleAvailableRouteSkipsTheClassifier() async {
+        // The default for a package user with no cloud key and no Private Cloud Compute entitlement.
+        let router = Router(classifier: FakeClassifier.always("complex"))
+        let input = RoutingInput(availability: [.onDevice: .available, .appleCloud: .unavailable(reason: "off"), .cloud: .unavailable(reason: "off")])
+        let result = await router.route("Hi", input: input)
+        #expect(result == .routed(RouteDecision(route: .onDevice, reason: "Only On-device is available", source: .rule), classifier: nil))
+    }
+
+    @Test func aMappingThatSendsEverythingToOneRouteSkipsTheClassifier() async {
+        let router = Router(
+            classifier: FakeClassifier.failing,
+            mapping: ComplexityMapping(simple: .appleCloud, moderate: .appleCloud, complex: .appleCloud)
+        )
+        let result = await router.route("Hi", input: everything)
+        #expect(result == .routed(RouteDecision(route: .appleCloud, reason: "Every request goes to Apple Cloud here", source: .rule), classifier: nil))
+    }
+
+    @Test func aMappingWithAChoiceStillClassifies() async {
+        let router = Router(classifier: FakeClassifier.always("simple"))
+        var input = everything
+        input.availability[.appleCloud] = .unavailable(reason: "off")
+        let result = await router.route("Hi", input: input)
+        #expect(result.decision?.route == .onDevice)
+        #expect(result.decision?.source == .classifier)
+    }
+
+    @Test func trimHistoryKeepsTheClassifiersPickWhenTheChatIsTooLong() async {
+        var input = everything
+        input.estimatedTokens = 5_000
+        input.contextBudgets = [.onDevice: 4_000, .appleCloud: 32_000]
+        input.baseTokens = 600
+        let moves = await Router(classifier: FakeClassifier.always("simple")).route("thanks", input: input)
+        #expect(moves.decision?.route == .appleCloud)
+        #expect(moves.decision?.tooLongFor == .onDevice)
+        #expect(moves.decision?.trimsHistory == false)
+        let stays = await Router(classifier: FakeClassifier.always("simple"), whenTooLong: .trimHistory).route("thanks", input: input)
+        #expect(stays.decision == RouteDecision(route: .onDevice, reason: "Quick conversation", source: .classifier, historyBudget: 3_400))
     }
 }

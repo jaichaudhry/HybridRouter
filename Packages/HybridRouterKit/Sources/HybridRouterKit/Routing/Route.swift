@@ -2,13 +2,16 @@
 public enum Route: String, CaseIterable, Codable, Sendable, Hashable {
     case onDevice
     case appleCloud
-    case claude
+    /// The cloud model: Claude, Muse Wonder or another provider's. Raw value "claude" so saved
+    /// results and transcripts from 0.3 and earlier still decode.
+    case cloud = "claude"
 
+    /// The route's generic name. ``RouteLabels`` names the cloud route for the model serving it.
     public var displayName: String {
         switch self {
         case .onDevice: "On-device"
         case .appleCloud: "Apple Cloud"
-        case .claude: "Claude"
+        case .cloud: "Cloud model"
         }
     }
 
@@ -17,7 +20,7 @@ public enum Route: String, CaseIterable, Codable, Sendable, Hashable {
         switch self {
         case .onDevice: "lock.iphone"
         case .appleCloud: "lock.icloud"
-        case .claude: "sparkle"
+        case .cloud: "cloud"
         }
     }
 
@@ -25,8 +28,8 @@ public enum Route: String, CaseIterable, Codable, Sendable, Hashable {
     public var escalated: Route? {
         switch self {
         case .onDevice: .appleCloud
-        case .appleCloud: .claude
-        case .claude: nil
+        case .appleCloud: .cloud
+        case .cloud: nil
         }
     }
 }

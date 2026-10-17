@@ -7,7 +7,7 @@ struct RoutingBenchmarkTests {
     private let cases: [RoutingBenchmark.Case] = [
         .init(id: 1, group: "a", prompt: "Hi", complexity: "simple", task: "chat"),
         .init(id: 2, group: "a", prompt: "Plan Rome", complexity: "moderate", task: "plan"),
-        .init(id: 3, group: "b", prompt: "Why?", complexity: "complex", task: "reason", previousRoute: .claude),
+        .init(id: 3, group: "b", prompt: "Why?", complexity: "complex", task: "reason", previousRoute: .cloud),
     ]
 
     @Test func reportsAccuracyMissesAndGroups() async {
@@ -24,6 +24,6 @@ struct RoutingBenchmarkTests {
     @Test func casesDecodeFromJSON() throws {
         let json = #"[{"id": 1, "group": "g", "prompt": "Why?", "complexity": "complex", "task": "reason", "previousRoute": "claude"}]"#
         let decoded = try RoutingBenchmark.load(Data(json.utf8))
-        #expect(decoded.first?.expectedRoute() == .claude)
+        #expect(decoded.first?.expectedRoute() == .cloud)
     }
 }

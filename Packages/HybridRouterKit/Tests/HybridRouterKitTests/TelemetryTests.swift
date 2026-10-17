@@ -47,7 +47,7 @@ struct TelemetryTests {
     @Test func tokensPerSecondIncludesThinkingTimeWhenReasoningIsUnreported() {
         // Claude: 2,000 thinking + 200 text tokens; 20 s thinking, then 2 s of text.
         let metrics = StepMetrics(
-            decision: .forced(.claude),
+            decision: .forced(.cloud),
             modelID: "claude-sonnet-5-5",
             timeToFirstToken: 20,
             totalLatency: 22,
@@ -62,20 +62,30 @@ struct TelemetryTests {
         let steps = [
             StepMetrics(decision: .forced(.onDevice), modelID: "apple-on-device", timeToFirstToken: nil,
                         totalLatency: 1, usage: usage, estimatedCost: 0),
-            StepMetrics(decision: .forced(.claude), modelID: "claude-sonnet-5-5", timeToFirstToken: nil,
+            StepMetrics(decision: .forced(.cloud), modelID: "claude-sonnet-5-5", timeToFirstToken: nil,
                         totalLatency: 1, usage: usage, estimatedCost: 2),
         ]
-        let summary = SessionSummary(steps: steps, costTable: table, claudeModelID: "claude-sonnet-5-5")
+        let summary = SessionSummary(steps: steps, costTable: table, cloudModelID: "claude-sonnet-5-5")
         #expect(summary.routeShare[.onDevice] == 0.5)
-        #expect(summary.routeShare[.claude] == 0.5)
+        #expect(summary.routeShare[.cloud] == 0.5)
         #expect(summary.totalCost == 2)
-        #expect(summary.allClaudeCost == 4)
+        #expect(summary.allCloudCost == 4)
         #expect(summary.saved == 2)
+        #expect(summary.unpricedSteps == 0)
+    }
+
+    @Test func summaryCountsCloudStepsWithoutAPrice() {
+        let usage = TokenUsage(input: 100, cachedInput: 0, output: 10, reasoning: nil)
+        let unpriced = StepMetrics(decision: .forced(.cloud), modelID: "gemini-3", timeToFirstToken: nil,
+                                   totalLatency: 1, usage: usage, estimatedCost: nil)
+        let free = StepMetrics(decision: .forced(.onDevice), modelID: "apple-on-device", timeToFirstToken: nil,
+                               totalLatency: 1, usage: usage, estimatedCost: nil)
+        #expect(SessionSummary(steps: [unpriced, free], costTable: table, cloudModelID: "claude-sonnet-5-5").unpricedSteps == 1)
     }
 
     @Test func metricsRoundTripAsJSON() throws {
         let metrics = StepMetrics(
-            decision: .forced(.claude), modelID: "claude-sonnet-5-5", timeToFirstToken: 0.3,
+            decision: .forced(.cloud), modelID: "claude-sonnet-5-5", timeToFirstToken: 0.3,
             totalLatency: 1.2, usage: TokenUsage(input: 5, cachedInput: 1, output: 7, reasoning: nil),
             estimatedCost: 0.0001, escalationCause: "timeout"
         )

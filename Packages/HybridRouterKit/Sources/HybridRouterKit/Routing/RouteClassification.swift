@@ -44,12 +44,20 @@ public struct ComplexityMapping: Equatable, Sendable {
     public var moderate: Route
     public var complex: Route
 
-    public static let standard = ComplexityMapping(simple: .onDevice, moderate: .appleCloud, complex: .claude)
+    public static let standard = ComplexityMapping(simple: .onDevice, moderate: .appleCloud, complex: .cloud)
 
     public init(simple: Route, moderate: Route, complex: Route) {
         self.simple = simple
         self.moderate = moderate
         self.complex = complex
+    }
+
+    /// The route every outcome lands on among `allowed`, including a failed classification
+    /// (which falls back to Apple Cloud), or nil if the classifier's answer matters.
+    func onlyRoute(allowed: [Route]) -> Route? {
+        let targets = [simple, moderate, complex, .appleCloud]
+        let routes = Set(targets.map { RoutingRules.resolve($0, allowed: allowed) ?? allowed[0] })
+        return routes.count == 1 ? routes.first : nil
     }
 
     /// The mapped route, or nil for a complexity the classifier shouldn't produce.

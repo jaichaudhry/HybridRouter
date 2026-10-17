@@ -1,6 +1,6 @@
 import Foundation
 
-/// Decides on-device whether a turn must stay off Claude. Nothing it inspects
+/// Decides on-device whether a turn must stay off the cloud model. Nothing it inspects
 /// leaves the device.
 public struct PrivacyGuard: Sendable {
     public enum Reason: String, Codable, Equatable, Sendable, CaseIterable {
@@ -56,7 +56,7 @@ public struct PrivacyGuard: Sendable {
     /// the end of the run. Only whole groups: windows inside an unbroken run would flag long
     /// order or tracking numbers by chance.
     static func containsCardNumber(_ text: String) -> Bool {
-        matches(cardPattern, in: text).contains { candidate in
+        matches(cardRegex, in: text).contains { candidate in
             let groups = candidate.split(whereSeparator: { $0 == " " || $0 == "-" })
                 .map { $0.compactMap(\.wholeNumberValue) }
             return (1...groups.count).contains { count in
@@ -73,35 +73,37 @@ public struct PrivacyGuard: Sendable {
 
     /// US Social Security numbers, and numbers introduced as a passport, licence or national ID.
     static func containsGovernmentID(_ text: String) -> Bool {
-        !matches(ssnPattern, in: text).isEmpty || !matches(labeledIDPattern, in: text).isEmpty
+        contains(ssnRegex, in: text) || contains(labeledIDRegex, in: text)
     }
 
     static func containsPhoneNumber(_ text: String) -> Bool {
-        detects(.phoneNumber, in: text)
+        contains(phoneDetector, in: text)
     }
 
     static func containsEmail(_ text: String) -> Bool {
-        !matches(emailPattern, in: text).isEmpty
+        contains(emailRegex, in: text)
     }
 
     static func containsAddress(_ text: String) -> Bool {
-        detects(.address, in: text)
+        contains(addressDetector, in: text)
     }
 
     static func containsHealthTerm(_ text: String) -> Bool {
-        let lowered = text.lowercased()
-        return healthTerms.contains { term in
-            lowered.range(of: "\\b\(NSRegularExpression.escapedPattern(for: term))\\b", options: .regularExpression) != nil
-        }
+        contains(healthRegex, in: text)
     }
 
     // MARK: Helpers
 
-    private static let cardPattern = #"\b(?:\d[ -]?){12,24}\d\b"#
-    private static let ssnPattern = #"\b\d{3}-\d{2}-\d{4}\b"#
-    private static let labeledIDPattern =
+    // Compiled once: assess runs on every message, including pasted documents.
+    private static let cardRegex = regex(#"\b(?:\d[ -]?){12,24}\d\b"#)
+    private static let ssnRegex = regex(#"\b\d{3}-\d{2}-\d{4}\b"#)
+    private static let labeledIDRegex = regex(
         #"(?i)\b(passport|driver'?s? licen[cs]e|national id|id number|social security)(?: number| no\.?| #)?[:\s#]*(?=[A-Z0-9-]*\d)[A-Z0-9][A-Z0-9-]{5,}"#
-    private static let emailPattern = #"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}"#
+    )
+    private static let emailRegex = regex(#"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}"#)
+    private static let healthRegex = regex(#"\b("# + healthTerms.map(NSRegularExpression.escapedPattern(for:)).joined(separator: "|") + #")\b"#)
+    private static let phoneDetector = try! NSDataDetector(types: NSTextCheckingResult.CheckingType.phoneNumber.rawValue)
+    private static let addressDetector = try! NSDataDetector(types: NSTextCheckingResult.CheckingType.address.rawValue)
 
     /// A small list on purpose: common enough to catch real health details, specific enough
     /// not to flag everyday words.
@@ -114,15 +116,18 @@ public struct PrivacyGuard: Sendable {
         "medical record", "the patient", "patient id", "patient portal",
     ]
 
-    private static func matches(_ pattern: String, in text: String) -> [String] {
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else { return [] }
+    /// The patterns are constants, so a failure here is a programming error caught by the tests.
+    private static func regex(_ pattern: String) -> NSRegularExpression {
+        try! NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
+    }
+
+    private static func matches(_ regex: NSRegularExpression, in text: String) -> [String] {
         let range = NSRange(text.startIndex..., in: text)
         return regex.matches(in: text, range: range).compactMap { Range($0.range, in: text).map { String(text[$0]) } }
     }
 
-    private static func detects(_ type: NSTextCheckingResult.CheckingType, in text: String) -> Bool {
-        guard let detector = try? NSDataDetector(types: type.rawValue) else { return false }
-        return detector.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil
+    private static func contains(_ regex: NSRegularExpression, in text: String) -> Bool {
+        regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil
     }
 
     static func luhn(_ digits: [Int]) -> Bool {

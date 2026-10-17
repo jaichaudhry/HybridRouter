@@ -5,14 +5,14 @@ import Testing
 
 @MainActor
 struct CompareModelTests {
-    private func model(claude: FakeProvider = FakeProvider(route: .claude, reply: "from claude"),
+    private func model(cloud: FakeProvider = FakeProvider(route: .cloud, reply: "from claude"),
                        appleCloud: FakeProvider = FakeProvider(route: .appleCloud, reply: "from cloud")) -> CompareModel {
         CompareModel {
             RoutedSession(
                 instructions: "Be brief.",
                 onDevice: FakeProvider(route: .onDevice, reply: "from device"),
                 appleCloud: appleCloud,
-                claude: claude,
+                cloud: cloud,
                 costTable: CostTable(updated: "", source: "", models: [:])
             )
         }
@@ -29,15 +29,15 @@ struct CompareModelTests {
     }
 
     @Test func failedAndSkippedRoutesDontFinish() async {
-        let compare = model(claude: FakeProvider(route: .claude, reply: "x", behavior: .timeout))
+        let compare = model(cloud: FakeProvider(route: .cloud, reply: "x", behavior: .timeout))
         compare.prompt = "Hi"
         await compare.run()
         #expect(Set(compare.finishOrder) == [.onDevice, .appleCloud])
     }
 
     @Test func privatePromptsSkipClaude() async {
-        let claude = FakeProvider(route: .claude, reply: "should not run")
-        let compare = model(claude: claude)
+        let claude = FakeProvider(route: .cloud, reply: "should not run")
+        let compare = model(cloud: claude)
         compare.prompt = "My number is (206) 555-0143, summarize my week"
         await compare.run()
         #expect(compare.columns[2].note == "Kept private: phone number")
@@ -53,7 +53,7 @@ struct CompareModelTests {
     }
 
     @Test func failuresAreShownPerColumn() async {
-        let compare = model(claude: FakeProvider(route: .claude, reply: "x", behavior: .timeout))
+        let compare = model(cloud: FakeProvider(route: .cloud, reply: "x", behavior: .timeout))
         compare.prompt = "Hi"
         await compare.run()
         #expect(compare.columns[2].note == "Couldn't answer (timed out)")

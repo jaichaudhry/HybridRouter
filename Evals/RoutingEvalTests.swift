@@ -45,12 +45,12 @@ struct RoutingCase: Decodable, Sendable, CustomTestStringConvertible {
         RoutingInput(
             privacyReason: context?.private,
             isOnline: !(context?.offline ?? false),
-            availability: [.onDevice: .available, .appleCloud: .available, .claude: .available],
+            availability: [.onDevice: .available, .appleCloud: .available, .cloud: .available],
             estimatedTokens: context?.tokens ?? 500,
             // 90% of 4,096 on-device, 32,768 Apple Cloud and 1M Claude tokens.
-            contextBudgets: [.onDevice: 3_686, .appleCloud: 29_491, .claude: 900_000],
+            contextBudgets: [.onDevice: 3_686, .appleCloud: 29_491, .cloud: 900_000],
             hasImage: context?.image ?? false,
-            visionRoutes: [.onDevice, .appleCloud, .claude]
+            visionRoutes: [.onDevice, .appleCloud, .cloud]
         )
     }
 }

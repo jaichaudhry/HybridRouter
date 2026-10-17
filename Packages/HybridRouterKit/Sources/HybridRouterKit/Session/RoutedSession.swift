@@ -36,8 +36,61 @@ public final class RoutedSession {
     @ObservationIgnored private let providers: [Route: any ModelProvider]
     @ObservationIgnored private let costTable: CostTable
     @ObservationIgnored private let privacy: PrivacyLedger
+    /// Text sent with every request besides the transcript: instructions, the longest route
+    /// note and tool descriptions. Counted by the context-fit estimate.
+    @ObservationIgnored public let fixedPromptText: String
+    /// How much of the conversation each route sees.
+    @ObservationIgnored public let historyPolicy: HistoryPolicy
 
+    /// - Parameters:
+    ///   - instructions: the app's system instructions, shared by every route.
+    ///   - tools: tools every route may call.
+    ///   - appleOnlyTools: tools for the Apple routes only, e.g. ones that read attachments by label.
+    ///   - onDevice, appleCloud, cloud: the provider for each route. A provider whose `route`
+    ///     doesn't match its slot reports the route unavailable instead of serving it.
+    ///   - history: an earlier conversation to continue.
+    ///   - privatePromptIDs: earlier private turns, from ``privatePromptIDs`` on the old session.
+    ///   - historyPolicy: how much of the conversation each route sees.
     public init(
+        instructions: String,
+        tools: [any Tool] = [],
+        appleOnlyTools: [any Tool] = [],
+        onDevice: any ModelProvider,
+        appleCloud: any ModelProvider,
+        cloud: any ModelProvider,
+        costTable: CostTable,
+        history: [Transcript.Entry] = [],
+        privatePromptIDs: Set<String> = [],
+        historyPolicy: HistoryPolicy = .full
+    ) {
+        self.historyPolicy = historyPolicy
+        // Rebuilt sessions (e.g. after a Claude key change) must keep withholding earlier private turns.
+        self.privacy = PrivacyLedger(privatePromptIDs: privatePromptIDs)
+        let slotted: [any ModelProvider] = [(Route.onDevice, onDevice), (.appleCloud, appleCloud), (.cloud, cloud)].map { route, provider -> any ModelProvider in
+            provider.route == route ? provider : MisplacedProvider(wrapped: provider, slot: route)
+        }
+        self.providers = Dictionary(uniqueKeysWithValues: slotted.map { ($0.route, $0) })
+        self.costTable = costTable
+        let models = RouteModels(onDevice: slotted[0], appleCloud: slotted[1], cloud: slotted[2])
+        let longestNote = Route.allCases.map { RoutingProfile.routeNote(for: $0, models: models.names) }.max { $0.count < $1.count } ?? ""
+        let toolText = (tools + appleOnlyTools).map { "\($0.name): \($0.description)" }
+        self.fixedPromptText = ([instructions, longestNote] + toolText).joined(separator: "\n")
+        self.session = LanguageModelSession(
+            profile: RoutingProfile(
+                instructions: instructions,
+                tools: tools,
+                appleOnlyTools: appleOnlyTools,
+                models: models,
+                privacy: privacy,
+                history: historyPolicy
+            ),
+            history: history
+        )
+        session.transcriptErrorHandlingPolicy = .revertTranscript
+    }
+
+    @available(*, deprecated, renamed: "init(instructions:tools:appleOnlyTools:onDevice:appleCloud:cloud:costTable:history:privatePromptIDs:)")
+    public convenience init(
         instructions: String,
         tools: [any Tool] = [],
         appleOnlyTools: [any Tool] = [],
@@ -48,34 +101,21 @@ public final class RoutedSession {
         history: [Transcript.Entry] = [],
         privatePromptIDs: Set<String> = []
     ) {
-        // Rebuilt sessions (e.g. after a Claude key change) must keep withholding earlier private turns.
-        self.privacy = PrivacyLedger(privatePromptIDs: privatePromptIDs)
-        precondition(onDevice.route == .onDevice && appleCloud.route == .appleCloud && claude.route == .claude,
-                     "Each provider must match its route")
-        self.providers = [.onDevice: onDevice, .appleCloud: appleCloud, .claude: claude]
-        self.costTable = costTable
-        let models = RouteModels(onDevice: onDevice, appleCloud: appleCloud, claude: claude)
-        self.session = LanguageModelSession(
-            profile: RoutingProfile(
-                instructions: instructions,
-                tools: tools,
-                appleOnlyTools: appleOnlyTools,
-                models: models,
-                privacy: privacy
-            ),
-            history: history
+        self.init(
+            instructions: instructions, tools: tools, appleOnlyTools: appleOnlyTools,
+            onDevice: onDevice, appleCloud: appleCloud, cloud: claude,
+            costTable: costTable, history: history, privatePromptIDs: privatePromptIDs
         )
-        session.transcriptErrorHandlingPolicy = .revertTranscript
     }
 
     public var transcript: Transcript { session.transcript }
 
-    /// Route names, with the cloud route named for the model serving it (Claude or Muse Wonder).
+    /// Route names, with the cloud route named for the model serving it.
     public var labels: RouteLabels {
-        RouteLabels(cloud: CloudModel(modelID: providers[.claude]?.modelID ?? "") ?? .claude)
+        RouteLabels(cloud: provider(for: .cloud))
     }
 
-    /// Prompt IDs of turns Claude must only see as placeholders. Pass them to a rebuilt session.
+    /// Prompt IDs of turns the cloud model must only see as placeholders. Pass them to a rebuilt session.
     public var privatePromptIDs: Set<String> { privacy.privatePromptIDs }
 
     /// The text of the most recent user message in the history, if any.
@@ -111,7 +151,7 @@ public final class RoutedSession {
     ///   - images: attached to the prompt with their labels.
     ///   - decision: the route to run on, and why.
     ///   - schema: if set, the reply is structured content matching it.
-    ///   - isPrivate: the turn is private, so Claude only ever sees placeholders for it.
+    ///   - isPrivate: the turn is private, so the cloud model only ever sees placeholders for it.
     ///   - onPartial: called with the reply so far as it streams.
     public func respond(
         to prompt: String,
@@ -131,6 +171,9 @@ public final class RoutedSession {
         defer { isResponding = false }
         session.properties.activeRoute = decision.route
         privacy.route = decision.route
+        privacy.turnLimit = decision.historyBudget.map(HistoryPolicy.Limit.tokens)
+        privacy.seen = nil
+        defer { privacy.turnLimit = nil }
 
         let usageBefore = session.usage
         let clock = ContinuousClock()
@@ -147,7 +190,7 @@ public final class RoutedSession {
             let usage = TokenUsage(
                 difference: session.usage,
                 minus: usageBefore,
-                reportsReasoning: decision.route != .claude
+                reportsReasoning: decision.route != .cloud
             )
             var metrics = StepMetrics(
                 decision: decision,
@@ -158,6 +201,10 @@ public final class RoutedSession {
                 estimatedCost: costTable.cost(of: usage, modelID: provider.modelID)
             )
             metrics.isSimulated = provider.isSimulated
+            if let seen = privacy.seen {
+                metrics.earlierTurnsSeen = seen.seen
+                metrics.earlierTurns = seen.total
+            }
             return metrics
         }
 
@@ -178,8 +225,8 @@ public final class RoutedSession {
         lastRoute = decision.route
         // Once a conversation has a private turn, later turns on Apple routes saw it and may
         // repeat or re-read it (e.g. "list the items again" re-runs OCR on a private scan), so
-        // they're withheld from Claude too. Claude's own turns never saw private content.
-        let derivesFromPrivate = !privacy.privatePromptIDs.isEmpty && decision.route != .claude
+        // they're withheld from the cloud model too. Its own turns never saw private content.
+        let derivesFromPrivate = !privacy.privatePromptIDs.isEmpty && decision.route != .cloud
         if isPrivate || derivesFromPrivate, case .prompt(let entry) = session.transcript.last(where: \.isPrompt) {
             privacy.markPrivate(promptID: entry.id)
         }

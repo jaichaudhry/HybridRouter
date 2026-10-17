@@ -44,7 +44,7 @@ public struct RouterAurora: View {
         return [
             glow(.onDevice), canvas, glow(.appleCloud),
             canvas, canvas, canvas,
-            canvas, glow(.claude), canvas,
+            canvas, glow(.cloud), canvas,
         ]
     }
 }

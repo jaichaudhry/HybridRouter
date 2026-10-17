@@ -5,12 +5,22 @@ import Foundation
 public struct RoutingInput: Equatable, Sendable {
     /// Set by Settings or the composer. Wins over everything.
     public var override: Route?
-    /// Why the turn must stay off Claude, or nil if it may leave the device.
+    /// Why the turn must stay off the cloud model, or nil if it may leave the device.
     public var privacyReason: String?
     public var isOnline: Bool
     public var availability: [Route: ProviderAvailability]
     /// Estimated tokens for instructions, tools, transcript, the new turn and reserved output.
     public var estimatedTokens: Int
+    /// Estimates for routes that see less of the history (see ``HistoryPolicy``). Other routes use
+    /// `estimatedTokens`.
+    public var estimatedTokensByRoute: [Route: Int]
+    /// Estimated tokens for everything but the earlier conversation: instructions, tools, the
+    /// new turn and reserved output. When set, a route too small for the whole chat can still
+    /// answer from its recent turns. Nil means the history can't be trimmed.
+    public var baseTokens: Int?
+    /// Stay on the route the router or user picked even when the chat is too long for it, and
+    /// trim the history, rather than moving to a larger route. Set from ``Router/whenTooLong``.
+    public var staysWhenTooLong: Bool
     /// Usable context per route. A missing route counts as unlimited.
     public var contextBudgets: [Route: Int]
     public var hasImage: Bool
@@ -35,6 +45,9 @@ public struct RoutingInput: Equatable, Sendable {
         isOnline: Bool = true,
         availability: [Route: ProviderAvailability],
         estimatedTokens: Int = 0,
+        estimatedTokensByRoute: [Route: Int] = [:],
+        baseTokens: Int? = nil,
+        staysWhenTooLong: Bool = false,
         contextBudgets: [Route: Int] = [:],
         hasImage: Bool = false,
         visionRoutes: Set<Route> = [],
@@ -49,6 +62,9 @@ public struct RoutingInput: Equatable, Sendable {
         self.isOnline = isOnline
         self.availability = availability
         self.estimatedTokens = estimatedTokens
+        self.estimatedTokensByRoute = estimatedTokensByRoute
+        self.baseTokens = baseTokens
+        self.staysWhenTooLong = staysWhenTooLong
         self.contextBudgets = contextBudgets
         self.hasImage = hasImage
         self.visionRoutes = visionRoutes
@@ -62,7 +78,23 @@ public struct RoutingInput: Equatable, Sendable {
     public var isPrivate: Bool { privacyReason != nil }
 
     func fits(_ route: Route) -> Bool {
-        contextBudgets[route].map { estimatedTokens <= $0 } ?? true
+        contextBudgets[route].map { (estimatedTokensByRoute[route] ?? estimatedTokens) <= $0 } ?? true
+    }
+
+    /// Whether the route can take the turn with only part of the history: the new turn
+    /// itself fits.
+    func fitsWithTrimming(_ route: Route) -> Bool {
+        guard let baseTokens else { return false }
+        return contextBudgets[route].map { baseTokens <= $0 } ?? true
+    }
+
+    /// The decision with its history budget set if the whole chat doesn't fit its route.
+    func budgeted(_ decision: RouteDecision) -> RouteDecision {
+        guard !fits(decision.route), fitsWithTrimming(decision.route),
+              let budget = contextBudgets[decision.route], let baseTokens else { return decision }
+        var decision = decision
+        decision.historyBudget = max(budget - baseTokens, 0)
+        return decision
     }
 
     func isAvailable(_ route: Route) -> Bool {
@@ -90,7 +122,7 @@ public enum RouteMention {
     /// The single route named in the message, or nil if none or both are named.
     public static func named(in prompt: String) -> Route? {
         let names: [(Route, String)] = [
-            (.claude, #"\b(claude|muse wonder)\b"#),
+            (.cloud, #"\b(claude|muse wonder)\b"#),
             (.appleCloud, #"\b(apple cloud|private cloud compute)\b"#),
         ]
         let named = names.filter { prompt.range(of: $0.1, options: [.regularExpression, .caseInsensitive]) != nil }
@@ -111,25 +143,37 @@ public enum RuleOutcome: Equatable, Sendable {
 /// The router's first stage: the user's override and deterministic rules, run before the classifier.
 public enum RoutingRules {
     public static func evaluate(_ input: RoutingInput) -> RuleOutcome {
+        switch evaluateRules(input) {
+        case .decided(let decision): .decided(input.budgeted(decision))
+        case let other: other
+        }
+    }
+
+    private static func evaluateRules(_ input: RoutingInput) -> RuleOutcome {
         // Layer 0: the user's choice.
         if let override = input.override {
-            // Privacy wins over a forced route: forcing Claude on a private turn is blocked.
-            if let reason = input.privacyReason, override == .claude {
-                return .blocked(reason: "Kept private (\(reason)), so this can't go to \(input.labels.name(.claude)).")
+            // Privacy wins over a forced route: forcing the cloud model on a private turn is blocked.
+            if let reason = input.privacyReason, override == .cloud {
+                return .blocked(reason: "Kept private (\(reason)), so this can't go to \(input.labels.name(.cloud)).")
             }
             if let reason = input.availability[override]?.reason {
-                return .blocked(reason: "\(override.displayName) unavailable: \(reason)")
+                return .blocked(reason: "\(input.labels.name(override)) unavailable: \(reason)")
             }
             if !input.isOnline, override != .onDevice {
-                return .blocked(reason: "Offline: \(override.displayName) needs a network connection.")
+                return .blocked(reason: "Offline: \(input.labels.name(override)) needs a network connection.")
             }
-            return .decided(.forced(override))
+            // A chosen route stays chosen: if the chat is too long for it, it answers from the
+            // most recent turns instead of moving.
+            if !input.fits(override), input.baseTokens != nil, !input.fitsWithTrimming(override) {
+                return .blocked(reason: "This message is too long for \(input.labels.name(override)) on its own.")
+            }
+            return .decided(.forced(override, labels: input.labels))
         }
 
         // A1 Privacy and A2 availability narrow the candidates.
         var allowed = Route.allCases.filter(input.isAvailable)
         if input.isPrivate {
-            allowed.removeAll { $0 == .claude }
+            allowed.removeAll { $0 == .cloud }
         }
         if !input.isOnline {
             allowed.removeAll { $0 != .onDevice }
@@ -138,8 +182,14 @@ public enum RoutingRules {
             return .blocked(reason: blockedReason(input))
         }
 
-        // A3 Context fit: only routes large enough for the conversation.
-        let fitting = allowed.filter(input.fits)
+        // A3 Context fit: only routes large enough for the conversation. When none is, or the
+        // app prefers to stay on the picked route, routes that can answer from the most recent
+        // turns count too.
+        var fitting = allowed.filter(input.fits)
+        if fitting.isEmpty || input.staysWhenTooLong {
+            let trimmable = allowed.filter(input.fitsWithTrimming)
+            if !trimmable.isEmpty { fitting = trimmable }
+        }
         guard let smallestFit = fitting.first else {
             return .blocked(reason: input.isPrivate
                 ? "Too long to keep private. Start a new chat or shorten it."
@@ -162,7 +212,7 @@ public enum RoutingRules {
             return .decided(RouteDecision(route: .onDevice, reason: "Offline", source: .rule))
         }
         // The user asked for a model by name. Privacy, availability and context size were
-        // checked above, so a private turn that names Claude has already stayed off it.
+        // checked above, so a private turn that names the cloud model has already stayed off it.
         if let named = input.namedRoute, fitting.contains(named) {
             return .decided(RouteDecision(route: named, reason: "You asked for \(input.labels.name(named))", source: .rule))
         }
@@ -173,16 +223,24 @@ public enum RoutingRules {
 
         // A question with one exact answer (counting, arithmetic, dates, conversions) goes to
         // the cloud model: the on-device model gets about half of these wrong.
-        if let exact = input.exactAnswer, fitting.contains(.claude) {
-            return .decided(RouteDecision(route: .claude, reason: "Needs an exact answer (\(exact.label))", source: .rule))
+        if let exact = input.exactAnswer, fitting.contains(.cloud) {
+            return .decided(RouteDecision(route: .cloud, reason: "Needs an exact answer (\(exact.label))", source: .rule))
         }
 
-        // Only one route is big enough: no choice left for the classifier.
-        if fitting.count == 1, smallestFit != allowed.first {
-            return .decided(RouteDecision(route: smallestFit, reason: "Too long for \(allowed[0].displayName)", source: .rule))
+        // Only one route is available and big enough: no choice left for the classifier.
+        if fitting.count == 1 {
+            if smallestFit == allowed.first {
+                return .decided(RouteDecision(route: smallestFit, reason: "Only \(input.labels.name(smallestFit)) is available", source: .rule))
+            }
+            return .decided(RouteDecision(
+                route: smallestFit,
+                reason: "Chat too long for \(input.labels.name(allowed[0]))",
+                source: .rule,
+                tooLongFor: allowed[0]
+            ))
         }
         // Otherwise the classifier still picks, among the routes that fit, so a long
-        // conversation can still reach Claude for a complex turn.
+        // conversation can still reach the cloud model for a complex turn.
         return .open(allowed: fitting)
     }
 

@@ -130,7 +130,7 @@ public final class ChatModel {
     public var steps: [StepMetrics] { messages.flatMap(\.steps) }
 
     public var summary: SessionSummary {
-        SessionSummary(steps: steps, costTable: costTable, claudeModelID: session.provider(for: .claude).modelID)
+        SessionSummary(steps: steps, costTable: costTable, cloudModelID: session.provider(for: .cloud).modelID)
     }
 
     /// Sends the draft, or `text` if given (e.g. a sample-prompt chip).

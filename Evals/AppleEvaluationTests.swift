@@ -24,7 +24,7 @@ struct RoutingEvaluation: Evaluation {
     func subject(from sample: ModelSample<String>) async throws -> ModelSubject<String> {
         let routingCase = cases.first { $0.prompt == sample.promptDescription }
         let input = RoutingInput(
-            availability: [.onDevice: .available, .appleCloud: .available, .claude: .available],
+            availability: [.onDevice: .available, .appleCloud: .available, .cloud: .available],
             previousPrompt: routingCase?.previousPrompt
         )
         let result = await Router(classifier: OnDeviceClassifier(), classifierTimeout: nil).route(sample.promptDescription, input: input)

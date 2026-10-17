@@ -32,6 +32,23 @@ final class AppModel {
             rebuildSessions()
         }
     }
+    /// What Auto does when a chat is too long for the route it picks: use a larger model, or
+    /// stay and answer from recent messages. A route picked in the composer always stays.
+    var longChats: Router.TooLongPolicy = AppModel.storedLongChats {
+        didSet {
+            UserDefaults.standard.set(longChats == .trimHistory, forKey: Self.longChatsKey)
+            for chat in chats.values {
+                chat.coordinator.router.whenTooLong = longChats
+            }
+        }
+    }
+
+    private static let longChatsKey = "HRLongChatsStay"
+
+    private static var storedLongChats: Router.TooLongPolicy {
+        UserDefaults.standard.bool(forKey: longChatsKey) ? .trimHistory : .useLargerModel
+    }
+
     /// Bumped when the Meta key changes, so views reading `hasMetaKey` refresh.
     private var metaKeyVersion = 0
     /// Why App Attest was abandoned this launch, if it was.
@@ -73,7 +90,7 @@ final class AppModel {
             )
             let chat = ChatModel(
                 session: session,
-                coordinator: Self.makeCoordinator(scenario: scenario, network: network),
+                coordinator: Self.makeCoordinator(scenario: scenario, network: network, longChats: Self.storedLongChats),
                 costTable: costTable,
                 structuredOutputs: scenario.structuredOutputs
             )
@@ -121,7 +138,7 @@ final class AppModel {
     }
 
     func makeCoordinator(for scenario: any Scenario) -> TurnCoordinator {
-        Self.makeCoordinator(scenario: scenario, network: network)
+        Self.makeCoordinator(scenario: scenario, network: network, longChats: longChats)
     }
 
     var prices: CostTable { costTable }
@@ -264,11 +281,20 @@ final class AppModel {
         }
     }
 
-    private static func makeCoordinator(scenario: any Scenario, network: NetworkMonitor) -> TurnCoordinator {
+    private static func makeCoordinator(
+        scenario: any Scenario,
+        network: NetworkMonitor,
+        longChats: Router.TooLongPolicy
+    ) -> TurnCoordinator {
         TurnCoordinator(
             // The exact-answer detector: +4 points on held-out prompts, +6 on the test set, for
             // 3-4% more cost (README › Routing improvements).
-            router: Router(classifier: OnDeviceClassifier(), mapping: scenario.mapping, detectsExactAnswers: true),
+            router: Router(
+                classifier: OnDeviceClassifier(),
+                mapping: scenario.mapping,
+                detectsExactAnswers: true,
+                whenTooLong: longChats
+            ),
             estimator: OnDeviceTokenEstimator(),
             isOnline: { network.isOnline }
         )
@@ -325,7 +351,7 @@ final class AppModel {
             appleOnlyTools: appleOnlyTools,
             onDevice: OnDeviceProvider(),
             appleCloud: appleCloud,
-            claude: cloud,
+            cloud: cloud,
             costTable: costTable,
             history: history,
             privatePromptIDs: privatePromptIDs

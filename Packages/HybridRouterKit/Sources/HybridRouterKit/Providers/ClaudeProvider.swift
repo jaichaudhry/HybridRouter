@@ -16,7 +16,7 @@ public struct ClaudeProvider: ModelProvider {
         }
     }
 
-    public let route = Route.claude
+    public let route = Route.cloud
     public let tier: Tier
     private let auth: ClaudeAuth
     private let configuredContextSize: Int
@@ -36,6 +36,8 @@ public struct ClaudeProvider: ModelProvider {
     }
 
     public var modelID: String { tier.claudeModel.id }
+
+    public var displayName: String { "Claude" }
 
     /// Set explicitly (it's also the bridge's default) so a reply that reaches it can be
     /// reported as cut off: Claude's max_tokens stop doesn't throw. Includes thinking tokens.

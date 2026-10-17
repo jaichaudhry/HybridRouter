@@ -31,6 +31,15 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Picker("Long chats", selection: $model.longChats) {
+                        Text("Use a larger model").tag(Router.TooLongPolicy.useLargerModel)
+                        Text("Stay, with recent messages").tag(Router.TooLongPolicy.trimHistory)
+                    }
+                } footer: {
+                    Text("On Auto, when a chat gets too long for the model the router picks: move to a larger model that sees the whole chat, or stay and answer from the most recent messages. A model you pick in the composer always stays. Private messages never reach the cloud model either way.")
+                }
+
+                Section {
                     LabeledContent("Claude", value: model.claudeAuth.mode.displayName)
                     if let failure = model.appAttestFailure {
                         Label("App Attest failed: \(failure)", systemImage: "exclamationmark.triangle")

@@ -63,7 +63,7 @@ struct TextRecognizerTests {
             instructions: "Be brief.",
             onDevice: onDevice,
             appleCloud: FakeProvider(route: .appleCloud, reply: "cloud"),
-            claude: FakeProvider(route: .claude, reply: "claude"),
+            cloud: FakeProvider(route: .cloud, reply: "claude"),
             costTable: CostTable(updated: "", source: "", models: [:])
         )
         let model = ChatModel(

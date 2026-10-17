@@ -30,14 +30,14 @@ struct AttachmentsAndToolsTests {
         return context.makeImage()!
     }
 
-    private func session(onDevice: FakeProvider, claude: FakeProvider = FakeProvider(route: .claude, reply: "claude")) -> RoutedSession {
+    private func session(onDevice: FakeProvider, cloud: FakeProvider = FakeProvider(route: .cloud, reply: "claude")) -> RoutedSession {
         RoutedSession(
             instructions: "Be brief.",
             tools: [SharedTool()],
             appleOnlyTools: [ScanTool()],
             onDevice: onDevice,
             appleCloud: FakeProvider(route: .appleCloud, reply: "cloud"),
-            claude: claude,
+            cloud: cloud,
             costTable: CostTable(updated: "", source: "", models: [:])
         )
     }
@@ -64,10 +64,10 @@ struct AttachmentsAndToolsTests {
 
     @Test func appleOnlyToolsAreLeftOutOfClaudeTurns() async throws {
         let onDevice = FakeProvider(route: .onDevice, reply: "a")
-        let claude = FakeProvider(route: .claude, reply: "b")
-        let routed = session(onDevice: onDevice, claude: claude)
+        let claude = FakeProvider(route: .cloud, reply: "b")
+        let routed = session(onDevice: onDevice, cloud: claude)
         _ = try await routed.respond(to: "Hi", decision: .forced(.onDevice))
-        _ = try await routed.respond(to: "Again", decision: .forced(.claude))
+        _ = try await routed.respond(to: "Again", decision: .forced(.cloud))
         #expect(Set(onDevice.offeredTools) == ["shared", "scan"])
         #expect(claude.offeredTools == ["shared"])
     }

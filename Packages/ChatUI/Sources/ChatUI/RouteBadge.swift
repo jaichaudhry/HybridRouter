@@ -89,7 +89,7 @@ private struct RoutingBadge: View {
                         let turn = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.6) / 1.6
                         Capsule().strokeBorder(
                             AngularGradient(
-                                colors: [Route.onDevice.glow, Route.appleCloud.glow, Route.claude.glow, Route.onDevice.glow],
+                                colors: [Route.onDevice.glow, Route.appleCloud.glow, Route.cloud.glow, Route.onDevice.glow],
                                 center: .center,
                                 angle: .degrees(turn * 360)
                             ),

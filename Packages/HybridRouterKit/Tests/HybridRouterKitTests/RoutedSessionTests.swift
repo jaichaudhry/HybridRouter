@@ -18,13 +18,13 @@ struct RoutedSessionTests {
     private func makeSession(
         onDevice: FakeProvider = FakeProvider(route: .onDevice, reply: "on-device reply"),
         appleCloud: FakeProvider = FakeProvider(route: .appleCloud, reply: "cloud reply"),
-        claude: FakeProvider = FakeProvider(route: .claude, reply: "claude reply")
+        cloud: FakeProvider = FakeProvider(route: .cloud, reply: "claude reply")
     ) -> RoutedSession {
         RoutedSession(
             instructions: "You are helpful.",
             onDevice: onDevice,
             appleCloud: appleCloud,
-            claude: claude,
+            cloud: cloud,
             costTable: costTable
         )
     }
@@ -41,11 +41,11 @@ struct RoutedSessionTests {
 
     @Test func eachTurnRunsOnItsRoute() async throws {
         let onDevice = FakeProvider(route: .onDevice, reply: "hello from device")
-        let claude = FakeProvider(route: .claude, reply: "hello from claude")
-        let session = makeSession(onDevice: onDevice, claude: claude)
+        let claude = FakeProvider(route: .cloud, reply: "hello from claude")
+        let session = makeSession(onDevice: onDevice, cloud: claude)
 
         let first = try await session.respond(to: "Hi", decision: .forced(.onDevice))
-        let second = try await session.respond(to: "Again", decision: .forced(.claude))
+        let second = try await session.respond(to: "Again", decision: .forced(.cloud))
 
         #expect(first.text == "hello from device")
         #expect(second.text == "hello from claude")
@@ -58,12 +58,12 @@ struct RoutedSessionTests {
     @Test func historyCarriesAcrossRouteSwitches() async throws {
         let onDevice = FakeProvider(route: .onDevice, reply: "Seattle ideas")
         let appleCloud = FakeProvider(route: .appleCloud, reply: "Kyoto itinerary")
-        let claude = FakeProvider(route: .claude, reply: "Cut day two")
-        let session = makeSession(onDevice: onDevice, appleCloud: appleCloud, claude: claude)
+        let claude = FakeProvider(route: .cloud, reply: "Cut day two")
+        let session = makeSession(onDevice: onDevice, appleCloud: appleCloud, cloud: claude)
 
         _ = try await session.respond(to: "Trip ideas?", decision: .forced(.onDevice))
         _ = try await session.respond(to: "Plan Kyoto", decision: .forced(.appleCloud))
-        _ = try await session.respond(to: "Is it realistic?", decision: .forced(.claude))
+        _ = try await session.respond(to: "Is it realistic?", decision: .forced(.cloud))
         _ = try await session.respond(to: "Text my partner", decision: .forced(.onDevice))
 
         let cloudSaw = try #require(appleCloud.requests.last)
@@ -90,12 +90,12 @@ struct RoutedSessionTests {
 
     @Test func metricsCarryTheDecisionUsageAndCost() async throws {
         let usage = TokenUsage(input: 1_000_000, cachedInput: 0, output: 100_000, reasoning: 0)
-        let session = makeSession(claude: FakeProvider(route: .claude, reply: "ok", usage: usage))
-        let decision = RouteDecision(route: .claude, reason: "Complex reasoning", source: .classifier)
+        let session = makeSession(cloud: FakeProvider(route: .cloud, reply: "ok", usage: usage))
+        let decision = RouteDecision(route: .cloud, reason: "Complex reasoning", source: .classifier)
 
         let result = try await session.respond(to: "Think hard", decision: decision)
 
-        #expect(result.metrics.route == .claude)
+        #expect(result.metrics.route == .cloud)
         #expect(result.metrics.reason == "Complex reasoning")
         #expect(result.metrics.source == "classifier")
         #expect(result.metrics.modelID == "claude-sonnet-5-5")
@@ -116,11 +116,11 @@ struct RoutedSessionTests {
     }
 
     @Test func unavailableRouteIsRefusedWithItsReason() async throws {
-        let claude = FakeProvider(route: .claude, reply: "x", availability: .unavailable(reason: "Claude not configured"))
-        let session = makeSession(claude: claude)
+        let claude = FakeProvider(route: .cloud, reply: "x", availability: .unavailable(reason: "Claude not configured"))
+        let session = makeSession(cloud: claude)
 
-        await #expect(throws: RoutedSession.Error.routeUnavailable(.claude, reason: "Claude not configured")) {
-            try await session.respond(to: "Hi", decision: .forced(.claude))
+        await #expect(throws: RoutedSession.Error.routeUnavailable(.cloud, reason: "Claude not configured")) {
+            try await session.respond(to: "Hi", decision: .forced(.cloud))
         }
         #expect(claude.requests.isEmpty)
         #expect(session.transcript.count == 1) // instructions only
@@ -134,7 +134,7 @@ struct RoutedSessionTests {
         while !session.isResponding { await Task.yield() }
 
         await #expect(throws: RoutedSession.Error.busy) {
-            try await session.respond(to: "Second", decision: .forced(.claude))
+            try await session.respond(to: "Second", decision: .forced(.cloud))
         }
         #expect(try await first.value.text == "slow")
         #expect(!session.isResponding)
@@ -151,17 +151,17 @@ private extension Array where Element == Transcript.Segment {
 
 extension RoutedSessionTests {
     @Test func prewarmingThenRespondingUsesTheDecidedRoute() async throws {
-        let claude = FakeProvider(route: .claude, reply: "claude")
-        let session = makeSession(claude: claude)
-        session.prewarm(.claude)
+        let claude = FakeProvider(route: .cloud, reply: "claude")
+        let session = makeSession(cloud: claude)
+        session.prewarm(.cloud)
         let result = try await session.respond(to: "Hi", decision: .forced(.onDevice))
         #expect(result.text == "on-device reply")
         #expect(claude.requests.isEmpty)
     }
 
     @Test func prewarmingAnUnavailableRouteIsIgnored() async throws {
-        let session = makeSession(claude: FakeProvider(route: .claude, reply: "x", availability: .unavailable(reason: "off")))
-        session.prewarm(.claude)
+        let session = makeSession(cloud: FakeProvider(route: .cloud, reply: "x", availability: .unavailable(reason: "off")))
+        session.prewarm(.cloud)
         let result = try await session.respond(to: "Hi", decision: .forced(.onDevice))
         #expect(result.text == "on-device reply")
     }
@@ -228,17 +228,17 @@ extension RoutedSessionTests {
 
     @Test func scenarioToolsAreOfferedOnEveryRoute() async throws {
         let onDevice = FakeProvider(route: .onDevice, reply: "a")
-        let claude = FakeProvider(route: .claude, reply: "b")
+        let claude = FakeProvider(route: .cloud, reply: "b")
         let session = RoutedSession(
             instructions: "Be brief.",
             tools: [EchoTool()],
             onDevice: onDevice,
             appleCloud: FakeProvider(route: .appleCloud, reply: "c"),
-            claude: claude,
+            cloud: claude,
             costTable: costTable
         )
         _ = try await session.respond(to: "Hi", decision: .forced(.onDevice))
-        _ = try await session.respond(to: "Again", decision: .forced(.claude))
+        _ = try await session.respond(to: "Again", decision: .forced(.cloud))
         #expect(onDevice.offeredTools == ["echo"])
         #expect(claude.offeredTools == ["echo"])
     }

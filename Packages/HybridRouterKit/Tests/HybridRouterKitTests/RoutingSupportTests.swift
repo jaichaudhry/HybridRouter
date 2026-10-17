@@ -1,10 +1,11 @@
 import FoundationModels
+import HybridRouterKitTesting
 import Testing
 @testable import HybridRouterKit
 
 struct RoutingSupportTests {
     @Test func everyRouteHasANameAndIcon() {
-        #expect(Route.allCases.map(\.displayName) == ["On-device", "Apple Cloud", "Claude"])
+        #expect(Route.allCases.map(\.displayName) == ["On-device", "Apple Cloud", "Cloud model"])
         #expect(Set(Route.allCases.map(\.symbolName)).count == Route.allCases.count)
     }
 
@@ -34,4 +35,31 @@ struct RoutingSupportTests {
         #expect(["simple", "moderate", "complex"].contains(classification.complexity))
         #expect(ComplexityMapping.standard.route(for: classification.complexity) != nil)
     }
+
+    @MainActor @Test func theEstimateCountsInstructionsNotesAndTools() {
+        let session = RoutedSession(
+            instructions: "You are a travel assistant.",
+            tools: [EchoTool()],
+            onDevice: FakeProvider(route: .onDevice, reply: "x"),
+            appleCloud: FakeProvider(route: .appleCloud, reply: "x"),
+            cloud: FakeProvider(route: .cloud, reply: "x"),
+            costTable: CostTable(updated: "", source: "", models: [:])
+        )
+        #expect(session.fixedPromptText.contains("You are a travel assistant."))
+        #expect(session.fixedPromptText.contains("This conversation is shared by 3 models"))
+        #expect(session.fixedPromptText.contains("echo: Repeats its input"))
+    }
+
+    @Test func characterEstimateCountsTextNotDebugDescriptions() async {
+        let entry = Transcript.Entry.prompt(Transcript.Prompt(segments: [.text(.init(content: String(repeating: "a", count: 300)))]))
+        let estimate = await CharacterTokenEstimator(reservedOutput: 0).estimate(history: [entry], prompt: "")
+        #expect(estimate == 100)
+    }
+}
+
+private struct EchoTool: Tool {
+    let name = "echo"
+    let description = "Repeats its input"
+    @Generable struct Arguments { var text: String }
+    func call(arguments: Arguments) async throws -> String { arguments.text }
 }

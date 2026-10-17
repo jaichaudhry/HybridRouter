@@ -22,7 +22,7 @@ public enum RoutingBenchmark {
 
         var input: RoutingInput {
             RoutingInput(
-                availability: [.onDevice: .available, .appleCloud: .available, .claude: .available],
+                availability: [.onDevice: .available, .appleCloud: .available, .cloud: .available],
                 followsUpOn: FollowUp.isBare(prompt) ? previousRoute : nil,
                 previousPrompt: previousPrompt
             )

@@ -54,7 +54,7 @@ struct MeasureRoutesView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(mix.scenario).font(.subheadline.weight(.semibold))
                             Text(mix.shareText).font(.caption)
-                            Text("Cost \(ResultsFormat.money(mix.summary.totalCost)) · all-Claude \(ResultsFormat.money(mix.summary.allClaudeCost)) · saved \(ResultsFormat.money(mix.summary.saved))")
+                            Text("Cost \(ResultsFormat.money(mix.summary.totalCost)) · all-Claude \(ResultsFormat.money(mix.summary.allCloudCost)) · saved \(ResultsFormat.money(mix.summary.saved))")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -195,10 +195,10 @@ final class RouteMeasurement {
                     outcome.failure ?? outcome.decision?.reason ?? "-"
                 ))
             }
-            let claudeID = session.provider(for: .claude).modelID
+            let claudeID = session.provider(for: .cloud).modelID
             mixes.append(Mix(
                 scenario: scenario.title,
-                summary: SessionSummary(steps: steps, costTable: app.prices, claudeModelID: claudeID),
+                summary: SessionSummary(steps: steps, costTable: app.prices, cloudModelID: claudeID),
                 failures: failures,
                 simulatedRoutes: Set(Route.allCases.filter { session.provider(for: $0).isSimulated }),
                 turns: turns
@@ -224,7 +224,7 @@ final class RouteMeasurement {
         }
         lines += ["", "| Scenario (sample prompts on Auto) | Route mix | Cost | All on Claude | Saved |", "|---|---|---|---|---|"]
         for mix in mixes {
-            lines.append("| \(mix.scenario) | \(mix.shareText) | \(ResultsFormat.money(mix.summary.totalCost)) | \(ResultsFormat.money(mix.summary.allClaudeCost)) | \(ResultsFormat.money(mix.summary.saved)) |")
+            lines.append("| \(mix.scenario) | \(mix.shareText) | \(ResultsFormat.money(mix.summary.totalCost)) | \(ResultsFormat.money(mix.summary.allCloudCost)) | \(ResultsFormat.money(mix.summary.saved)) |")
         }
         lines += ["", "Instructions: \(OnDeviceClassifier.InstructionSet.tuned(for: SystemLanguageModel.default.variant).id)"]
         for mix in mixes {

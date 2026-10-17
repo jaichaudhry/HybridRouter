@@ -18,14 +18,14 @@ struct QualityReportTests {
     }
 
     /// A prompt where on-device and Claude pass as given, and the router chose `router`.
-    private static func result(_ id: Int, onDevice: Bool, claude: Bool, router: Route) -> QualityBenchmark.CaseResult {
+    private static func result(_ id: Int, onDevice: Bool, cloud: Bool, router: Route) -> QualityBenchmark.CaseResult {
         .init(
             case: benchmarkCase(id),
             routerRoute: router, routerReason: nil, routerLatency: 0.5,
             answers: [answer(.onDevice, cost: 0), answer(.claude, cost: 0.01)],
             judgments: [
                 .init(column: .onDevice, passes: onDevice, score: onDevice ? 5 : 1, rationale: "", cost: 0.001),
-                .init(column: .claude, passes: claude, score: claude ? 5 : 1, rationale: "", cost: 0.001),
+                .init(column: .claude, passes: cloud, score: cloud ? 5 : 1, rationale: "", cost: 0.001),
             ]
         )
     }
@@ -36,10 +36,10 @@ struct QualityReportTests {
             columns: [.onDevice, .claude], unmeasured: ["appleCloud": "No entitlement"]
         )
         run.cases = [
-            result(1, onDevice: true, claude: true, router: .onDevice),   // matched
-            result(2, onDevice: false, claude: true, router: .onDevice),  // under-routed
-            result(3, onDevice: true, claude: true, router: .claude),     // over-routed
-            result(4, onDevice: false, claude: false, router: .claude),   // unsolved
+            result(1, onDevice: true, cloud: true, router: .onDevice),   // matched
+            result(2, onDevice: false, cloud: true, router: .onDevice),  // under-routed
+            result(3, onDevice: true, cloud: true, router: .cloud),     // over-routed
+            result(4, onDevice: false, cloud: false, router: .cloud),   // unsolved
         ]
         return run
     }()
@@ -81,7 +81,7 @@ struct QualityReportTests {
 
     @Test func splitsAreReportedSeparately() {
         var run = Self.run
-        run.cases.append(Self.result(5, onDevice: true, claude: true, router: .onDevice))
+        run.cases.append(Self.result(5, onDevice: true, cloud: true, router: .onDevice))
         run.cases[4] = .init(case: Self.benchmarkCase(5, split: "tuning"), routerRoute: .onDevice, routerReason: nil, routerLatency: nil,
                              answers: run.cases[4].answers, judgments: run.cases[4].judgments)
         #expect(QualityReport(run, split: "heldout").count == 4)
@@ -144,13 +144,13 @@ struct QualityBenchmarkRunnerTests {
                 case .museWonder: "muse answer"
                 default: "claude answer"
                 }
-                var claude = FakeProvider(route: .claude, reply: reply)
+                var claude = FakeProvider(route: .cloud, reply: reply)
                 claude.availability = column == .museWonder ? museAvailability : claudeAvailability
                 return RoutedSession(
                     instructions: "Be brief.",
                     onDevice: FakeProvider(route: .onDevice, reply: "device answer"),
                     appleCloud: appleCloud,
-                    claude: claude,
+                    cloud: claude,
                     costTable: costTable
                 )
             },
@@ -216,7 +216,7 @@ struct QualityBenchmarkRunnerTests {
     @Test func addingAppleCloudRecomputesTheRoutersChoices() async throws {
         // "moderate" goes to Apple Cloud; without it, the router moved those turns up to Claude.
         let original = await runner(classifier: .always("moderate")).run(cases(2))
-        #expect(original.cases.allSatisfy { $0.routerRoute == .claude && $0.routerReason?.hasSuffix("(Apple Cloud unavailable)") == true })
+        #expect(original.cases.allSatisfy { $0.routerRoute == .cloud && $0.routerReason?.hasSuffix("(Apple Cloud unavailable)") == true })
 
         let judge = FakeAnswerJudge.passing(containing: "cloud")
         let extended = await runner(judge: judge, appleCloudIsReal: true).addColumn(.appleCloud, to: original)
@@ -239,11 +239,11 @@ struct QualityBenchmarkRunnerTests {
         func result(_ route: Route, _ reason: String) -> QualityBenchmark.CaseResult {
             .init(case: cases(1)[0], routerRoute: route, routerReason: reason, routerLatency: nil, answers: [], judgments: [])
         }
-        let moved = result(.claude, "Multi-step summary (Apple Cloud unavailable)").routedWithAppleCloud()
+        let moved = result(.cloud, "Multi-step summary (Apple Cloud unavailable)").routedWithAppleCloud()
         #expect(moved.routerRoute == .appleCloud)
         #expect(moved.routerReason == "Multi-step summary")
-        #expect(result(.claude, "Couldn't classify (timed out), so using a mid-size model").routedWithAppleCloud().routerRoute == .appleCloud)
-        #expect(result(.claude, "Complex reasoning").routedWithAppleCloud().routerRoute == .claude)
+        #expect(result(.cloud, "Couldn't classify (timed out), so using a mid-size model").routedWithAppleCloud().routerRoute == .appleCloud)
+        #expect(result(.cloud, "Complex reasoning").routedWithAppleCloud().routerRoute == .cloud)
         #expect(result(.onDevice, "Quick conversation").routedWithAppleCloud().routerRoute == .onDevice)
     }
 
@@ -275,7 +275,7 @@ struct QualityBenchmarkRunnerTests {
         // "moderate" maps to Apple Cloud, which isn't measured, so the router moves up to Claude,
         // as the shipped app does without the entitlement.
         let result = await runner(classifier: .always("moderate")).run(cases(1))
-        #expect(result.cases.first?.routerRoute == .claude)
+        #expect(result.cases.first?.routerRoute == .cloud)
     }
 
     @Test func unavailableClaudeLeavesBothClaudeColumnsUnmeasured() async {
@@ -333,7 +333,7 @@ struct QualityReplayTests {
             makeSession: { _ in
                 RoutedSession(instructions: "", onDevice: FakeProvider(route: .onDevice, reply: "device answer"),
                               appleCloud: FakeProvider(route: .appleCloud, reply: "", availability: .unavailable(reason: "off")),
-                              claude: FakeProvider(route: .claude, reply: "claude answer"), costTable: costTable)
+                              cloud: FakeProvider(route: .cloud, reply: "claude answer"), costTable: costTable)
             },
             // On-device passes only for prompts 1 and 2.
             judge: FakeAnswerJudge { answer, benchmarkCase in answer.hasPrefix("claude") || benchmarkCase.id <= 2 },
@@ -379,7 +379,7 @@ struct QualityReplayTests {
         var original = await run(.always("complex"))
         original.cases[0] = QualityBenchmark.CaseResult(
             case: .init(id: 1, split: "tuning", group: "chat", task: "chat", difficulty: "easy", prompt: "Question 1"),
-            routerRoute: .claude, routerReason: nil, routerLatency: nil, answers: original.cases[0].answers, judgments: original.cases[0].judgments)
+            routerRoute: .cloud, routerReason: nil, routerLatency: nil, answers: original.cases[0].answers, judgments: original.cases[0].judgments)
         let replayed = await QualityReplay.reroute(original, with: Router(classifier: FakeClassifier.always("simple")), split: "heldout")
         #expect(replayed.cases.map(\.id) == [2, 3, 4])
     }

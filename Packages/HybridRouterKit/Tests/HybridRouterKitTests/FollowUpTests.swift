@@ -16,17 +16,17 @@ struct FollowUpTests {
 
     @Test func followUpStaysOnThePreviousRoute() {
         let input = RoutingInput(
-            availability: [.onDevice: .available, .appleCloud: .available, .claude: .available],
-            followsUpOn: .claude
+            availability: [.onDevice: .available, .appleCloud: .available, .cloud: .available],
+            followsUpOn: .cloud
         )
-        #expect(RoutingRules.evaluate(input) == .decided(RouteDecision(route: .claude, reason: "Follow-up", source: .rule)))
+        #expect(RoutingRules.evaluate(input) == .decided(RouteDecision(route: .cloud, reason: "Follow-up", source: .rule)))
     }
 
     @Test func followUpCantBreakPrivacy() {
         let input = RoutingInput(
             privacyReason: "Medical",
-            availability: [.onDevice: .available, .appleCloud: .available, .claude: .available],
-            followsUpOn: .claude
+            availability: [.onDevice: .available, .appleCloud: .available, .cloud: .available],
+            followsUpOn: .cloud
         )
         #expect(RoutingRules.evaluate(input).decidedRoute == .onDevice)
     }
@@ -65,7 +65,7 @@ struct FollowUpCoordinatorTests {
             instructions: "Be brief.",
             onDevice: FakeProvider(route: .onDevice, reply: "device"),
             appleCloud: FakeProvider(route: .appleCloud, reply: "cloud"),
-            claude: FakeProvider(route: .claude, reply: "claude"),
+            cloud: FakeProvider(route: .cloud, reply: "claude"),
             costTable: CostTable(updated: "", source: "", models: [:])
         )
     }
@@ -78,7 +78,7 @@ struct FollowUpCoordinatorTests {
         let followUp = await TurnCoordinator(router: Router(classifier: FakeClassifier.always("simple")),
                                              estimator: FixedTokenEstimator(100), isOnline: { true })
             .run(.init(prompt: "Why?"), in: routed)
-        #expect(followUp.decision == RouteDecision(route: .claude, reason: "Follow-up", source: .rule))
+        #expect(followUp.decision == RouteDecision(route: .cloud, reason: "Follow-up", source: .rule))
     }
 
     @Test func classifierSeesThePreviousMessage() async {

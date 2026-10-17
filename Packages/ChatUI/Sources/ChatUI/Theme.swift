@@ -18,7 +18,7 @@ extension Route {
         switch self {
         case .onDevice: Theme.color(light: 0x006468, dark: 0x5ED6D0, lightHigh: 0x004F53, darkHigh: 0x9AF0EA)
         case .appleCloud: Theme.color(light: 0x4246CC, dark: 0xA3ADFF, lightHigh: 0x3131AE, darkHigh: 0xC6CCFF)
-        case .claude: Theme.color(light: 0x9C4220, dark: 0xF29A78, lightHigh: 0x7E3216, darkHigh: 0xFFC2A8)
+        case .cloud: Theme.color(light: 0x9C4220, dark: 0xF29A78, lightHigh: 0x7E3216, darkHigh: 0xFFC2A8)
         }
     }
 
@@ -27,7 +27,7 @@ extension Route {
         switch self {
         case .onDevice: Theme.color(light: 0x007C80, dark: 0x3FD0C8, lightHigh: 0x005E62, darkHigh: 0x86EAE3)
         case .appleCloud: Theme.color(light: 0x5157E0, dark: 0x7880FF, lightHigh: 0x3A3CC4, darkHigh: 0xB4BCFF)
-        case .claude: Theme.color(light: 0xB04E2C, dark: 0xE07B56, lightHigh: 0x8E3A1A, darkHigh: 0xFFB291)
+        case .cloud: Theme.color(light: 0xB04E2C, dark: 0xE07B56, lightHigh: 0x8E3A1A, darkHigh: 0xFFB291)
         }
     }
 
@@ -36,7 +36,7 @@ extension Route {
         switch self {
         case .onDevice: Theme.color(light: 0x36C9C0, dark: 0x8AF5EA)
         case .appleCloud: Theme.color(light: 0x8EA2FF, dark: 0xC2C9FF)
-        case .claude: Theme.color(light: 0xF0956E, dark: 0xFFC0A3)
+        case .cloud: Theme.color(light: 0xF0956E, dark: 0xFFC0A3)
         }
     }
 

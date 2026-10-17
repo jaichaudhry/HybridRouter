@@ -43,7 +43,7 @@ public struct ModelAnswerJudge: AnswerJudge {
     private let makeSession: @MainActor () -> RoutedSession
     private let route: Route
 
-    public init(route: Route = .claude, makeSession: @escaping @MainActor () -> RoutedSession) {
+    public init(route: Route = .cloud, makeSession: @escaping @MainActor () -> RoutedSession) {
         self.route = route
         self.makeSession = makeSession
     }

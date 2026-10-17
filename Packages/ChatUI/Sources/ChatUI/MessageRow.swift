@@ -101,6 +101,9 @@ private struct AssistantMessage: View {
             } else {
                 reply
             }
+            if let note = HistoryNote(message: message) {
+                note.transition(.opacity)
+            }
             if let error = message.errorMessage {
                 Label(error, systemImage: "exclamationmark.triangle")
                     .font(.footnote)
@@ -218,6 +221,56 @@ private struct WaitingStatus: View {
 }
 
 /// The finished reply's one-line summary: route · first token · cost.
+/// Says when the chat's length changed where a reply ran or what it saw: it moved to a larger
+/// model that can see the whole chat, or it answered from the most recent messages only.
+struct HistoryNote: View {
+    enum Kind: Equatable {
+        /// Auto moved the reply up from `preferred`, which the chat is too long for.
+        case movedUp(from: Route, to: Route, modelID: String?)
+        /// The reply's model saw only the last `seen` of `total` earlier exchanges.
+        case recentOnly(route: Route, seen: Int, total: Int, modelID: String?)
+    }
+
+    let kind: Kind
+    @Environment(\.routeLabels) private var labels
+
+    init?(message: ChatMessage) {
+        let step = message.metrics
+        if let step, step.leftOutEarlierTurns, let seen = step.earlierTurnsSeen, let total = step.earlierTurns {
+            kind = .recentOnly(route: step.route, seen: seen, total: total, modelID: step.modelID)
+        } else if let decision = message.decision, let preferred = decision.tooLongFor, preferred != decision.route {
+            kind = .movedUp(from: preferred, to: decision.route, modelID: step?.modelID)
+        } else {
+            return nil
+        }
+    }
+
+    var body: some View {
+        Label(text, systemImage: symbol)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    var text: String {
+        switch kind {
+        case .movedUp(let from, let to, let modelID):
+            "This chat is too long for \(labels.name(from)), so \(labels.name(to, modelID: modelID)) answered with the whole conversation."
+        case .recentOnly(let route, let seen, let total, let modelID):
+            seen == 0
+                ? "This chat is too long for \(labels.name(route, modelID: modelID)), so it answered without the earlier messages."
+                : "This chat is too long for \(labels.name(route, modelID: modelID)), so it saw only the last \(seen) of \(total) earlier exchanges."
+        }
+    }
+
+    private var symbol: String {
+        switch kind {
+        case .movedUp: "arrow.up.forward.circle"
+        case .recentOnly: "scissors"
+        }
+    }
+}
+
 private struct ProvenanceLine: View {
     let metrics: StepMetrics
     @Environment(\.routeLabels) private var labels

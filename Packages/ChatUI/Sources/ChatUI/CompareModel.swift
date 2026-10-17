@@ -48,7 +48,7 @@ public final class CompareModel {
         // checker bug, so these are main-actor tasks awaited together.)
         var answers: [Task<Void, Never>] = []
         for (index, route) in Route.allCases.enumerated() {
-            if route == .claude, let privacy {
+            if route == .cloud, let privacy {
                 columns[index].note = "Kept private: \(privacy.label)"
                 continue
             }

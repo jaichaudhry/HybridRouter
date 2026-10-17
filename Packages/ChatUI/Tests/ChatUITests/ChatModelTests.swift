@@ -20,18 +20,19 @@ struct ChatModelTests {
     private func makeModel(
         onDevice: FakeProvider = FakeProvider(route: .onDevice, reply: "from device"),
         appleCloud: FakeProvider = FakeProvider(route: .appleCloud, reply: "from cloud"),
-        claude: FakeProvider = FakeProvider(route: .claude, reply: "from claude"),
+        cloud: FakeProvider = FakeProvider(route: .cloud, reply: "from claude"),
         classifier: FakeClassifier = .always("simple")
     ) -> ChatModel {
         let session = RoutedSession(
             instructions: "Be brief.",
             onDevice: onDevice,
             appleCloud: appleCloud,
-            claude: claude,
+            cloud: cloud,
             costTable: costTable
         )
         let coordinator = TurnCoordinator(
             router: Router(classifier: classifier),
+            policy: EscalationPolicy(retryDelay: .zero),
             estimator: FixedTokenEstimator(100),
             isOnline: { true }
         )
@@ -53,18 +54,18 @@ struct ChatModelTests {
 
     @Test func overrideForcesTheRoute() async {
         let model = makeModel()
-        model.routeOverride = .claude
+        model.routeOverride = .cloud
         await model.send("Think hard")
 
         let reply = model.messages[1]
         #expect(reply.content == .text("from claude"))
-        #expect(reply.decision == .forced(.claude))
+        #expect(reply.decision == .forced(.cloud))
     }
 
     @Test func autoRoutesThroughTheClassifier() async {
         let model = makeModel(classifier: .always("complex", task: "reason"))
         await model.send("Is this realistic?")
-        #expect(model.messages[1].decision == RouteDecision(route: .claude, reason: "Complex reasoning", source: .classifier))
+        #expect(model.messages[1].decision == RouteDecision(route: .cloud, reason: "Complex reasoning", source: .classifier))
         #expect(model.messages[1].content == .text("from claude"))
     }
 
@@ -82,9 +83,9 @@ struct ChatModelTests {
     }
 
     @Test func answeringOnDeviceInsteadSwitchesTheWaitingReply() async throws {
-        let claude = FakeProvider(route: .claude, reply: "slow claude", delay: .seconds(5))
-        let model = makeModel(claude: claude)
-        model.routeOverride = .claude
+        let claude = FakeProvider(route: .cloud, reply: "slow claude", delay: .seconds(5))
+        let model = makeModel(cloud: claude)
+        model.routeOverride = .cloud
         let sending = Task { await model.send("Plan a week in Kyoto") }
         while !model.canAnswerOnDevice {
             try await Task.sleep(for: .milliseconds(10))
@@ -95,7 +96,7 @@ struct ChatModelTests {
         let reply = model.messages[1]
         #expect(reply.content == .text("from device"))
         #expect(reply.decision?.route == .onDevice)
-        #expect(reply.previousRoutes == [.claude])
+        #expect(reply.previousRoutes == [.cloud])
         #expect(reply.errorMessage == nil)
         #expect(reply.steps.last?.route == .onDevice)
         #expect(model.messages.count == 2)
@@ -120,12 +121,13 @@ struct ChatModelTests {
     }
 
     @Test func failedTurnsClearPartialText() async {
-        let model = makeModel(claude: FakeProvider(route: .claude, reply: "x", behavior: .timeout))
-        model.routeOverride = .claude
+        let model = makeModel(cloud: FakeProvider(route: .cloud, reply: "x", behavior: .timeout))
+        model.routeOverride = .cloud
         await model.send("Hi")
         #expect(model.messages[1].content == .text(""))
         #expect(model.messages[1].errorMessage == "Claude couldn't answer (timed out). Try another route.")
-        #expect(model.messages[1].steps.map(\.failure) == ["timed out"])
+        // A forced route gets one retry, then stays put.
+        #expect(model.messages[1].steps.map(\.failure) == ["timed out", "timed out"])
     }
 
     @Test func structuredRepliesAreKeptStructured() async {
@@ -144,9 +146,9 @@ struct ChatModelTests {
 
     @Test func unavailableOverrideShowsTheReason() async {
         let model = makeModel(
-            claude: FakeProvider(route: .claude, reply: "x", availability: .unavailable(reason: "Claude not configured"))
+            cloud: FakeProvider(route: .cloud, reply: "x", availability: .unavailable(reason: "Claude not configured"))
         )
-        model.routeOverride = .claude
+        model.routeOverride = .cloud
         await model.send("Hi")
 
         #expect(model.messages[1].errorMessage == "Claude unavailable: Claude not configured")
@@ -164,14 +166,14 @@ struct ChatModelTests {
     @Test func summaryAndExportCoverEveryStep() async throws {
         let model = makeModel()
         await model.send("One")
-        model.routeOverride = .claude
+        model.routeOverride = .cloud
         await model.send("Two")
 
         #expect(model.summary.stepCount == 2)
         #expect(model.summary.routeShare[.onDevice] == 0.5)
 
         let exported = try JSONDecoder().decode([StepMetrics].self, from: model.exportMetrics())
-        #expect(exported.map(\.route) == [.onDevice, .claude])
+        #expect(exported.map(\.route) == [.onDevice, .cloud])
     }
 }
 
@@ -180,19 +182,19 @@ extension ChatModelTests {
         let model = makeModel()
         await model.send("Remember me")
 
-        let newClaude = FakeProvider(route: .claude, reply: "I remember")
+        let newClaude = FakeProvider(route: .cloud, reply: "I remember")
         model.replaceSession { history, privatePromptIDs in
             RoutedSession(
                 instructions: "Be brief.",
                 onDevice: FakeProvider(route: .onDevice, reply: "x"),
                 appleCloud: FakeProvider(route: .appleCloud, reply: "x"),
-                claude: newClaude,
+                cloud: newClaude,
                 costTable: costTable,
                 history: history,
                 privatePromptIDs: privatePromptIDs
             )
         }
-        model.routeOverride = .claude
+        model.routeOverride = .cloud
         await model.send("Do you?")
 
         #expect(model.messages.last?.content == .text("I remember"))
@@ -210,13 +212,13 @@ extension ChatModelTests {
         let sending = Task { await model.send("First") }
         while !model.isSending { await Task.yield() }
 
-        let newClaude = FakeProvider(route: .claude, reply: "new key works")
+        let newClaude = FakeProvider(route: .cloud, reply: "new key works")
         model.replaceSession { history, privatePromptIDs in
             RoutedSession(
                 instructions: "Be brief.",
                 onDevice: FakeProvider(route: .onDevice, reply: "x"),
                 appleCloud: FakeProvider(route: .appleCloud, reply: "x"),
-                claude: newClaude,
+                cloud: newClaude,
                 costTable: costTable,
                 history: history,
                 privatePromptIDs: privatePromptIDs
@@ -225,7 +227,7 @@ extension ChatModelTests {
         await sending.value
         #expect(model.messages[1].content == .text("slow"))
 
-        model.routeOverride = .claude
+        model.routeOverride = .cloud
         await model.send("Second")
         #expect(model.messages.last?.content == .text("new key works"))
         // The swapped-in session kept the reply that was streaming during the swap.
@@ -251,8 +253,8 @@ extension ChatModelTests {
     }
 
     @Test func detectedPrivacyKeepsTheTurnOffClaude() async {
-        let claude = FakeProvider(route: .claude, reply: "should not run")
-        let model = makeModel(claude: claude, classifier: .always("complex"))
+        let claude = FakeProvider(route: .cloud, reply: "should not run")
+        let model = makeModel(cloud: claude, classifier: .always("complex"))
         await model.send("My card is 4111 1111 1111 1111, which plan should I pick?")
         #expect(model.messages[0].privacyReason == "card number")
         #expect(model.messages[1].decision?.route == .onDevice)
@@ -267,13 +269,13 @@ extension ChatModelTests {
         #expect(model.messages[1].decision?.route == .onDevice)
         #expect(model.isPrivate == false)
         await model.send("Which offer should I take?")
-        #expect(model.messages[3].decision?.route == .claude)
+        #expect(model.messages[3].decision?.route == .cloud)
     }
 
     @Test func forcingClaudeOnAPrivateMessageIsBlocked() async {
         let model = makeModel()
         model.isPrivate = true
-        model.routeOverride = .claude
+        model.routeOverride = .cloud
         await model.send("Hello")
         #expect(model.messages[1].errorMessage == "Kept private (marked private), so this can't go to Claude.")
     }
@@ -354,19 +356,19 @@ extension ChatModelTests {
         model.isPrivate = true
         await model.send("My SSN is 123-45-6789")
 
-        let newClaude = FakeProvider(route: .claude, reply: "ok")
+        let newClaude = FakeProvider(route: .cloud, reply: "ok")
         model.replaceSession { history, privatePromptIDs in
             RoutedSession(
                 instructions: "Be brief.",
                 onDevice: FakeProvider(route: .onDevice, reply: "x"),
                 appleCloud: FakeProvider(route: .appleCloud, reply: "x"),
-                claude: newClaude,
+                cloud: newClaude,
                 costTable: costTable,
                 history: history,
                 privatePromptIDs: privatePromptIDs
             )
         }
-        model.routeOverride = .claude
+        model.routeOverride = .cloud
         await model.send("Plan Kyoto")
 
         let claudeSaw = String(describing: try #require(newClaude.requests.last))
@@ -378,7 +380,7 @@ extension ChatModelTests {
 extension ChatModelTests {
     @Test func blockedTurnsGiveBackTheDraftAndAttachments() async {
         let model = makeModel()
-        model.routeOverride = .claude
+        model.routeOverride = .cloud
         model.draft = "Extract the total"
         model.attachments = [.scan(Self.image(), name: "Scan 1")]
         await model.send()
@@ -415,5 +417,33 @@ extension ChatModelTests {
         model.routeOverride = .onDevice
         await model.send("Hi")
         #expect(!model.messages[3].routeIsSimulated)
+    }
+}
+
+@MainActor
+struct HistoryNoteTests {
+    private func reply(decision: RouteDecision, seen: Int? = nil, total: Int? = nil) -> ChatMessage {
+        var metrics = StepMetrics(decision: decision, modelID: "apple-on-device", timeToFirstToken: 0.1,
+                                  totalLatency: 1, usage: TokenUsage(input: 1, cachedInput: 0, output: 1, reasoning: 0),
+                                  estimatedCost: 0)
+        metrics.earlierTurnsSeen = seen
+        metrics.earlierTurns = total
+        return ChatMessage(role: .assistant, content: .text("ok"), decision: decision, steps: [metrics])
+    }
+
+    @Test func aReplyThatMovedUpForLengthSaysSo() {
+        let decision = RouteDecision(route: .cloud, reason: "Quick conversation (chat too long for On-device)",
+                                     source: .classifier, tooLongFor: .onDevice)
+        #expect(HistoryNote(message: reply(decision: decision))?.kind == .movedUp(from: .onDevice, to: .cloud, modelID: "apple-on-device"))
+    }
+
+    @Test func aReplyFromRecentMessagesSaysHowMany() {
+        let note = HistoryNote(message: reply(decision: .forced(.onDevice), seen: 3, total: 8))
+        #expect(note?.kind == .recentOnly(route: .onDevice, seen: 3, total: 8, modelID: "apple-on-device"))
+    }
+
+    @Test func anOrdinaryReplyHasNoNote() {
+        #expect(HistoryNote(message: reply(decision: .forced(.onDevice))) == nil)
+        #expect(HistoryNote(message: reply(decision: .forced(.onDevice), seen: 4, total: 4)) == nil)
     }
 }

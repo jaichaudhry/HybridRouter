@@ -19,6 +19,16 @@ public struct StepMetrics: Codable, Equatable, Sendable, Identifiable {
     public var failure: String?
     /// The route was served by a stand-in model, so speed and cost aren't the real route's.
     public var isSimulated = false
+    /// When the model saw only recent turns: how many earlier turns it saw…
+    public var earlierTurnsSeen: Int?
+    /// …out of how many there were.
+    public var earlierTurns: Int?
+
+    /// True when the model answered without seeing the whole conversation.
+    public var leftOutEarlierTurns: Bool {
+        guard let earlierTurnsSeen, let earlierTurns else { return false }
+        return earlierTurnsSeen < earlierTurns
+    }
 
     public init(
         id: UUID = UUID(),
@@ -57,24 +67,37 @@ public struct StepMetrics: Codable, Equatable, Sendable, Identifiable {
     }
 }
 
-/// Route mix and cost for a whole session, including what it would have cost on Claude alone.
+/// Route mix and cost for a whole session, including what it would have cost on the cloud
+/// model alone.
 ///
-/// The all-Claude figure prices each step's reported tokens at Claude rates. Tokenizers differ
-/// between models, so it's an estimate.
+/// The all-cloud figure prices each step's reported tokens at the cloud model's rates.
+/// Tokenizers differ between models, so it's an estimate.
 public struct SessionSummary: Equatable, Sendable {
     public var stepCount: Int
     public var routeShare: [Route: Double]
     public var totalCost: Double
-    public var allClaudeCost: Double
+    public var allCloudCost: Double
+    /// Paid steps whose model isn't in the price table, so they're missing from `totalCost`.
+    public var unpricedSteps: Int
 
-    public var saved: Double { max(allClaudeCost - totalCost, 0) }
+    public var saved: Double { max(allCloudCost - totalCost, 0) }
 
-    public init(steps: [StepMetrics], costTable: CostTable, claudeModelID: String) {
+    @available(*, deprecated, renamed: "allCloudCost")
+    public var allClaudeCost: Double { allCloudCost }
+
+    public init(steps: [StepMetrics], costTable: CostTable, cloudModelID: String) {
         stepCount = steps.count
         var counts: [Route: Int] = [:]
         for step in steps { counts[step.route, default: 0] += 1 }
         routeShare = counts.mapValues { Double($0) / Double(max(steps.count, 1)) }
         totalCost = steps.reduce(0) { $0 + ($1.estimatedCost ?? 0) }
-        allClaudeCost = steps.reduce(0) { $0 + (costTable.cost(of: $1.usage, modelID: claudeModelID) ?? 0) }
+        allCloudCost = steps.reduce(0) { $0 + (costTable.cost(of: $1.usage, modelID: cloudModelID) ?? 0) }
+        // Apple's routes are free and aren't listed; a cloud step without a price is a gap.
+        unpricedSteps = steps.filter { $0.route == .cloud && $0.estimatedCost == nil && !$0.isSimulated }.count
+    }
+
+    @available(*, deprecated, renamed: "init(steps:costTable:cloudModelID:)")
+    public init(steps: [StepMetrics], costTable: CostTable, claudeModelID: String) {
+        self.init(steps: steps, costTable: costTable, cloudModelID: claudeModelID)
     }
 }

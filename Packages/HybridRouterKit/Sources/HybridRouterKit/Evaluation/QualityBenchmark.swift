@@ -45,7 +45,7 @@ public enum QualityBenchmark {
             switch self {
             case .onDevice: .onDevice
             case .appleCloud: .appleCloud
-            case .claude, .claudeDeep, .museWonder: .claude
+            case .claude, .claudeDeep, .museWonder: .cloud
             }
         }
 
@@ -57,7 +57,7 @@ public enum QualityBenchmark {
             switch route {
             case .onDevice: self = .onDevice
             case .appleCloud: self = .appleCloud
-            case .claude: self = .claude
+            case .cloud: self = .claude
             }
         }
 

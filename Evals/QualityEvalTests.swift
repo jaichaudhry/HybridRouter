@@ -76,7 +76,7 @@ struct QualityEvalTests {
             onDevice: OnDeviceProvider(),
             // No Private Cloud Compute entitlement on a Mac, so Apple Cloud isn't measured.
             appleCloud: AppleCloudProvider(isEnabled: false),
-            claude: cloud,
+            cloud: cloud,
             costTable: (try? CostTable.bundled()) ?? CostTable(updated: "", source: "", models: [:])
         )
     }
@@ -89,7 +89,7 @@ struct QualityEvalTests {
             RoutedSession(
                 instructions: ModelAnswerJudge.instructionsForSession,
                 onDevice: OnDeviceProvider(), appleCloud: AppleCloudProvider(isEnabled: false),
-                claude: ClaudeProvider(auth: auth, tier: .deep), costTable: costTable
+                cloud: ClaudeProvider(auth: auth, tier: .deep), costTable: costTable
             )
         }
     }

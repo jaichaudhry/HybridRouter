@@ -42,14 +42,29 @@ public struct Router: Sendable {
     /// Sends questions with one exact answer to the cloud model before the classifier runs.
     /// See ``ExactAnswerDetector``.
     public var detectsExactAnswers: Bool
+    /// What to do when the chat is too long for the route the classifier picks.
+    public var whenTooLong: TooLongPolicy
     private let classifier: any RouteClassifier
+
+    /// What happens when the conversation is too long for the route the router would pick.
+    /// A route the user forces always stays put and answers from the recent turns.
+    public enum TooLongPolicy: Equatable, Sendable {
+        /// Move to the next route that fits the whole conversation. If none does, answer from
+        /// the most recent turns that fit.
+        case useLargerModel
+        /// Stay on the picked route and answer from the most recent turns that fit. Cheaper and
+        /// keeps more turns on the phone, but the model can't see older turns.
+        case trimHistory
+    }
 
     public init(
         classifier: any RouteClassifier,
         mapping: ComplexityMapping = .standard,
         classifierTimeout: Duration? = .seconds(4),
-        detectsExactAnswers: Bool = false
+        detectsExactAnswers: Bool = false,
+        whenTooLong: TooLongPolicy = .useLargerModel
     ) {
+        self.whenTooLong = whenTooLong
         self.classifier = classifier
         self.mapping = mapping
         self.classifierTimeout = classifierTimeout
@@ -71,6 +86,9 @@ public struct Router: Sendable {
         if detectsExactAnswers, input.exactAnswer == nil {
             input.exactAnswer = ExactAnswerDetector.kind(of: prompt)
         }
+        if whenTooLong == .trimHistory {
+            input.staysWhenTooLong = true
+        }
         let allowed: [Route]
         switch RoutingRules.evaluate(input) {
         case .decided(let decision):
@@ -82,6 +100,12 @@ public struct Router: Sendable {
             allowed = routes
         }
 
+        // The mapping can send every label to one route (e.g. only Apple Cloud and the cloud
+        // model are allowed, and simple turns map up to Apple Cloud). Then classifying only adds latency.
+        if !classifyDecidedTurns, let only = mapping.onlyRoute(allowed: allowed) {
+            let reason = "Every request goes to \(input.labels.name(only)) here"
+            return .routed(input.budgeted(RouteDecision(route: only, reason: reason, source: .rule)), classifier: nil)
+        }
         let run = await classify(prompt, previous: input.previousPrompt)
         return .routed(Self.decide(run, mapping: mapping, allowed: allowed, input: input), classifier: run)
     }
@@ -152,18 +176,22 @@ public struct Router: Sendable {
         guard let classification = run.classification, let target = mapping.route(for: classification.complexity) else {
             let route = RoutingRules.resolve(.appleCloud, allowed: allowed) ?? allowed[0]
             let cause = run.failure.map { " (\($0.label))" } ?? ""
-            return RouteDecision(route: route, reason: "Couldn't classify\(cause), so using a mid-size model", source: .classifier)
+            return input.budgeted(RouteDecision(route: route, reason: "Couldn't classify\(cause), so using a mid-size model", source: .classifier))
         }
         // `allowed` is never empty for an open outcome.
         let route = RoutingRules.resolve(target, allowed: allowed) ?? allowed[0]
-        let reason: String
         if route == target {
-            reason = classification.reason
-        } else if input.isAvailable(target), !input.fits(target) {
-            reason = "\(classification.reason) (too long for \(input.labels.name(target)))"
-        } else {
-            reason = "\(classification.reason) (\(input.labels.name(target)) unavailable)"
+            return input.budgeted(RouteDecision(route: route, reason: classification.reason, source: .classifier))
         }
-        return RouteDecision(route: route, reason: reason, source: .classifier)
+        if input.isAvailable(target), !input.fits(target) {
+            return input.budgeted(RouteDecision(
+                route: route,
+                reason: "\(classification.reason) (chat too long for \(input.labels.name(target)))",
+                source: .classifier,
+                tooLongFor: target
+            ))
+        }
+        let reason = "\(classification.reason) (\(input.labels.name(target)) unavailable)"
+        return input.budgeted(RouteDecision(route: route, reason: reason, source: .classifier))
     }
 }

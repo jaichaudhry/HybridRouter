@@ -28,12 +28,16 @@ public struct SessionSummaryView: View {
             Section {
                 LabeledContent("Steps", value: "\(summary.stepCount)")
                 LabeledContent("Total cost", value: Format.cost(summary.totalCost))
-                LabeledContent("If all on Claude", value: Format.cost(summary.allClaudeCost))
+                LabeledContent("If all on the cloud model", value: Format.cost(summary.allCloudCost))
                 LabeledContent("Saved", value: Format.cost(summary.saved))
             } header: {
                 Text("Cost")
             } footer: {
-                Text("Estimates from each model's reported tokens and the bundled price table.")
+                if summary.unpricedSteps > 0 {
+                    Text("Estimates from each model's reported tokens and the bundled price table. \(summary.unpricedSteps) cloud steps have no listed price and aren't counted.")
+                } else {
+                    Text("Estimates from each model's reported tokens and the bundled price table.")
+                }
             }
         }
         .navigationTitle("Session")

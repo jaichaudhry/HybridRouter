@@ -14,6 +14,12 @@ public enum FakeBehavior: Hashable, Sendable {
     case contextExceeded
     /// Throws a rate limit, like Apple Cloud past its daily allowance.
     case rateLimited
+    /// Throws a rate limit for the first `n` requests, then replies.
+    case rateLimitedFirst(Int)
+    /// Throws a lost connection, as when the device goes offline.
+    case offline
+    /// Streams the first word, then loses the connection.
+    case dropsMidReply
 }
 
 /// A LanguageModel that streams a canned reply word by word and records every request,
@@ -78,8 +84,14 @@ public struct FakeExecutor: LanguageModelExecutor {
             try await Task.sleep(for: configuration.delay)
         }
         switch configuration.behavior {
-        case .reply, .empty:
+        case .reply, .empty, .dropsMidReply:
             break
+        case .rateLimitedFirst(let count):
+            if RequestLog.shared.transcripts(for: configuration.name).count <= count {
+                throw LanguageModelError.rateLimited(.init(resetDate: nil, debugDescription: "fake rate limit"))
+            }
+        case .offline:
+            throw URLError(.notConnectedToInternet)
         case .timeout:
             throw LanguageModelError.timeout(.init(debugDescription: "fake timeout"))
         case .contextExceeded:
@@ -92,6 +104,9 @@ public struct FakeExecutor: LanguageModelExecutor {
         for (index, word) in words.enumerated() {
             let text = index == 0 ? String(word) : " " + word
             await channel.send(.response(action: .appendText(text, tokenCount: 1)))
+            if configuration.behavior == .dropsMidReply {
+                throw URLError(.networkConnectionLost)
+            }
         }
         let usage = configuration.usage
         await channel.send(.response(action: .updateUsage(
@@ -127,6 +142,7 @@ public final class RequestLog: Sendable {
 public struct FakeProvider: ModelProvider {
     public let route: Route
     public let modelID: String
+    public let displayName: String
     public let fake: FakeLanguageModel
     public var availability: ProviderAvailability
     public var contextLimit: Int?
@@ -141,14 +157,17 @@ public struct FakeProvider: ModelProvider {
         delay: Duration = .zero,
         contextLimit: Int? = nil,
         maximumResponseTokens: Int? = nil,
-        behavior: FakeBehavior = .reply
+        behavior: FakeBehavior = .reply,
+        modelID: String? = nil,
+        displayName: String? = nil
     ) {
         self.route = route
         self.contextLimit = contextLimit
         self.maximumResponseTokens = maximumResponseTokens
         // Unique per test so the shared request log never mixes tests.
         let name = "\(route.rawValue)-\(UUID().uuidString)"
-        self.modelID = route == .claude ? "claude-sonnet-5-5" : "apple-on-device"
+        self.modelID = modelID ?? (route == .cloud ? "claude-sonnet-5-5" : "apple-on-device")
+        self.displayName = displayName ?? (route == .cloud ? "Claude" : route.displayName)
         self.fake = FakeLanguageModel(name: name, reply: reply, usage: usage, delay: delay, behavior: behavior)
         self.availability = availability
     }

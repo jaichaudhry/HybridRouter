@@ -13,6 +13,8 @@ public protocol ModelProvider: Sendable {
     var route: Route { get }
     /// Identifier used for telemetry and the cost table, e.g. "claude-sonnet-5-5".
     var modelID: String { get }
+    /// The model's name in reasons and badges, e.g. "Claude". Defaults to the route's name.
+    var displayName: String { get }
     var model: any LanguageModel { get }
     var availability: ProviderAvailability { get }
     /// The model's context window in tokens, or nil if unknown (treated as unlimited).
@@ -24,6 +26,7 @@ public protocol ModelProvider: Sendable {
 }
 
 extension ModelProvider {
+    public var displayName: String { route.displayName }
     public var maximumResponseTokens: Int? { nil }
     public var isSimulated: Bool { false }
 }

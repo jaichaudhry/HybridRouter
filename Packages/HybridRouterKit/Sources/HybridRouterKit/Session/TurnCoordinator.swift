@@ -43,7 +43,7 @@ public struct TurnCoordinator {
     public struct Request: Sendable {
         public var prompt: String
         public var override: Route?
-        /// Why the turn must stay off Claude, or nil.
+        /// Why the turn must stay off the cloud model, or nil.
         public var privacyReason: String?
         public var images: [ImageInput]
         /// Structured outputs the scenario wants for some turns; the first that applies is used.
@@ -89,6 +89,8 @@ public struct TurnCoordinator {
     public var contextMargin: Double
     private let isOnline: @Sendable () -> Bool
     private static let logger = Logger(subsystem: "dev.hybridrouter", category: "routing")
+    /// A rough allowance per attached image. The on-device tokenizer can't count images.
+    static let imageTokens = 800
 
     public init(
         router: Router,
@@ -114,7 +116,7 @@ public struct TurnCoordinator {
         in session: RoutedSession,
         onEvent: (Event) -> Void = { _ in }
     ) async -> Outcome {
-        let input = await routingInput(for: request, in: session)
+        var input = await routingInput(for: request, in: session)
         var decision: RouteDecision
         let classifier: ClassifierRun?
         // With structured outputs on offer, rule-decided turns (images, privacy) are still
@@ -133,8 +135,11 @@ public struct TurnCoordinator {
         }
         var steps: [StepMetrics] = []
         var escalationCause: FailureCause?
+        var tried: Set<Route> = []
+        var retries = 0
         while true {
             onEvent(.routed(decision))
+            tried.insert(decision.route)
             let cause: FailureCause
             func record(_ metrics: StepMetrics, failure: FailureCause?) {
                 var metrics = metrics
@@ -153,15 +158,12 @@ public struct TurnCoordinator {
                 ) { onEvent(.partial($0)) }
                 guard result.content.isEmpty else {
                     record(result.metrics, failure: nil)
-                    // A reply that reached the length cap stopped early. Keep it, but say so.
-                    let limit = session.provider(for: decision.route).maximumResponseTokens
-                    let truncated = limit.map { result.metrics.usage.output >= $0 } ?? false
                     return Outcome(
                         content: result.content,
                         decision: decision,
                         steps: steps,
                         classifier: classifier,
-                        failure: truncated ? "Reply was cut off at the length limit." : nil
+                        failure: isTruncated(result, in: session) ? "Reply was cut off at the length limit." : nil
                     )
                 }
                 // Claude refusals and truncation return normally with nothing in them.
@@ -171,20 +173,55 @@ public struct TurnCoordinator {
             } catch let failure as RoutedSession.StepFailure {
                 cause = FailureCause(failure)
                 record(failure.metrics, failure: cause)
+            } catch RoutedSession.Error.busy {
+                // Another turn is running on this session; retrying elsewhere would hit the same.
+                return Outcome(content: nil, decision: decision, steps: steps, classifier: classifier,
+                               failure: "Another reply is still in progress.")
             } catch {
                 cause = FailureCause(error)
             }
 
-            switch policy.next(after: cause, decision: decision, input: input) {
-            case .retry(let next):
-                Self.logger.info("Escalating \(decision.route.rawValue, privacy: .public) → \(next.route.rawValue, privacy: .public): \(cause.label, privacy: .public)")
+            // Re-check what's reachable: the network or a route may have gone away mid-turn.
+            input = await refreshed(input, in: session)
+            switch policy.next(after: cause, decision: decision, input: input, tried: tried, retries: retries) {
+            case .retry(let next, let delay):
+                Self.logger.info("Retrying \(decision.route.rawValue, privacy: .public) → \(next.route.rawValue, privacy: .public): \(cause.label, privacy: .public)")
+                retries = next.route == decision.route ? retries + 1 : 0
                 escalationCause = cause
                 decision = next
+                if delay > .zero {
+                    do {
+                        try await Task.sleep(for: delay)
+                    } catch {
+                        return Outcome(content: nil, decision: decision, steps: steps, classifier: classifier,
+                                       failure: "\(input.labels.name(decision.route)) couldn't answer (\(FailureCause.cancelled.label)).")
+                    }
+                }
             case .stop(let reason):
                 Self.logger.notice("Turn failed on \(decision.route.rawValue, privacy: .public): \(cause.label, privacy: .public)")
                 return Outcome(content: nil, decision: decision, steps: steps, classifier: classifier, failure: reason)
             }
         }
+    }
+
+    /// Whether a reply reached the route's length cap. Claude's max_tokens stop doesn't throw,
+    /// and the turn's output tokens add up every request in a tool loop, so only a turn without
+    /// tool calls (one request) can be judged from them.
+    private func isTruncated(_ result: RoutedSession.TurnResult, in session: RoutedSession) -> Bool {
+        guard let limit = session.provider(for: result.metrics.route).maximumResponseTokens,
+              result.metrics.usage.output >= limit else { return false }
+        let turn = session.transcript.reversed().prefix { !$0.isPrompt }
+        return !turn.contains { if case .toolCalls = $0 { true } else { false } }
+    }
+
+    /// `input` with availability and connectivity as they are now.
+    private func refreshed(_ input: RoutingInput, in session: RoutedSession) async -> RoutingInput {
+        var input = input
+        input.isOnline = isOnline()
+        for route in Route.allCases {
+            input.availability[route] = session.availability(of: route)
+        }
+        return input
     }
 
     func routingInput(for request: Request, in session: RoutedSession) async -> RoutingInput {
@@ -201,12 +238,31 @@ public struct TurnCoordinator {
                 vision.insert(route)
             }
         }
+        // Each route is checked against the history it will see: with a window, a long chat can
+        // still fit the on-device model.
+        let history = Array(session.transcript)
+        let fixed = session.fixedPromptText + "\n" + request.prompt
+        let images = Self.imageTokens * request.images.count
+        let fullEstimate = await estimator.estimate(history: history, prompt: fixed) + images
+        // What the turn needs without the earlier conversation, so a route too small for the
+        // whole chat can still answer from its recent turns. Only counted when something doesn't fit.
+        let needsTrimming = budgets.values.contains { fullEstimate > $0 }
+        let base = needsTrimming ? await estimator.estimate(history: [], prompt: fixed) + images : nil
+        var perRoute: [Route: Int] = [:]
+        for route in Route.allCases where session.historyPolicy.limits[route] != nil {
+            let visible = session.historyPolicy.visibleHistory(history, for: route)
+            perRoute[route] = visible.count == history.count
+                ? fullEstimate
+                : await estimator.estimate(history: visible, prompt: fixed) + images
+        }
         return RoutingInput(
             override: request.override,
             privacyReason: request.privacyReason,
             isOnline: isOnline(),
             availability: availability,
-            estimatedTokens: await estimator.estimate(history: Array(session.transcript), prompt: request.prompt),
+            estimatedTokens: fullEstimate,
+            estimatedTokensByRoute: perRoute,
+            baseTokens: base,
             contextBudgets: budgets,
             hasImage: !request.images.isEmpty,
             visionRoutes: vision,

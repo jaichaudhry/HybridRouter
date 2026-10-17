@@ -236,11 +236,11 @@ final class AppleCloudChecks {
             instructions: "Answer in as few words as possible.",
             onDevice: OnDeviceProvider(),
             appleCloud: AppleCloudProvider(isEnabled: true),
-            claude: claude,
+            cloud: claude,
             costTable: app.prices
         )
         var hops: [Route] = [.onDevice, .appleCloud]
-        if claude.availability.isAvailable { hops.append(.claude) }
+        if claude.availability.isAvailable { hops.append(.cloud) }
         hops.append(.appleCloud)
         let prompts = ["My favorite city is Kyoto. Reply OK.", "Reply OK.", "Reply OK.", "What's my favorite city? One word."]
         var path: [String] = []
@@ -272,7 +272,7 @@ final class AppleCloudChecks {
             appleOnlyTools: tools,
             onDevice: OnDeviceProvider(),
             appleCloud: AppleCloudProvider(isEnabled: true),
-            claude: ClaudeProvider(auth: .off),
+            cloud: ClaudeProvider(auth: .off),
             costTable: app.prices
         )
         do {

@@ -1,5 +1,8 @@
 import ClaudeForFoundationModels
 import Foundation
+#if canImport(DeviceCheck)
+import DeviceCheck
+#endif
 
 /// How the app authenticates to Claude, shown in Settings.
 public enum ClaudeAuthMode: Equatable, Sendable {
@@ -42,6 +45,33 @@ public struct ClaudeAuthEnvironment: Sendable {
         self.developerKey = developerKey
         self.allowsDeveloperKey = allowsDeveloperKey
     }
+
+    /// This device and build: whether it's a simulator, whether App Attest is supported, and
+    /// whether developer keys are allowed (Debug builds only).
+    public static func current(clientID: String? = nil, developerKey: String? = nil) -> ClaudeAuthEnvironment {
+        #if targetEnvironment(simulator)
+        let isPhysicalDevice = false
+        #else
+        let isPhysicalDevice = true
+        #endif
+        #if DEBUG
+        let allowsDeveloperKey = true
+        #else
+        let allowsDeveloperKey = false
+        #endif
+        #if canImport(DeviceCheck)
+        let isAppAttestSupported = DCAppAttestService.shared.isSupported
+        #else
+        let isAppAttestSupported = false
+        #endif
+        return ClaudeAuthEnvironment(
+            clientID: clientID,
+            isPhysicalDevice: isPhysicalDevice,
+            isAppAttestSupported: isAppAttestSupported,
+            developerKey: developerKey,
+            allowsDeveloperKey: allowsDeveloperKey
+        )
+    }
 }
 
 /// The resolved Claude credentials. `authMode` is nil when Claude is off.
@@ -50,6 +80,19 @@ public struct ClaudeAuth: Sendable, CustomStringConvertible {
     public let authMode: AuthMode?
 
     public static let off = ClaudeAuth(mode: .off, authMode: nil)
+
+    /// An Anthropic API key. Fine for development and personal apps; a shipped app should use
+    /// ``appAttest(clientID:)`` so no key is embedded. A blank key turns Claude off.
+    public static func apiKey(_ key: String) -> ClaudeAuth {
+        let key = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        return key.isEmpty ? .off : ClaudeAuth(mode: .userKey, authMode: .apiKey(key))
+    }
+
+    /// App Attest with your Claude Console client ID (`clid_…`). Needs a physical device that
+    /// supports App Attest.
+    public static func appAttest(clientID: String) -> ClaudeAuth {
+        ClaudeAuth(mode: .appAttest(clientID: clientID), authMode: .appAttest(clientID: clientID))
+    }
 
     public var isEnabled: Bool { authMode != nil }
 

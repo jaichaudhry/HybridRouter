@@ -18,23 +18,23 @@ struct PrivateHistoryTests {
         }
     }
 
-    private func session(onDevice: FakeProvider, claude: FakeProvider) -> RoutedSession {
+    private func session(onDevice: FakeProvider, cloud: FakeProvider) -> RoutedSession {
         RoutedSession(
             instructions: "Be brief.",
             onDevice: onDevice,
             appleCloud: FakeProvider(route: .appleCloud, reply: "cloud"),
-            claude: claude,
+            cloud: cloud,
             costTable: CostTable(updated: "", source: "", models: [:])
         )
     }
 
     @Test func claudeSeesPlaceholdersForEarlierPrivateTurns() async throws {
         let onDevice = FakeProvider(route: .onDevice, reply: "Noted your number")
-        let claude = FakeProvider(route: .claude, reply: "Here's a plan")
-        let routed = session(onDevice: onDevice, claude: claude)
+        let claude = FakeProvider(route: .cloud, reply: "Here's a plan")
+        let routed = session(onDevice: onDevice, cloud: claude)
 
         _ = try await routed.respond(to: "My number is 206-555-0143", decision: .forced(.onDevice), isPrivate: true)
-        _ = try await routed.respond(to: "Plan a trip to Kyoto", decision: .forced(.claude))
+        _ = try await routed.respond(to: "Plan a trip to Kyoto", decision: .forced(.cloud))
         _ = try await routed.respond(to: "Thanks", decision: .forced(.onDevice))
 
         let claudeSaw = try #require(claude.requests.last)
@@ -48,16 +48,16 @@ struct PrivateHistoryTests {
     }
 
     @Test func nonPrivateHistoryIsUntouched() async throws {
-        let claude = FakeProvider(route: .claude, reply: "ok")
-        let routed = session(onDevice: FakeProvider(route: .onDevice, reply: "hi"), claude: claude)
+        let claude = FakeProvider(route: .cloud, reply: "ok")
+        let routed = session(onDevice: FakeProvider(route: .onDevice, reply: "hi"), cloud: claude)
         _ = try await routed.respond(to: "Hello", decision: .forced(.onDevice))
-        _ = try await routed.respond(to: "Plan Kyoto", decision: .forced(.claude))
+        _ = try await routed.respond(to: "Plan Kyoto", decision: .forced(.cloud))
         #expect(texts(try #require(claude.requests.last)) == ["Hello", "hi", "Plan Kyoto"])
     }
 
     @Test func coordinatorMarksDetectedPrivacyAndClaudeLaterSeesPlaceholders() async throws {
-        let claude = FakeProvider(route: .claude, reply: "advice")
-        let routed = session(onDevice: FakeProvider(route: .onDevice, reply: "saved"), claude: claude)
+        let claude = FakeProvider(route: .cloud, reply: "advice")
+        let routed = session(onDevice: FakeProvider(route: .onDevice, reply: "saved"), cloud: claude)
         let coordinator = TurnCoordinator(router: Router(classifier: FakeClassifier.always("complex")),
                                           estimator: FixedTokenEstimator(100), isOnline: { true })
 
@@ -66,7 +66,7 @@ struct PrivateHistoryTests {
         #expect(claude.requests.isEmpty)
 
         let second = await coordinator.run(.init(prompt: "Which offer should I take?"), in: routed)
-        #expect(second.decision?.route == .claude)
+        #expect(second.decision?.route == .cloud)
         #expect(!texts(try #require(claude.requests.last)).joined().contains("4111"))
     }
 
@@ -85,13 +85,13 @@ struct PrivateHistoryTests {
 
     @Test func turnsAfterAPrivateOneOnAppleRoutesAreWithheldToo() async throws {
         let onDevice = FakeProvider(route: .onDevice, reply: "Your number is 206-555-0143")
-        let claude = FakeProvider(route: .claude, reply: "plan")
-        let routed = session(onDevice: onDevice, claude: claude)
+        let claude = FakeProvider(route: .cloud, reply: "plan")
+        let routed = session(onDevice: onDevice, cloud: claude)
 
         _ = try await routed.respond(to: "My number is 206-555-0143", decision: .forced(.onDevice), isPrivate: true)
         _ = try await routed.respond(to: "Why?", decision: .forced(.onDevice))  // repeats the number
-        _ = try await routed.respond(to: "Plan Kyoto", decision: .forced(.claude))
-        _ = try await routed.respond(to: "And Osaka?", decision: .forced(.claude))
+        _ = try await routed.respond(to: "Plan Kyoto", decision: .forced(.cloud))
+        _ = try await routed.respond(to: "And Osaka?", decision: .forced(.cloud))
 
         let claudeSaw = try #require(claude.requests.last)
         #expect(!texts(claudeSaw).joined().contains("555"))
@@ -101,19 +101,19 @@ struct PrivateHistoryTests {
     }
 
     @Test func aRebuiltSessionKeepsItsPrivateTurns() async throws {
-        let first = session(onDevice: FakeProvider(route: .onDevice, reply: "ok"), claude: FakeProvider(route: .claude, reply: "x"))
+        let first = session(onDevice: FakeProvider(route: .onDevice, reply: "ok"), cloud: FakeProvider(route: .cloud, reply: "x"))
         _ = try await first.respond(to: "SSN 123-45-6789", decision: .forced(.onDevice), isPrivate: true)
-        let claude = FakeProvider(route: .claude, reply: "y")
+        let claude = FakeProvider(route: .cloud, reply: "y")
         let rebuilt = RoutedSession(
             instructions: "Be brief.",
             onDevice: FakeProvider(route: .onDevice, reply: "ok"),
             appleCloud: FakeProvider(route: .appleCloud, reply: "cloud"),
-            claude: claude,
+            cloud: claude,
             costTable: CostTable(updated: "", source: "", models: [:]),
             history: Array(first.transcript),
             privatePromptIDs: first.privatePromptIDs
         )
-        _ = try await rebuilt.respond(to: "Plan Kyoto", decision: .forced(.claude))
+        _ = try await rebuilt.respond(to: "Plan Kyoto", decision: .forced(.cloud))
         #expect(!texts(try #require(claude.requests.last)).joined().contains("123-45-6789"))
     }
 }

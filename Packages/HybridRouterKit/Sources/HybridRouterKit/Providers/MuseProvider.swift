@@ -10,7 +10,7 @@ import FoundationModels
 /// the prompt-caching flag the bridge always sends is accepted. Meta doesn't enforce number
 /// ranges in structured output, so a guided `.range` can come back out of range.
 ///
-/// It takes the `.claude` slot of a ``RoutedSession``; the route is the "large cloud model" tier.
+/// It serves the cloud route of a ``RoutedSession``, the "large cloud model" tier.
 public struct MuseProvider: ModelProvider {
     public static let baseURL = URL(string: "https://api.meta.ai")!
     static let wonder = ClaudeModel(id: "muse-wonder-1.0", capabilities: .init(
@@ -20,7 +20,7 @@ public struct MuseProvider: ModelProvider {
         imageInput: true
     ))
 
-    public let route = Route.claude
+    public let route = Route.cloud
     private let apiKey: String?
     private let configuredContextSize: Int
     private let museModel: ClaudeLanguageModel
@@ -41,6 +41,8 @@ public struct MuseProvider: ModelProvider {
     }
 
     public var modelID: String { Self.wonder.id }
+
+    public var displayName: String { "Muse Wonder" }
 
     /// The same cap as Claude, so a reply that reaches it is reported as cut off. Includes reasoning.
     public var maximumResponseTokens: Int? { 16_000 }
