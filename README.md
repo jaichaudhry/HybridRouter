@@ -70,7 +70,7 @@ For each message:
 1. **Privacy check, on-device.** Card numbers, IDs, contact details, health terms, scans and the Private toggle mark a turn private.
 2. **Rules** settle the clear cases: your chosen route, privacy, offline, context size, images, a model you name ("ask Claude"), and questions with one exact answer.
 3. **The on-device classifier** labels everything else simple, moderate or complex, which maps to on-device, Apple Cloud or the cloud model.
-4. **Escalation** retries a failed reply one route up, but never to the cloud model for a private turn.
+4. **Failures** are retried once, then escalated one route up, or answered by a smaller model if nothing above can help. A private turn never reaches the cloud model.
 
 All three models implement Apple's `LanguageModel` protocol, so one `LanguageModelSession` switches between them and keeps a single transcript.
 
@@ -88,33 +88,25 @@ All three models implement Apple's `LanguageModel` protocol, so one `LanguageMod
 ## Use HybridRouterKit in your app
 
 ```swift
-.package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.3.0")
+.package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.4.0")
 ```
 
 ```swift
 import HybridRouterKit
 
-let session = RoutedSession(
+let assistant = HybridAssistant(
     instructions: "You are a helpful travel assistant.",
-    onDevice: OnDeviceProvider(),
-    appleCloud: AppleCloudProvider(isEnabled: false),   // true with the PCC entitlement
-    claude: ClaudeProvider(auth: claudeAuth),            // or MuseProvider(apiKey:)
-    costTable: try CostTable.bundled()
+    cloud: .claude(apiKey: key)          // or .museWonder(apiKey:), or .off for Apple's models only
 )
-let coordinator = TurnCoordinator(
-    router: Router(classifier: OnDeviceClassifier(), detectsExactAnswers: true),
-    estimator: OnDeviceTokenEstimator(),
-    isOnline: { network.isOnline }
-)
-
-let privacy = PrivacyGuard().assess(prompt)
-let outcome = await coordinator.run(.init(prompt: prompt, privacyReason: privacy?.label), in: session)
-print(outcome.decision?.reason ?? "", outcome.content?.text ?? "")   // "Quick conversation", the reply
+let reply = await assistant.respond(to: "Plan three days in Kyoto")
+print(reply.decision?.reason ?? "", reply.text)   // "Multi-step planning", the itinerary
 ```
+
+Privacy checks are on by default. Rate limits and dropped connections are retried, then fall back to a smaller model. For streaming, your own providers or custom rules, use `send(_:)` or build a `RoutedSession` and `TurnCoordinator` directly.
 
 iOS 27 and macOS 27. `HybridRouterKitTesting` adds fake models, so routing and privacy rules can be unit-tested on a Mac without a device or network.
 
-**→ [The full example, auth options and API notes](docs/hybridrouterkit.md)**
+**→ [Install steps, a SwiftUI example, options and upgrading from 0.3](docs/hybridrouterkit.md)**
 
 ## Run the app
 
