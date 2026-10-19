@@ -7,6 +7,11 @@ import Foundation
 /// Tuned on the 175 development prompts in Evals/quality_benchmark.json: it fires on 12% of
 /// them, the on-device answer fails on 52% of those (36% elsewhere), and it catches 7 of the
 /// 11 prompts the classifier kept on-device that then failed.
+///
+/// Two patterns were added for speech input, where letters and symbols come out as words:
+/// "how many hours are in the word strawberry" (spoken "r's") still counts letters, and
+/// "17 times 24" is arithmetic like "17×24". Neither changes the result on any of the 325
+/// benchmark prompts.
 public enum ExactAnswerDetector {
     public enum Kind: String, CaseIterable, Sendable {
         case counting, arithmetic, datesAndTimes, conversions
@@ -24,9 +29,9 @@ public enum ExactAnswerDetector {
         fileprivate var pattern: String {
             switch self {
             case .counting:
-                #"\bhow many (letters|words|characters|vowels|syllables|times)\b|\bhow many [a-z]'?s\b|\bcount (the )?(letters|words|characters)\b|\bspell\b.*\bbackwards?\b|\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|\d+(st|nd|rd|th)) (word|letter)\b"#
+                #"\bhow many (letters|words|characters|vowels|syllables|times)\b|\bhow many [a-z]'?s\b|\bcount (the )?(letters|words|characters)\b|\bspell\b.*\bbackwards?\b|\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|\d+(st|nd|rd|th)) (word|letter)\b|\bhow many\b[^?.!]*\bin the (word|name|phrase|sentence)\b"#
             case .arithmetic:
-                #"\d\s*[×x*/+]\s*\d|\d\s*-\s*\d+\s*=|\bwhat(?:'s| is) \d+(\.\d+)?\s*%\s*of\b|\bcompound(ed|ing)?\b|\b(add|adds) up\b|\bcalculate\b|\bper person\b|\bsplit(ting)? (the |a )?(bill|cost|total|trip)|\btotal (for|cost|comes)\b|\bhow much (will|would|do|does) .* (cost|be|have|pay|save)\b"#
+                #"\d\s*[×x*/+]\s*\d|\b\d+(\.\d+)?\s*(times|plus|minus|multiplied by|divided by)\s*\d|\d\s*-\s*\d+\s*=|\bwhat(?:'s| is) \d+(\.\d+)?\s*%\s*of\b|\bcompound(ed|ing)?\b|\b(add|adds) up\b|\bcalculate\b|\bper person\b|\bsplit(ting)? (the |a )?(bill|cost|total|trip)|\btotal (for|cost|comes)\b|\bhow much (will|would|do|does) .* (cost|be|have|pay|save)\b"#
             case .datesAndTimes:
                 #"\b\d+ days? (after|before|from)\b|\bday of the week\b|\bwhat time (is it|will it be|do i|does it|would)\b|\btime (difference|zone)\b|\bhow many (days|nights|weeks|hours|minutes|seconds)\b|\b(land|lands|arrive|arrives|arrival)\b.*\b(local time|what time)\b|\bvacation days\b|\blocal time\b"#
             case .conversions:

@@ -153,6 +153,12 @@ struct ExactAnswerTests {
         ("If I leave Seattle at 9 am on a 10-hour flight, what local time will I land?", .datesAndTimes),
         ("Convert 72 degrees Fahrenheit to Celsius.", .conversions),
         ("Scale this recipe from 4 servings to 6", .conversions),
+        // As speech-to-text writes them: spoken letters become words, symbols become words.
+        ("How many hours are in the word strawberry?", .counting),
+        ("How many ours are in the word strawberry?", .counting),
+        ("What is 17 times 24?", .arithmetic),
+        ("What's 1200 divided by 7?", .arithmetic),
+        ("What is 17×24?", .arithmetic),
     ])
     func spotsQuestionsWithOneExactAnswer(prompt: String, kind: ExactAnswerDetector.Kind) {
         #expect(ExactAnswerDetector.kind(of: prompt) == kind)
@@ -164,9 +170,16 @@ struct ExactAnswerTests {
         "Explain how a credit score works",
         "Plan a 3-day trip to Lisbon",
         "Summarize these meeting notes in three bullets",
+        "I go running 3 times a week",
+        "Prove that the square root of 2 is irrational",
     ])
     func leavesOtherPromptsAlone(prompt: String) {
         #expect(ExactAnswerDetector.kind(of: prompt) == nil)
+    }
+
+    @Test func aTimeQuestionStaysATimeQuestion() {
+        // "in the word" marks letter counting; without it, "how many hours" is about time.
+        #expect(ExactAnswerDetector.kind(of: "How many hours are in a week?") == .datesAndTimes)
     }
 
     @Test func anExactAnswerGoesToTheCloud() {
