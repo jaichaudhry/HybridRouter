@@ -111,6 +111,9 @@ struct SettingsView: View {
                     NavigationLink("Answer quality") {
                         QualityEvalView(app: model)
                     }
+                    NavigationLink("Speech check") {
+                        SpeechCheckView(app: model)
+                    }
                     NavigationLink("Apple Cloud checks") {
                         AppleCloudChecksView(app: model)
                     }

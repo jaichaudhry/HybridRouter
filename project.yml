@@ -45,6 +45,8 @@ targets:
     dependencies:
       - package: HybridRouterKit
         product: HybridRouterKit
+      - package: HybridRouterKit
+        product: HybridRouterKitVoice
       - package: ChatUI
         product: ChatUI
     info:
@@ -63,6 +65,8 @@ targets:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
+        NSMicrophoneUsageDescription: Speak a message instead of typing it. Speech is transcribed on your device, and the audio never leaves it.
+        NSSpeechRecognitionUsageDescription: Turn what you say into text on your device.
         NSCameraUsageDescription: Scan receipts and documents. Scans stay on your device or Apple's Private Cloud Compute and are never sent to Claude or Muse Wonder.
         HRAppleCloudEnabled: $(HR_APPLE_CLOUD_ENABLED)
         HRClaudeClientID: $(CLAUDE_CLIENT_ID)

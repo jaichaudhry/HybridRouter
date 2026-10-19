@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		10C9144A233E4CA683C7D73F /* DocumentCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C6582CFB6A85333C8FA9E84 /* DocumentCards.swift */; };
-		14036354A649CE383BEBB1BE /* ChatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 26BB5A6C5BE7C9FEC71C1110 /* ChatUI */; };
+		14036354A649CE383BEBB1BE /* HybridRouterKitVoice in Frameworks */ = {isa = PBXBuildFile; productRef = 3A664FB87325C65D02803934 /* HybridRouterKitVoice */; };
 		31E817D090FB2CC071C90B6D /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 475BD9FCD8D78EDABF43EEA7 /* AppIcon.icon */; };
 		4ABC43073CB23616BF6A9641 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF2EF4049958BD1AF58338A /* AppModel.swift */; };
 		522962104E2B3019DAD7EBE3 /* Itinerary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20F77900120E6155D0FC4141 /* Itinerary.swift */; };
@@ -27,9 +27,11 @@
 		C020849E266F855ECC342AEB /* DocumentHelperScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 749770A29283B53825397EEC /* DocumentHelperScenario.swift */; };
 		D026BB74E903117DCE548FD2 /* HybridRouterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F403000424EB9780533C886E /* HybridRouterApp.swift */; };
 		D169671AD8291E5F8AFF8848 /* MeasureRoutesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2A77CA1F811B723F0F5882C /* MeasureRoutesView.swift */; };
+		D372CBE6A83A2B567FEEFDAD /* SpeechCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8564833B3C81F379CE018B58 /* SpeechCheckView.swift */; };
 		DF2BFC2DF87DC5031C206F9E /* AppleCloudChecksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1270BE3E83D2B9E245B8ED1 /* AppleCloudChecksView.swift */; };
 		E513A3FEF9215BCE00EC66E8 /* classifier_benchmark.json in Resources */ = {isa = PBXBuildFile; fileRef = 2A0B5D7416B9B563BDAC2D6E /* classifier_benchmark.json */; };
 		F50724C376D4DA06F17837A9 /* quality_testset.json in Resources */ = {isa = PBXBuildFile; fileRef = A12CA4D69F48FB5D4D33778A /* quality_testset.json */; };
+		F5C21F45E16802E3AB12990D /* ChatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 26BB5A6C5BE7C9FEC71C1110 /* ChatUI */; };
 		F751E029F9FD712552A4E662 /* HybridRouterKit in Frameworks */ = {isa = PBXBuildFile; productRef = 09724B000CD1208B71F52D0A /* HybridRouterKit */; };
 		F77336D3513767E8837CFDBD /* 2026-10-14-iphone-quality-muse.json in Resources */ = {isa = PBXBuildFile; fileRef = 52E3562E23F0DA0620ACDD04 /* 2026-10-14-iphone-quality-muse.json */; };
 /* End PBXBuildFile section */
@@ -48,6 +50,7 @@
 		5C6582CFB6A85333C8FA9E84 /* DocumentCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentCards.swift; sourceTree = "<group>"; };
 		5EDA3B0B2C8A6931897A98E6 /* PlacesTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacesTool.swift; sourceTree = "<group>"; };
 		749770A29283B53825397EEC /* DocumentHelperScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentHelperScenario.swift; sourceTree = "<group>"; };
+		8564833B3C81F379CE018B58 /* SpeechCheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechCheckView.swift; sourceTree = "<group>"; };
 		85B747C17A70C0450B37AA8E /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		8DDD0D7C41E6B7C54D7A4C60 /* Scenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scenario.swift; sourceTree = "<group>"; };
 		956E9CD1DDE33B8C4C3FFE15 /* 2026-10-15-iphone-quality-testset.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "2026-10-15-iphone-quality-testset.json"; sourceTree = "<group>"; };
@@ -72,7 +75,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				F751E029F9FD712552A4E662 /* HybridRouterKit in Frameworks */,
-				14036354A649CE383BEBB1BE /* ChatUI in Frameworks */,
+				14036354A649CE383BEBB1BE /* HybridRouterKitVoice in Frameworks */,
+				F5C21F45E16802E3AB12990D /* ChatUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -130,6 +134,7 @@
 				18B5B6663B7DB28AA51BD343 /* QualityEvalView.swift */,
 				F8E24A6F752500FF0E3D76E5 /* RoutingBenchmarkView.swift */,
 				F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */,
+				8564833B3C81F379CE018B58 /* SpeechCheckView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -212,6 +217,7 @@
 			name = HybridRouter;
 			packageProductDependencies = (
 				09724B000CD1208B71F52D0A /* HybridRouterKit */,
+				3A664FB87325C65D02803934 /* HybridRouterKitVoice */,
 				26BB5A6C5BE7C9FEC71C1110 /* ChatUI */,
 			);
 			productName = HybridRouter;
@@ -286,6 +292,7 @@
 				7B1A64C6A3AEAAED2E5603B3 /* RoutingBenchmarkView.swift in Sources */,
 				7A6D76409900DF6EF96E8898 /* Scenario.swift in Sources */,
 				A85ED142CB286D27CA187F13 /* SettingsView.swift in Sources */,
+				D372CBE6A83A2B567FEEFDAD /* SpeechCheckView.swift in Sources */,
 				6830BC7643C7CA34B77C777E /* TripPlannerScenario.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -496,6 +503,10 @@
 		26BB5A6C5BE7C9FEC71C1110 /* ChatUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = ChatUI;
+		};
+		3A664FB87325C65D02803934 /* HybridRouterKitVoice */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HybridRouterKitVoice;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

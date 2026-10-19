@@ -28,8 +28,8 @@ struct Composer: View {
             if !model.attachments.isEmpty {
                 attachmentChips
             }
-            if let attachError {
-                Text(attachError)
+            if let error = attachError ?? model.voiceError {
+                Text(error)
                     .font(.caption)
                     .foregroundStyle(.red)
             }
@@ -39,7 +39,7 @@ struct Composer: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack(alignment: .bottom, spacing: 8) {
                             fieldWithPrivate
-                            sendButton
+                            trailingButton
                         }
                         optionsMenu
                     }
@@ -47,7 +47,7 @@ struct Composer: View {
                     HStack(alignment: .bottom, spacing: 8) {
                         optionsMenu
                         fieldWithPrivate
-                        sendButton
+                        trailingButton
                     }
                 }
             }
@@ -56,6 +56,8 @@ struct Composer: View {
         .padding(.vertical, 8)
         .animation(Motion.badge, value: model.isPrivate)
         .animation(Motion.badge, value: model.routeOverride)
+        .animation(Motion.badge, value: model.isListening)
+        .onChange(of: model.voice.text) { model.voiceTextChanged() }
         .photosPicker(isPresented: $showsPhotoPicker, selection: $photoSelection, matching: .images)
         .onChange(of: photoSelection) { _, item in
             guard let item else { return }
@@ -89,7 +91,8 @@ struct Composer: View {
     }
 
     private var messageField: some View {
-        TextField(model.isPrivate ? "Private message" : "Message", text: $model.draft, axis: .vertical)
+        TextField(fieldPrompt, text: $model.draft, axis: .vertical)
+            .disabled(model.isListening)
             .lineLimit(1...6)
             .textFieldStyle(.plain)
             .padding(.leading, 14)
@@ -101,6 +104,43 @@ struct Composer: View {
                 send()
                 return .handled
             }
+    }
+
+    private var fieldPrompt: String {
+        if model.isListening { return "Listening…" }
+        return model.isPrivate ? "Private message" : "Message"
+    }
+
+    /// Send, or the mic while there's nothing to send, or Stop while listening.
+    @ViewBuilder private var trailingButton: some View {
+        if model.isListening {
+            Button {
+                Task { await model.stopListening() }
+            } label: {
+                // Bars that follow the voice; tapping them stops, like other dictation buttons.
+                VoiceLevelBars(level: model.voice.level)
+                    .frame(width: 30, height: 30)
+            }
+            .buttonStyle(.glassProminent)
+            .buttonBorderShape(.circle)
+            .tint(.red)
+            .disabled(model.voice.state != .listening)
+            .accessibilityLabel("Stop dictation")
+        } else if model.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, model.attachments.isEmpty, !model.isSending {
+            Button {
+                Task { await model.startListening() }
+            } label: {
+                Image(systemName: "mic.fill")
+                    .font(.body.weight(.semibold))
+                    .frame(width: 30, height: 30)
+            }
+            .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
+            .accessibilityLabel("Dictate")
+            .accessibilityHint("Speech is turned into text on this iPhone")
+        } else {
+            sendButton
+        }
     }
 
     private var sendButton: some View {

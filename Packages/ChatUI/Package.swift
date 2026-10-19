@@ -11,7 +11,10 @@ let package = Package(
         .package(path: "../HybridRouterKit"),
     ],
     targets: [
-        .target(name: "ChatUI", dependencies: ["HybridRouterKit"]),
+        .target(name: "ChatUI", dependencies: [
+            "HybridRouterKit",
+            .product(name: "HybridRouterKitVoice", package: "HybridRouterKit"),
+        ]),
         .testTarget(
             name: "ChatUITests",
             dependencies: ["ChatUI", .product(name: "HybridRouterKitTesting", package: "HybridRouterKit")]

@@ -30,6 +30,10 @@
 	<string>$(META_API_KEY)</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Scan receipts and documents. Scans stay on your device or Apple's Private Cloud Compute and are never sent to Claude or Muse Wonder.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Speak a message instead of typing it. Speech is transcribed on your device, and the audio never leaves it.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Turn what you say into text on your device.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

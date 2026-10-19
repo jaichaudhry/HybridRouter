@@ -2,6 +2,7 @@ import Foundation
 import FoundationModels
 import Observation
 import HybridRouterKit
+import HybridRouterKitVoice
 
 /// One message in the chat list.
 public struct ChatMessage: Identifiable, Equatable, Sendable {
@@ -95,6 +96,16 @@ public final class ChatModel {
         didSet { prewarm() }
     }
 
+    /// Speech-to-text for the composer, on the device. What's heard fills the draft, which then
+    /// goes through the same privacy check and routing as typing.
+    public let voice = VoiceInput()
+    /// Extra names the speech model should expect, e.g. places in a travel scenario.
+    public var voiceVocabulary: [String] = []
+    /// Why listening couldn't start, if it couldn't.
+    public private(set) var voiceError: String?
+    /// The draft before listening started; what's heard is added after it.
+    @ObservationIgnored private var draftBeforeVoice = ""
+
     public private(set) var session: RoutedSession
     public var coordinator: TurnCoordinator
     public var structuredOutputs: [StructuredOutput]
@@ -124,7 +135,7 @@ public final class ChatModel {
     }
 
     public var canSend: Bool {
-        !isSending && (!draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attachments.isEmpty)
+        !isSending && !isListening && (!draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attachments.isEmpty)
     }
 
     public var steps: [StepMetrics] { messages.flatMap(\.steps) }
@@ -214,6 +225,42 @@ public final class ChatModel {
             self.attachments = attachments
             isPrivate = markedPrivate
         }
+    }
+
+    // MARK: Voice
+
+    public var isListening: Bool { voice.state != .idle }
+
+    /// Starts listening; what's heard fills the draft as it's spoken.
+    public func startListening() async {
+        guard !isListening else { return }
+        voiceError = nil
+        voice.vocabulary = VoiceInput.routeNames(session.labels) + voiceVocabulary
+        draftBeforeVoice = draft
+        do {
+            try await voice.start()
+        } catch {
+            voiceError = error.localizedDescription
+        }
+    }
+
+    /// Stops listening and leaves the final words in the draft, to check before sending.
+    public func stopListening() async {
+        guard isListening else { return }
+        let transcript = await voice.stop()
+        draft = Self.joined(draftBeforeVoice, transcript.text)
+    }
+
+    /// Keeps the draft showing what's been heard so far. Called as the transcript changes.
+    public func voiceTextChanged() {
+        guard voice.state == .listening else { return }
+        draft = Self.joined(draftBeforeVoice, voice.text)
+    }
+
+    static func joined(_ typed: String, _ spoken: String) -> String {
+        let typed = typed.trimmingCharacters(in: .whitespacesAndNewlines)
+        let spoken = spoken.trimmingCharacters(in: .whitespacesAndNewlines)
+        return [typed, spoken].filter { !$0.isEmpty }.joined(separator: " ")
     }
 
     /// Whether the reply in progress can be switched to on-device: it's still waiting for its

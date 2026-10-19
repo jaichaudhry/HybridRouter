@@ -447,3 +447,12 @@ struct HistoryNoteTests {
         #expect(HistoryNote(message: reply(decision: .forced(.onDevice), seen: 4, total: 4)) == nil)
     }
 }
+
+@MainActor
+struct DictationTests {
+    @Test func spokenWordsFollowWhatWasTyped() {
+        #expect(ChatModel.joined("Plan a trip to", " Kyoto in April ") == "Plan a trip to Kyoto in April")
+        #expect(ChatModel.joined("", "Why is the sky blue?") == "Why is the sky blue?")
+        #expect(ChatModel.joined("Draft", "") == "Draft")
+    }
+}

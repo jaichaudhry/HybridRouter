@@ -7,6 +7,8 @@ let package = Package(
     platforms: [.iOS("27.0"), .macOS("27.0")],
     products: [
         .library(name: "HybridRouterKit", targets: ["HybridRouterKit"]),
+        // On-device speech-to-text. Separate so apps without voice don't reference microphone APIs.
+        .library(name: "HybridRouterKitVoice", targets: ["HybridRouterKitVoice"]),
         // Fake models and providers for tests and previews.
         .library(name: "HybridRouterKitTesting", targets: ["HybridRouterKitTesting"]),
     ],
@@ -22,12 +24,16 @@ let package = Package(
             resources: [.process("Resources")]
         ),
         .target(
+            name: "HybridRouterKitVoice",
+            dependencies: ["HybridRouterKit"]
+        ),
+        .target(
             name: "HybridRouterKitTesting",
             dependencies: ["HybridRouterKit"]
         ),
         .testTarget(
             name: "HybridRouterKitTests",
-            dependencies: ["HybridRouterKit", "HybridRouterKitTesting"],
+            dependencies: ["HybridRouterKit", "HybridRouterKitTesting", "HybridRouterKitVoice"],
             resources: [.copy("Fixtures")]
         ),
     ],
