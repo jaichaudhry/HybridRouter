@@ -8,6 +8,10 @@ Things found by testing on real hardware, and what the app does about them:
 - **Claude refusals and length cut-offs don't throw** through the bridge; the reply just comes back empty or short. The router treats an empty reply as a failure and flags cut-off replies.
 - **The iOS Simulator has no `OCRTool` or `BarcodeReaderTool`.** Its SDK doesn't include their overlay, so Document Helper's image tools are compiled in for devices only.
 - **Context can mislead the classifier.** Showing it the previous message for every short turn made "Make a packing list for the kids" inherit "complex" from a trade-offs question before it. Context is now added only when a message refers back ("do the same for Osaka").
+- **Speech-to-text writes letters and symbols its own way.** Spoken "r's" came out as "hours", and "17 times 24" as "17×24", which changed what the exact-answer rule saw. It now matches "how many … in the word …" and number words like "times", so typed and spoken prompts route the same.
+- **iOS 27 deprecates `AVAudioNode.installTap`.** Its replacement, `installAudioTap`, hands the tap a read-only `AVReadOnlyAudioPCMBuffer`; `AVAudioFile` writes it directly, and the speech converter gets a copy.
+- **A microphone tap written inside a `@MainActor` type crashes.** Swift 6 makes the closure main-actor isolated, and the tap runs on the audio thread, so the tap lives in its own nonisolated class.
+- **Voice is a separate library** because App Store review flags apps whose binaries reference microphone or speech APIs without a purpose string, even when the code is never used.
 - **Generating a reason is expensive.** A free-text reason added about 600 ms per classification on an M1 Max, so the badge's reason is derived from the labels instead.
 
 ---

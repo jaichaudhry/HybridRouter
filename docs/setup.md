@@ -50,6 +50,7 @@ While you wait for the entitlement, Debug builds have **Settings â€º Developer â
 
 ```
 Packages/HybridRouterKit   Router, privacy, providers, routed session, Claude auth, telemetry. No UI.
+                     HybridRouterKitVoice: on-device speech-to-text (VoiceInput).
 Packages/ChatUI      Streaming chat, route badge, metrics, composer, compare mode.
 App/                 The iOS app: scenarios, Settings, on-device benchmarks and checks.
 Evals/               Routing cases, the classifier benchmark, the answer-quality benchmark and its results, the Apple evaluation.

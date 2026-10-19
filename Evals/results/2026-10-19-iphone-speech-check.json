@@ -1,0 +1,357 @@
+[
+  {
+    "id" : 1,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 6.3,
+        "finalAfterStop" : 0.059824167,
+        "firstTextAfter" : 2.128451,
+        "referenceWords" : 8,
+        "spokenExact" : "dates and times",
+        "spokenRoute" : "Muse Wonder",
+        "transcript" : "How many hours are in the word strawberry?",
+        "typedExact" : "counting",
+        "typedRoute" : "Muse Wonder",
+        "usedVocabulary" : true,
+        "wordErrors" : 1
+      }
+    },
+    "text" : "How many r's are in the word strawberry?"
+  },
+  {
+    "id" : 2,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 4.7,
+        "finalAfterStop" : 0.039075,
+        "firstTextAfter" : 1.246555959,
+        "referenceWords" : 5,
+        "spokenExact" : "arithmetic",
+        "spokenRoute" : "Muse Wonder",
+        "transcript" : "What is 17×24?",
+        "typedRoute" : "On-device",
+        "usedVocabulary" : true,
+        "wordErrors" : 1
+      }
+    },
+    "text" : "What is 17 times 24?"
+  },
+  {
+    "id" : 3,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 6.8,
+        "finalAfterStop" : 0.070381958,
+        "firstTextAfter" : 1.243156375,
+        "referenceWords" : 11,
+        "spokenExact" : "dates and times",
+        "spokenRoute" : "Muse Wonder",
+        "transcript" : "What day of the week is 45 days after a Friday?",
+        "typedExact" : "dates and times",
+        "typedRoute" : "Muse Wonder",
+        "usedVocabulary" : true,
+        "wordErrors" : 0
+      }
+    },
+    "text" : "What day of the week is 45 days after a Friday?"
+  },
+  {
+    "id" : 4,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 5.2,
+        "finalAfterStop" : 0.051951333,
+        "firstTextAfter" : 1.240436625,
+        "referenceWords" : 6,
+        "spokenExact" : "conversion",
+        "spokenRoute" : "Muse Wonder",
+        "transcript" : "Convert 72°F to Celsius",
+        "typedExact" : "conversion",
+        "typedRoute" : "Muse Wonder",
+        "usedVocabulary" : true,
+        "wordErrors" : 3
+      }
+    },
+    "text" : "Convert 72 degrees Fahrenheit to Celsius."
+  },
+  {
+    "id" : 5,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 5.8,
+        "finalAfterStop" : 0.084550959,
+        "firstTextAfter" : 1.2387585,
+        "referenceWords" : 15,
+        "spokenExact" : "arithmetic",
+        "spokenRoute" : "Muse Wonder",
+        "transcript" : "If I save $250 a month, how much will I have after 18 months?",
+        "typedExact" : "arithmetic",
+        "typedRoute" : "Muse Wonder",
+        "usedVocabulary" : true,
+        "wordErrors" : 1
+      }
+    },
+    "text" : "If I save 250 dollars a month, how much will I have after 18 months?"
+  },
+  {
+    "id" : 6,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 5.3,
+        "finalAfterStop" : 0.093235542,
+        "firstTextAfter" : 1.243101042,
+        "referenceWords" : 8,
+        "spokenRoute" : "Muse Wonder",
+        "transcript" : "Ask Claude to compare these two job offers.",
+        "typedRoute" : "Muse Wonder",
+        "usedVocabulary" : true,
+        "wordErrors" : 0
+      }
+    },
+    "text" : "Ask Claude to compare these two job offers."
+  },
+  {
+    "id" : 7,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 5.6,
+        "finalAfterStop" : 0.066984417,
+        "firstTextAfter" : 1.245216834,
+        "referenceWords" : 7,
+        "spokenRoute" : "Muse Wonder",
+        "transcript" : "Can Muse wonder explain how vaccines work?",
+        "typedRoute" : "Muse Wonder",
+        "usedVocabulary" : true,
+        "wordErrors" : 0
+      }
+    },
+    "text" : "Can Muse Wonder explain how vaccines work?"
+  },
+  {
+    "id" : 8,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 5.4,
+        "finalAfterStop" : 0.066075125,
+        "firstTextAfter" : 2.120335292,
+        "referenceWords" : 9,
+        "spokenRoute" : "Apple Cloud",
+        "transcript" : "Use Apple Cloud to plan a weekend in Lisbon.",
+        "typedRoute" : "Apple Cloud",
+        "usedVocabulary" : true,
+        "wordErrors" : 0
+      }
+    },
+    "text" : "Use Apple Cloud to plan a weekend in Lisbon."
+  },
+  {
+    "id" : 9,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 4.9,
+        "finalAfterStop" : 0.070213958,
+        "firstTextAfter" : 1.2417215,
+        "referenceWords" : 11,
+        "spokenRoute" : "Apple Cloud",
+        "transcript" : "Plan three days in Kyoto with a day trip to Nara.",
+        "typedRoute" : "Apple Cloud",
+        "usedVocabulary" : true,
+        "wordErrors" : 0
+      }
+    },
+    "text" : "Plan three days in Kyoto with a day trip to Nara."
+  },
+  {
+    "id" : 10,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 9.3,
+        "finalAfterStop" : 0.071624292,
+        "firstTextAfter" : 2.124166583,
+        "referenceWords" : 9,
+        "spokenRoute" : "Muse Wonder",
+        "transcript" : "What's the best time of year to visit Reykjavik?",
+        "typedRoute" : "Muse Wonder",
+        "usedVocabulary" : true,
+        "wordErrors" : 0
+      }
+    },
+    "text" : "What's the best time of year to visit Reykjavik?"
+  },
+  {
+    "id" : 11,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 11.9,
+        "finalAfterStop" : 0.028831208,
+        "firstTextAfter" : 2.124518666,
+        "referenceWords" : 8,
+        "spokenPrivacy" : "phone number",
+        "spokenRoute" : "On-device",
+        "transcript" : "Text my number 415-555-0132 Sam",
+        "typedPrivacy" : "phone number",
+        "typedRoute" : "On-device",
+        "usedVocabulary" : true,
+        "wordErrors" : 1
+      }
+    },
+    "text" : "Text my number, 415-555-0132, to Sam."
+  },
+  {
+    "id" : 12,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 4.7,
+        "finalAfterStop" : 0.11459625,
+        "firstTextAfter" : 1.250174417,
+        "referenceWords" : 10,
+        "spokenPrivacy" : "health information",
+        "spokenRoute" : "On-device",
+        "transcript" : "My doctor prescribed a new medication for my blood pressure.",
+        "typedPrivacy" : "health information",
+        "typedRoute" : "On-device",
+        "usedVocabulary" : true,
+        "wordErrors" : 0
+      }
+    },
+    "text" : "My doctor prescribed a new medication for my blood pressure."
+  },
+  {
+    "id" : 13,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 7.1,
+        "finalAfterStop" : 0.028572125,
+        "firstTextAfter" : 1.236638,
+        "referenceWords" : 6,
+        "spokenPrivacy" : "email address",
+        "spokenRoute" : "On-device",
+        "transcript" : "Email the itinerary to j@example.com",
+        "typedPrivacy" : "email address",
+        "typedRoute" : "On-device",
+        "usedVocabulary" : true,
+        "wordErrors" : 1
+      }
+    },
+    "text" : "Email the itinerary to jai@example.com."
+  },
+  {
+    "id" : 14,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 5.3,
+        "finalAfterStop" : 0.059830959,
+        "firstTextAfter" : 2.125984333,
+        "referenceWords" : 8,
+        "spokenRoute" : "On-device",
+        "transcript" : "Rewrite this sentence so it sounds more friendly.",
+        "typedRoute" : "On-device",
+        "usedVocabulary" : true,
+        "wordErrors" : 0
+      }
+    },
+    "text" : "Rewrite this sentence so it sounds more friendly."
+  },
+  {
+    "id" : 15,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 4.7,
+        "finalAfterStop" : 0.096409667,
+        "firstTextAfter" : 1.24818,
+        "referenceWords" : 8,
+        "spokenRoute" : "On-device",
+        "transcript" : "Give me three ideas for a birthday dinner.",
+        "typedRoute" : "On-device",
+        "usedVocabulary" : true,
+        "wordErrors" : 0
+      }
+    },
+    "text" : "Give me three ideas for a birthday dinner."
+  },
+  {
+    "id" : 16,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 3.6,
+        "finalAfterStop" : 0.037164584,
+        "firstTextAfter" : 1.238010833,
+        "referenceWords" : 5,
+        "spokenRoute" : "On-device",
+        "transcript" : "Why is the sky blue?",
+        "typedRoute" : "On-device",
+        "usedVocabulary" : true,
+        "wordErrors" : 0
+      }
+    },
+    "text" : "Why is the sky blue?"
+  },
+  {
+    "id" : 17,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 5.2,
+        "finalAfterStop" : 0.097686625,
+        "firstTextAfter" : 1.24315475,
+        "referenceWords" : 8,
+        "spokenRoute" : "Muse Wonder",
+        "transcript" : "Summarise the pros and cons of electric cars.",
+        "typedRoute" : "Muse Wonder",
+        "usedVocabulary" : true,
+        "wordErrors" : 1
+      }
+    },
+    "text" : "Summarize the pros and cons of electric cars."
+  },
+  {
+    "id" : 18,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 2.4,
+        "finalAfterStop" : 0.032535875,
+        "firstTextAfter" : 2.127754666,
+        "referenceWords" : 1,
+        "spokenRoute" : "On-device",
+        "transcript" : "Why?",
+        "typedRoute" : "On-device",
+        "usedVocabulary" : true,
+        "wordErrors" : 0
+      }
+    },
+    "text" : "Why?"
+  },
+  {
+    "id" : 19,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 3,
+        "finalAfterStop" : 0.045094291,
+        "firstTextAfter" : 2.128029208,
+        "referenceWords" : 3,
+        "spokenRoute" : "On-device",
+        "transcript" : "Make it shorter.",
+        "typedRoute" : "On-device",
+        "usedVocabulary" : true,
+        "wordErrors" : 0
+      }
+    },
+    "text" : "Make it shorter."
+  },
+  {
+    "id" : 20,
+    "takes" : {
+      "speechTranscriber" : {
+        "audioSeconds" : 5.5,
+        "finalAfterStop" : 0.061066958,
+        "firstTextAfter" : 1.242584208,
+        "referenceWords" : 8,
+        "spokenRoute" : "Muse Wonder",
+        "transcript" : "Write a Swift function that reverses a string.",
+        "typedRoute" : "Muse Wonder",
+        "usedVocabulary" : true,
+        "wordErrors" : 0
+      }
+    },
+    "text" : "Write a Swift function that reverses a string."
+  }
+]

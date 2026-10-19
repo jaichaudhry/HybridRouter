@@ -51,6 +51,16 @@ Intervals are 95% paired bootstrap ranges.
 - **The "what does it need?" classifier** asks the on-device model what a prompt needs instead of how complex it sounds. It's consistently cheaper, but its effect on quality is unclear, so it stays an experiment, a candidate for a future "save money" setting.
 - **What didn't work:** asking the on-device model to check its own answers. It called 94% of them trustworthy, wrong ones included. Learned routers on 175 examples weren't better than the classifier either. Giving the on-device model tools for exact answers (a calculator, date maths, time zones, counting and unit conversion) instead of sending those questions to the cloud: it passed 11 of 20 of them against Sonnet's 19, fewer of the other prompts, and slowed every reply from 1.9 to 7.0 s, so the tools were removed ([details](../Evals/results/2026-10-16-on-device-tools.md)). Details are in [`Evals/results/2026-10-15-routing-replays.md`](../Evals/results/2026-10-15-routing-replays.md).
 
+## Speech-to-text
+
+Apple's on-device `SpeechTranscriber`, on 20 prompts read aloud on an iPhone (Settings › Developer › Speech check):
+
+| Real word errors | Same privacy decision as typed | Same route as typed | Final text after Stop |
+|---|---|---|---|
+| 3 of 154 words (1.9%) | 20 of 20 | 19 of 20, then 20 of 20 after the speech patterns | 0.06 s (median) |
+
+Formatting such as "17×24" for "17 times 24" isn't counted as an error. Details: [`Evals/results/2026-10-19-iphone-speech-check.md`](../Evals/results/2026-10-19-iphone-speech-check.md).
+
 ## Routing accuracy
 
 Routing accuracy against 50 hand-labeled prompts in `Evals/classifier_benchmark.json`. Apple ships different on-device model variants, and a prompt tuned on one doesn't transfer to the other, so the classifier uses instructions tuned per variant:

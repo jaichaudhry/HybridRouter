@@ -43,8 +43,9 @@ The app has three scenarios, picked from the title bar. It opens in Chat, then r
 | | Import a contract, then "Summarize the key risks" | Claude, or Apple Cloud if it's private |
 
 - **The composer** has a "+" menu for attachments (photos, the document scanner, text or PDF files) and the route (Auto, On-device, Apple Cloud, Claude), and a Private lock in the message field.
+- **Dictation:** with the field empty, the mic button turns speech into text on the device. Words appear as you speak, with bars that follow your voice; tap them to stop, check the text, then send. It's routed and privacy-checked like typing.
 - **Compare mode** (toolbar) runs one prompt on all three routes side by side, with each route's speed and cost.
-- **Settings › Developer** has the tools that produced the [results](results.md): a routing benchmark, per-route measurements, Apple Cloud checks, and (in Debug builds) a simulated Apple Cloud for developing without Apple's entitlement.
+- **Settings › Developer** has the tools that produced the [results](results.md): a routing benchmark, per-route measurements, the speech check, Apple Cloud checks, and (in Debug builds) a simulated Apple Cloud for developing without Apple's entitlement.
 
 ## APIs and frameworks used
 
@@ -59,6 +60,7 @@ The app has three scenarios, picked from the title bar. It opens in Chat, then r
 | `Attachment` (images), `OCRTool`, `BarcodeReaderTool` | Reading scanned receipts and notes on Apple routes only | `RoutedSession.swift`, `App/Scenarios/DocumentHelper/` |
 | `LanguageModelSession.Usage`, `LanguageModelError` | Per-step tokens and cost; failure causes for escalation | `Telemetry/`, `Routing/EscalationPolicy.swift` |
 | Evaluations framework | The classifier benchmark as an Apple evaluation | `Evals/AppleEvaluationTests.swift` |
+| `SpeechAnalyzer`, `SpeechTranscriber`, `AnalysisContext`, `AVAudioEngine.installAudioTap` | On-device dictation with model names as hints; the speech check | `HybridRouterKitVoice/VoiceInput.swift`, `App/Settings/SpeechCheckView.swift` |
 | `ClaudeLanguageModel`, `ClaudeModel`, `AuthMode`, App Attest | Claude route; API key or App Attest auth | `HybridRouterKit/Providers/ClaudeProvider.swift`, `Auth/` |
 | `NSDataDetector`, regular expressions | On-device PII detection | `HybridRouterKit/Privacy/PrivacyGuard.swift` |
 | VisionKit, PDFKit, PhotosUI | Document scanner, PDF import, photo picker | `ChatUI/DocumentScanner.swift`, `ChatAttachment.swift`, `Composer.swift` |

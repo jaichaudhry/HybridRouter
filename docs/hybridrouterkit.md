@@ -101,6 +101,30 @@ Out of the box it:
 
 For a shipped app, use App Attest instead of an embedded key: `cloud: .claudeAuth(.appAttest(clientID: "clid_…"))`. Pass `appleCloudEnabled: true` once your team has the Private Cloud Compute entitlement.
 
+## Voice input
+
+> [!NOTE]
+> On `main`, coming in 0.5.0. Until then, depend on the branch to try it: `.package(url: "https://github.com/jaichaudhry/HybridRouter", branch: "main")`.
+
+`HybridRouterKitVoice` turns speech into text on the device, with Apple's `SpeechTranscriber`: the audio never leaves the phone. The text then goes through the same privacy check and routing as a typed message.
+
+```swift
+import HybridRouterKitVoice
+
+let voice = VoiceInput(for: assistant)   // expects "Claude", "Muse Wonder", "Apple Cloud"…
+try await voice.start()                  // voice.text updates as the user speaks
+let transcript = await voice.stop()      // final text, usually within 0.1 s of stopping
+let reply = await assistant.respond(to: transcript.text)
+```
+
+- **Add the library and a permission string.** Add the `HybridRouterKitVoice` product to your target and `NSMicrophoneUsageDescription` to your Info.plist. Voice is a separate library so apps that don't use it never reference microphone APIs, which App Store review checks for.
+- **Live text.** `finalText` holds words that won't change; `volatileText` is the latest guess (show it dimmed); `text` is both. `level` (0–1) drives a level meter.
+- **Names.** `VoiceInput(for:)` passes the assistant's model names to the speech model as hints, so "ask Claude" isn't heard as "ask cloud" and still routes as asked. Add your own with `vocabulary:`.
+- **Recordings.** `VoiceInput.transcribe(audioFile:)` transcribes a file. `recordingURL` saves live audio, e.g. to compare `.speech` with `.dictation` (the keyboard dictation model) on the same recording.
+- **The speech model** is downloaded once per language if it isn't on the device yet; the first `start()` can take a moment.
+
+On an iPhone, 20 prompts read aloud had 3 real word errors in 154 (1.9%), and every privacy decision matched the typed prompt. The one error that mattered, "r's" heard as "hours", is caught by the exact-answer rule ([results](../Evals/results/2026-10-19-iphone-speech-check.md)).
+
 ## Full control: `RoutedSession` and `TurnCoordinator`
 
 `HybridAssistant` is a thin layer over these. Use them directly to supply your own providers, classifier, mapping, escalation policy or token estimator:

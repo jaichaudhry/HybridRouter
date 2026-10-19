@@ -104,6 +104,8 @@ print(reply.decision?.reason ?? "", reply.text)   // "Multi-step planning", the 
 
 Privacy checks are on by default. Rate limits and dropped connections are retried, then fall back to a smaller model. For streaming, your own providers or custom rules, use `send(_:)` or build a `RoutedSession` and `TurnCoordinator` directly.
 
+**New on `main`:** `HybridRouterKitVoice` adds on-device speech-to-text. The audio never leaves the phone, and the transcript is routed and privacy-checked like typing.
+
 iOS 27 and macOS 27. `HybridRouterKitTesting` adds fake models, so routing and privacy rules can be unit-tested on a Mac without a device or network.
 
 **→ [Install steps, a SwiftUI example, options and upgrading from 0.3](docs/hybridrouterkit.md)**
