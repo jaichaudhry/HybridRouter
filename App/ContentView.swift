@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var showsSettings = false
     @State private var showsSummary = false
     @State private var showsCompare = false
+    @State private var showsChats = false
     @Namespace private var transitions
 
     var body: some View {
@@ -28,16 +29,20 @@ struct ContentView: View {
                         ScenarioPicker(model: model)
                     }
                     ToolbarItem(placement: .topBarLeading) {
-                        Button("Session summary", systemImage: "chart.pie") { showsSummary = true }
-                            .disabled(model.chat.steps.isEmpty)
+                        Button("Chats", systemImage: "clock.arrow.circlepath") { showsChats = true }
                     }
-                    .matchedTransitionSource(id: "summary", in: transitions)
+                    .matchedTransitionSource(id: "chats", in: transitions)
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Compare routes", systemImage: "rectangle.split.3x1") { showsCompare = true }
+                        Button("New chat", systemImage: "square.and.pencil") { model.newChat() }
+                            .disabled(model.chat.messages.isEmpty || model.chat.isSending)
                     }
-                    .matchedTransitionSource(id: "compare", in: transitions)
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Settings", systemImage: "gearshape") { showsSettings = true }
+                        Menu("More", systemImage: "ellipsis") {
+                            Button("Session summary", systemImage: "chart.pie") { showsSummary = true }
+                                .disabled(model.chat.steps.isEmpty)
+                            Button("Compare routes", systemImage: "rectangle.split.3x1") { showsCompare = true }
+                            Button("Settings", systemImage: "gearshape") { showsSettings = true }
+                        }
                     }
                 }
                 // Toolbars stay monochrome; route colors are for content.
@@ -51,7 +56,10 @@ struct ContentView: View {
         .sheet(isPresented: $showsCompare) {
             CompareSheet(app: model)
                 .presentationSizing(.page)
-                .zoomTransition(from: "compare", in: transitions)
+        }
+        .sheet(isPresented: $showsChats) {
+            ChatsSheet(model: model)
+                .zoomTransition(from: "chats", in: transitions)
         }
         .sheet(isPresented: $showsSettings) {
             SettingsView(model: model)
@@ -66,8 +74,82 @@ struct ContentView: View {
                         }
                     }
             }
-            .zoomTransition(from: "summary", in: transitions)
         }
+    }
+}
+
+/// Saved chats, newest first: open one, start a new one, or swipe to delete.
+private struct ChatsSheet: View {
+    let model: AppModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Button("New chat", systemImage: "square.and.pencil") {
+                        model.newChat()
+                        dismiss()
+                    }
+                    .disabled(model.chat.messages.isEmpty)
+                }
+                if model.savedChats.isEmpty {
+                    Text(model.savesChats ? "Chats you have are saved here, on this iPhone." : "Saving chats is off in Settings.")
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(model.scenarios.filter { scenario in model.savedChats.contains { $0.scenarioID == scenario.id } }, id: \.id) { scenario in
+                    Section(scenario.title) {
+                        ForEach(model.savedChats.filter { $0.scenarioID == scenario.id }) { chat in
+                            Button {
+                                Task {
+                                    await model.openChat(chat.id)
+                                    dismiss()
+                                }
+                            } label: {
+                                ChatRow(chat: chat, isOpen: chat.id == model.openChatID && scenario.id == model.scenario.id)
+                            }
+                            .buttonStyle(.plain)
+                            .swipeActions {
+                                Button("Delete", systemImage: "trash", role: .destructive) {
+                                    Task { await model.deleteChat(chat.id) }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Chats")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+private struct ChatRow: View {
+    let chat: ChatStore.Summary
+    let isOpen: Bool
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(chat.title)
+                    .lineLimit(1)
+                Text("\(chat.updatedAt.formatted(.relative(presentation: .named))) · \(chat.messageCount) messages")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            if isOpen {
+                Image(systemName: "checkmark")
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel("Open")
+            }
+        }
+        .contentShape(.rect)
     }
 }
 

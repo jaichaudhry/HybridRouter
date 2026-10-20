@@ -181,8 +181,8 @@ private struct DecidedRouteBadge: View {
 
     private var detail: String {
         let reason = decision.reason
-        // Rule decisions already say "Kept private: …"; forced and escalated ones don't.
-        guard let privacyReason, !decision.reason.hasPrefix("Kept private") else { return reason }
+        // Privacy rule decisions already say "Kept private: …"; forced and escalated ones don't.
+        guard let privacyReason, !decision.decidedByPrivacy else { return reason }
         return "\(reason) · Kept private: \(privacyReason)"
     }
 

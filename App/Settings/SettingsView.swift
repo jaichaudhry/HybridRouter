@@ -10,6 +10,7 @@ struct SettingsView: View {
     @State private var keyDraft = ""
     @State private var metaKeyDraft = ""
     @State private var errorMessage: String?
+    @State private var confirmsDeleteAll = false
 
     var body: some View {
         NavigationStack {
@@ -99,6 +100,23 @@ struct SettingsView: View {
                         : (model.simulatesAppleCloud ? "Simulated on-device" : "Not enabled"))
                 } footer: {
                     Text("Apple Cloud needs Apple's Private Cloud Compute entitlement. See the README.")
+                }
+
+                Section {
+                    Toggle("Save chats", isOn: $model.savesChats)
+                    Button("Delete all chats", role: .destructive) { confirmsDeleteAll = true }
+                        .disabled(model.savedChats.isEmpty)
+                        .confirmationDialog("Delete all saved chats?", isPresented: $confirmsDeleteAll, titleVisibility: .visible) {
+                            Button("Delete all chats", role: .destructive) {
+                                Task { await model.deleteAllChats() }
+                            }
+                        } message: {
+                            Text("This can't be undone.")
+                        }
+                } header: {
+                    Text("Chats")
+                } footer: {
+                    Text("Chats are saved only on this iPhone, encrypted while it's locked, and left out of backups. Private messages stay private after a chat is reopened.")
                 }
 
                 Section("Developer") {

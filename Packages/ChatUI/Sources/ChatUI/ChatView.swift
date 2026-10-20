@@ -26,6 +26,12 @@ public struct ChatView: View {
     public var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
+                if model.restoredConservatively {
+                    Label("Earlier messages in this chat won't be shared with \(labels.name(.cloud)): its private messages couldn't be matched when it was reopened.",
+                          systemImage: "lock")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 ForEach(model.messages) { message in
                     MessageRow(message: message, answerOnDevice: answerOnDevice(for: message))
                         .id(message.id)

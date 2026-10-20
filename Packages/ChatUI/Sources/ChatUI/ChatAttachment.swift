@@ -33,7 +33,7 @@ public struct ChatAttachment: Identifiable, Sendable {
 
     /// What a sent message keeps of this attachment for display.
     public var preview: AttachmentPreview {
-        AttachmentPreview(name: name, thumbnail: thumbnail, isScan: isScan)
+        AttachmentPreview(id: id, name: name, thumbnail: thumbnail, isScan: isScan)
     }
 
     /// Longest side of preview thumbnails, in pixels: sharp at 3x for a ~120pt tile.
@@ -121,10 +121,34 @@ public struct ChatAttachment: Identifiable, Sendable {
 }
 
 /// How a sent message shows one of its attachments.
-public struct AttachmentPreview: Identifiable, Equatable, Sendable {
-    public let id = UUID()
+public struct AttachmentPreview: Identifiable, Equatable, Sendable, Codable {
+    public let id: UUID
     public let name: String
-    /// Nil for documents.
-    public let thumbnail: CGImage?
+    /// Nil for documents. Not encoded: ``ChatStore`` keeps thumbnails as image files.
+    public var thumbnail: CGImage?
     public let isScan: Bool
+
+    public init(id: UUID = UUID(), name: String, thumbnail: CGImage?, isScan: Bool) {
+        self.id = id
+        self.name = name
+        self.thumbnail = thumbnail
+        self.isScan = isScan
+    }
+
+    private enum CodingKeys: String, CodingKey { case id, name, isScan }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        isScan = try container.decode(Bool.self, forKey: .isScan)
+        thumbnail = nil
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(isScan, forKey: .isScan)
+    }
 }

@@ -2,9 +2,10 @@ import ChatUI
 import FoundationModels
 import Observation
 import OSLog
+import UIKit
 import HybridRouterKit
 
-/// App-wide state: configuration, Claude credentials, and one chat per scenario.
+/// App-wide state: configuration, Claude credentials, and the open chat in each scenario.
 @MainActor
 @Observable
 final class AppModel {
@@ -53,8 +54,21 @@ final class AppModel {
     private var metaKeyVersion = 0
     /// Why App Attest was abandoned this launch, if it was.
     private(set) var appAttestFailure: String?
-    /// Each scenario keeps its own conversation.
-    private let chats: [String: ChatModel]
+    /// The open chat in each scenario. The app starts with new chats; saved ones open from the
+    /// chat list. A chat is saved once it has a message.
+    private(set) var chats: [String: ChatModel]
+    /// Saved chats, newest first, for the chat list.
+    private(set) var savedChats: [ChatStore.Summary] = []
+    /// Save chats on this device. Off stops saving; it doesn't delete saved chats.
+    var savesChats: Bool = UserDefaults.standard.object(forKey: AppModel.savesChatsKey) as? Bool ?? true {
+        didSet { UserDefaults.standard.set(savesChats, forKey: Self.savesChatsKey) }
+    }
+
+    private static let savesChatsKey = "HRSavesChats"
+
+    /// Which saved chat each scenario's open chat is.
+    @ObservationIgnored private var openChats: [String: (id: UUID, createdAt: Date)] = [:]
+    @ObservationIgnored let chatStore = ChatStore()
 
     @ObservationIgnored private let config: AppConfig
     @ObservationIgnored private let secrets: any SecretStore
@@ -80,25 +94,129 @@ final class AppModel {
         let cloud = Self.cloudProvider(Self.storedCloudModel, auth: auth, metaKey: Self.metaKey(config: config, secrets: secrets))
         var chats: [String: ChatModel] = [:]
         for scenario in scenarios {
-            let session = Self.makeSession(
-                scenario: scenario,
-                config: config,
-                cloud: cloud,
-                costTable: costTable,
-                simulatesAppleCloud: Self.storedSimulatesAppleCloud,
-                history: []
-            )
-            let chat = ChatModel(
-                session: session,
+            chats[scenario.id] = ChatModel(
+                session: Self.makeSession(
+                    scenario: scenario,
+                    config: config,
+                    cloud: cloud,
+                    costTable: costTable,
+                    simulatesAppleCloud: Self.storedSimulatesAppleCloud
+                ),
                 coordinator: Self.makeCoordinator(scenario: scenario, network: network, longChats: Self.storedLongChats),
                 costTable: costTable,
                 structuredOutputs: scenario.structuredOutputs
             )
-            chat.imagesArePrivate = scenario.imagesArePrivate
-            chats[scenario.id] = chat
         }
         self.chats = chats
+        for scenario in scenarios {
+            setUp(chats[scenario.id]!, in: scenario, id: UUID(), createdAt: .now)
+        }
         prewarmClaude()
+        Task { savedChats = await chatStore.list() }
+        Task { [chatStore] in
+            // Saves made while the phone was locked can't be written until it's unlocked.
+            for await _ in NotificationCenter.default.notifications(named: UIApplication.protectedDataDidBecomeAvailableNotification) {
+                await chatStore.retryPendingSaves()
+            }
+        }
+    }
+
+    // MARK: Saved chats
+
+    /// Starts a new, empty chat in the current scenario.
+    func newChat() {
+        let chat = makeChat(for: scenario)
+        chats[scenario.id] = chat
+        setUp(chat, in: scenario, id: UUID(), createdAt: .now)
+        chat.prewarm()
+    }
+
+    /// Opens a saved chat, switching to its scenario.
+    func openChat(_ id: UUID) async {
+        do {
+            let saved = try await chatStore.load(id)
+            guard let scenario = scenarios.first(where: { $0.id == saved.scenarioID }) else { return }
+            let chat = try makeChat(for: scenario, restoring: saved)
+            chats[scenario.id] = chat
+            setUp(chat, in: scenario, id: saved.id, createdAt: saved.createdAt)
+            selectedScenarioID = scenario.id
+        } catch {
+            logger.error("Couldn't open a saved chat: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    /// Deletes a saved chat. If it's open, its scenario starts a new chat.
+    func deleteChat(_ id: UUID) async {
+        try? await chatStore.delete(id)
+        savedChats = await chatStore.list()
+        for scenario in scenarios where openChats[scenario.id]?.id == id {
+            let chat = makeChat(for: scenario)
+            chats[scenario.id] = chat
+            setUp(chat, in: scenario, id: UUID(), createdAt: .now)
+        }
+    }
+
+    /// Deletes every saved chat and starts each scenario afresh.
+    func deleteAllChats() async {
+        try? await chatStore.deleteAll()
+        savedChats = []
+        for scenario in scenarios {
+            let chat = makeChat(for: scenario)
+            chats[scenario.id] = chat
+            setUp(chat, in: scenario, id: UUID(), createdAt: .now)
+        }
+    }
+
+    var openChatID: UUID? { openChats[scenario.id]?.id }
+
+    /// Scenario settings and autosave for a chat that's becoming the scenario's open one.
+    private func setUp(_ chat: ChatModel, in scenario: any Scenario, id: UUID, createdAt: Date) {
+        chat.imagesArePrivate = scenario.imagesArePrivate
+        openChats[scenario.id] = (id, createdAt)
+        let scenarioID = scenario.id
+        chat.onTurnFinished = { [weak self, weak chat] in
+            guard let self, let chat else { return }
+            save(chat, scenarioID: scenarioID)
+        }
+    }
+
+    private func save(_ chat: ChatModel, scenarioID: String) {
+        guard savesChats, !chat.messages.isEmpty, let open = openChats[scenarioID] else { return }
+        let saved = chat.savedChat(id: open.id, scenarioID: scenarioID, createdAt: open.createdAt)
+        Task {
+            do {
+                try await chatStore.save(saved)
+            } catch {
+                logger.error("Couldn't save the chat: \(error.localizedDescription, privacy: .public)")
+            }
+            savedChats = await chatStore.list()
+        }
+    }
+
+    /// A chat for `scenario` with the app's current models and settings, new or continuing a saved one.
+    private func makeChat(for scenario: any Scenario, restoring saved: SavedChat? = nil) throws -> ChatModel {
+        let makeSession: ChatModel.SessionFactory = { [config, costTable, currentCloudProvider, simulatesAppleCloud] conversation in
+            Self.makeSession(
+                scenario: scenario,
+                config: config,
+                cloud: currentCloudProvider,
+                costTable: costTable,
+                simulatesAppleCloud: simulatesAppleCloud,
+                conversation: conversation
+            )
+        }
+        let coordinator = Self.makeCoordinator(scenario: scenario, network: network, longChats: longChats)
+        guard let saved else {
+            return ChatModel(session: makeSession(.empty), coordinator: coordinator, costTable: costTable,
+                             structuredOutputs: scenario.structuredOutputs)
+        }
+        return try ChatModel(restoring: saved, makeSession: makeSession, coordinator: coordinator,
+                             costTable: costTable, structuredOutputs: scenario.structuredOutputs)
+    }
+
+    private func makeChat(for scenario: any Scenario) -> ChatModel {
+        // Only restoring can throw.
+        try! makeChat(for: scenario, restoring: nil)
     }
 
     var scenario: any Scenario {
@@ -119,8 +237,7 @@ final class AppModel {
             config: config,
             cloud: currentCloudProvider,
             costTable: costTable,
-            simulatesAppleCloud: simulatesAppleCloud,
-            history: []
+            simulatesAppleCloud: simulatesAppleCloud
         )
     }
 
@@ -175,15 +292,14 @@ final class AppModel {
         let cloud = currentCloudProvider
         let simulates = simulatesAppleCloud
         for scenario in scenarios {
-            chats[scenario.id]?.replaceSession { [config, costTable] history, privatePromptIDs in
+            chats[scenario.id]?.replaceSession { [config, costTable] conversation in
                 Self.makeSession(
                     scenario: scenario,
                     config: config,
                     cloud: cloud,
                     costTable: costTable,
                     simulatesAppleCloud: simulates,
-                    history: history,
-                    privatePromptIDs: privatePromptIDs
+                    conversation: conversation
                 )
             }
         }
@@ -314,8 +430,7 @@ final class AppModel {
         cloud: any ModelProvider,
         costTable: CostTable,
         simulatesAppleCloud: Bool,
-        history: [Transcript.Entry],
-        privatePromptIDs: Set<String> = []
+        conversation: RestoredConversation = .empty
     ) -> RoutedSession {
         makeSession(
             instructions: scenario.instructions,
@@ -325,8 +440,7 @@ final class AppModel {
             cloud: cloud,
             costTable: costTable,
             simulatesAppleCloud: simulatesAppleCloud,
-            history: history,
-            privatePromptIDs: privatePromptIDs
+            conversation: conversation
         )
     }
 
@@ -338,8 +452,7 @@ final class AppModel {
         cloud: any ModelProvider,
         costTable: CostTable,
         simulatesAppleCloud: Bool,
-        history: [Transcript.Entry] = [],
-        privatePromptIDs: Set<String> = []
+        conversation: RestoredConversation = .empty
     ) -> RoutedSession {
         // The real entitlement always wins over the stand-in.
         let appleCloud: any ModelProvider = !config.isAppleCloudEnabled && simulatesAppleCloud
@@ -353,8 +466,9 @@ final class AppModel {
             appleCloud: appleCloud,
             cloud: cloud,
             costTable: costTable,
-            history: history,
-            privatePromptIDs: privatePromptIDs
+            history: conversation.history,
+            privatePromptIDs: conversation.privatePromptIDs,
+            lastRoute: conversation.lastRoute
         )
     }
 }

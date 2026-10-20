@@ -183,15 +183,15 @@ extension ChatModelTests {
         await model.send("Remember me")
 
         let newClaude = FakeProvider(route: .cloud, reply: "I remember")
-        model.replaceSession { history, privatePromptIDs in
+        model.replaceSession { conversation in
             RoutedSession(
                 instructions: "Be brief.",
                 onDevice: FakeProvider(route: .onDevice, reply: "x"),
                 appleCloud: FakeProvider(route: .appleCloud, reply: "x"),
                 cloud: newClaude,
                 costTable: costTable,
-                history: history,
-                privatePromptIDs: privatePromptIDs
+                history: conversation.history,
+                privatePromptIDs: conversation.privatePromptIDs
             )
         }
         model.routeOverride = .cloud
@@ -213,15 +213,15 @@ extension ChatModelTests {
         while !model.isSending { await Task.yield() }
 
         let newClaude = FakeProvider(route: .cloud, reply: "new key works")
-        model.replaceSession { history, privatePromptIDs in
+        model.replaceSession { conversation in
             RoutedSession(
                 instructions: "Be brief.",
                 onDevice: FakeProvider(route: .onDevice, reply: "x"),
                 appleCloud: FakeProvider(route: .appleCloud, reply: "x"),
                 cloud: newClaude,
                 costTable: costTable,
-                history: history,
-                privatePromptIDs: privatePromptIDs
+                history: conversation.history,
+                privatePromptIDs: conversation.privatePromptIDs
             )
         }
         await sending.value
@@ -357,15 +357,15 @@ extension ChatModelTests {
         await model.send("My SSN is 123-45-6789")
 
         let newClaude = FakeProvider(route: .cloud, reply: "ok")
-        model.replaceSession { history, privatePromptIDs in
+        model.replaceSession { conversation in
             RoutedSession(
                 instructions: "Be brief.",
                 onDevice: FakeProvider(route: .onDevice, reply: "x"),
                 appleCloud: FakeProvider(route: .appleCloud, reply: "x"),
                 cloud: newClaude,
                 costTable: costTable,
-                history: history,
-                privatePromptIDs: privatePromptIDs
+                history: conversation.history,
+                privatePromptIDs: conversation.privatePromptIDs
             )
         }
         model.routeOverride = .cloud

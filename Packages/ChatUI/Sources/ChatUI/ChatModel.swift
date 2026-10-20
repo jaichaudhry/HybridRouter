@@ -6,7 +6,7 @@ import HybridRouterKitVoice
 
 /// One message in the chat list.
 public struct ChatMessage: Identifiable, Equatable, Sendable {
-    public enum Role: Sendable { case user, assistant }
+    public enum Role: String, Sendable, Codable { case user, assistant }
 
     public let id: UUID
     public let role: Role
@@ -56,6 +56,46 @@ public struct ChatMessage: Identifiable, Equatable, Sendable {
 
     /// Metrics for the step that produced the reply.
     public var metrics: StepMetrics? { steps.last }
+}
+
+/// Saved without the in-flight state: a restored message is never streaming.
+extension ChatMessage: Codable {
+    private enum CodingKeys: String, CodingKey {
+        case id, role, content, decision, steps, errorMessage, privacyReason, routeIsSimulated,
+             attachmentNames, attachments, previousRoutes
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: try container.decode(UUID.self, forKey: .id),
+            role: try container.decode(Role.self, forKey: .role),
+            content: try container.decode(TurnContent.self, forKey: .content),
+            decision: try container.decodeIfPresent(RouteDecision.self, forKey: .decision),
+            steps: try container.decode([StepMetrics].self, forKey: .steps),
+            errorMessage: try container.decodeIfPresent(String.self, forKey: .errorMessage),
+            privacyReason: try container.decodeIfPresent(String.self, forKey: .privacyReason),
+            attachmentNames: try container.decode([String].self, forKey: .attachmentNames),
+            attachments: try container.decode([AttachmentPreview].self, forKey: .attachments)
+        )
+        routeIsSimulated = try container.decode(Bool.self, forKey: .routeIsSimulated)
+        previousRoutes = try container.decode([Route].self, forKey: .previousRoutes)
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(role, forKey: .role)
+        try container.encode(content, forKey: .content)
+        try container.encodeIfPresent(decision, forKey: .decision)
+        try container.encode(steps, forKey: .steps)
+        try container.encodeIfPresent(errorMessage, forKey: .errorMessage)
+        try container.encodeIfPresent(privacyReason, forKey: .privacyReason)
+        try container.encode(routeIsSimulated, forKey: .routeIsSimulated)
+        try container.encode(attachmentNames, forKey: .attachmentNames)
+        try container.encode(attachments, forKey: .attachments)
+        try container.encode(previousRoutes, forKey: .previousRoutes)
+    }
 }
 
 /// Limits how often streamed text reaches the screen. Each update re-renders the reply and
@@ -119,8 +159,8 @@ public final class ChatModel {
     /// A session swap requested mid-reply, applied when the reply finishes.
     @ObservationIgnored private var pendingSession: SessionFactory?
 
-    /// Builds a session from the previous one's history and private turns.
-    public typealias SessionFactory = (_ history: [Transcript.Entry], _ privatePromptIDs: Set<String>) -> RoutedSession
+    /// Builds a session that continues a conversation: its history, private turns and last route.
+    public typealias SessionFactory = (_ conversation: RestoredConversation) -> RoutedSession
 
     public init(
         session: RoutedSession,
@@ -132,6 +172,55 @@ public final class ChatModel {
         self.coordinator = coordinator
         self.costTable = costTable
         self.structuredOutputs = structuredOutputs
+    }
+
+    // MARK: Saving
+
+    /// Continues a saved chat. `makeSession` builds the session from its conversation, with the
+    /// scenario's current instructions and the app's current models.
+    /// - Throws: if the chat was saved by a newer version.
+    public convenience init(
+        restoring saved: SavedChat,
+        makeSession: SessionFactory,
+        coordinator: TurnCoordinator,
+        costTable: CostTable,
+        structuredOutputs: [StructuredOutput] = []
+    ) throws {
+        let conversation = try saved.conversation.restore()
+        self.init(session: makeSession(conversation), coordinator: coordinator, costTable: costTable, structuredOutputs: structuredOutputs)
+        messages = saved.messages
+        routeOverride = saved.routeOverride
+        restoredConservatively = conversation.isConservative
+    }
+
+    /// The saved chat's private turns didn't line up with its conversation, so the cloud model
+    /// sees none of its earlier messages. Shown as a note.
+    public private(set) var restoredConservatively = false
+
+    /// Called after each turn finishes (answered, failed or blocked), never while a reply streams.
+    /// For saving the chat.
+    @ObservationIgnored public var onTurnFinished: (@MainActor () -> Void)?
+
+    /// This chat, to save with ``ChatStore``.
+    public func savedChat(id: UUID, scenarioID: String, createdAt: Date) -> SavedChat {
+        SavedChat(
+            id: id,
+            scenarioID: scenarioID,
+            title: Self.title(for: messages),
+            createdAt: createdAt,
+            updatedAt: .now,
+            messages: messages.filter { !$0.isStreaming },
+            conversation: session.snapshot(),
+            routeOverride: routeOverride
+        )
+    }
+
+    /// The first message, shortened, or "New chat".
+    static func title(for messages: [ChatMessage]) -> String {
+        guard let first = messages.first(where: { $0.role == .user })?.content.text
+            .trimmingCharacters(in: .whitespacesAndNewlines), !first.isEmpty else { return "New chat" }
+        let line = first.split(whereSeparator: \.isNewline).first.map(String.init) ?? first
+        return line.count > 60 ? String(line.prefix(57)) + "…" : line
     }
 
     public var canSend: Bool {
@@ -225,6 +314,7 @@ public final class ChatModel {
             self.attachments = attachments
             isPrivate = markedPrivate
         }
+        onTurnFinished?()
     }
 
     // MARK: Voice
@@ -348,7 +438,11 @@ public final class ChatModel {
     private func applyPendingSession() {
         guard let makeSession = pendingSession else { return }
         pendingSession = nil
-        session = makeSession(Array(session.transcript), session.privatePromptIDs)
+        session = makeSession(RestoredConversation(
+            history: Array(session.transcript),
+            privatePromptIDs: session.privatePromptIDs,
+            lastRoute: session.lastRoute
+        ))
     }
 
     /// Exports every step's metrics as JSON.

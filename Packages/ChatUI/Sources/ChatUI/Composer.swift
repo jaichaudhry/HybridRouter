@@ -234,7 +234,7 @@ struct Composer: View {
         .accessibilityLabel("Private")
         .accessibilityValue(model.isPrivate ? "On" : "Off")
         .accessibilityAddTraits(.isToggle)
-        .accessibilityHint("Private messages never go to Claude")
+        .accessibilityHint("Private messages never go to \(labels.name(.cloud))")
     }
 
     private var attachmentChips: some View {
