@@ -51,6 +51,7 @@ public final class RoutedSession {
     ///   - history: an earlier conversation to continue.
     ///   - privatePromptIDs: earlier private turns, from ``privatePromptIDs`` on the old session.
     ///   - historyPolicy: how much of the conversation each route sees.
+    ///   - lastRoute: the route of the last reply in `history`, so a bare follow-up stays on it.
     public init(
         instructions: String,
         tools: [any Tool] = [],
@@ -61,9 +62,11 @@ public final class RoutedSession {
         costTable: CostTable,
         history: [Transcript.Entry] = [],
         privatePromptIDs: Set<String> = [],
-        historyPolicy: HistoryPolicy = .full
+        historyPolicy: HistoryPolicy = .full,
+        lastRoute: Route? = nil
     ) {
         self.historyPolicy = historyPolicy
+        self.lastRoute = lastRoute
         // Rebuilt sessions (e.g. after a Claude key change) must keep withholding earlier private turns.
         self.privacy = PrivacyLedger(privatePromptIDs: privatePromptIDs)
         let slotted: [any ModelProvider] = [(Route.onDevice, onDevice), (.appleCloud, appleCloud), (.cloud, cloud)].map { route, provider -> any ModelProvider in
@@ -264,7 +267,7 @@ extension Transcript.HistoryView {
 }
 
 /// A reply: plain text, or structured content generated from a schema.
-public enum TurnContent: Equatable, Sendable {
+public enum TurnContent: Equatable, Sendable, Codable {
     case text(String)
     case structured(GeneratedContent)
 
@@ -272,6 +275,26 @@ public enum TurnContent: Equatable, Sendable {
         switch self {
         case .text(let text): text
         case .structured(let content): content.jsonString
+        }
+    }
+
+    private enum CodingKeys: String, CodingKey { case text, structured }
+
+    /// Structured content is stored as its JSON, which `GeneratedContent(json:)` reads back.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let json = try container.decodeIfPresent(String.self, forKey: .structured) {
+            self = .structured(try GeneratedContent(json: json))
+        } else {
+            self = .text(try container.decode(String.self, forKey: .text))
+        }
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .text(let text): try container.encode(text, forKey: .text)
+        case .structured(let content): try container.encode(content.jsonString, forKey: .structured)
         }
     }
 

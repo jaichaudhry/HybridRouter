@@ -17,6 +17,8 @@ Every step reports ``StepMetrics``: route, reason, latency, tokens and estimated
 - ``RoutedSession``
 - ``TurnCoordinator``
 - ``HistoryPolicy``
+- ``ConversationSnapshot``
+- ``RestoredConversation``
 - ``TurnContent``
 - ``ImageInput``
 - ``StructuredOutput``

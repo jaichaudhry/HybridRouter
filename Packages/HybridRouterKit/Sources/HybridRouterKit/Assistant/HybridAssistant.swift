@@ -94,6 +94,9 @@ public final class HybridAssistant {
     public var keepsImagesPrivate: Bool
     /// Every step of every turn so far.
     public private(set) var steps: [StepMetrics] = []
+    /// The restored conversation's private turns didn't line up with its transcript, so every
+    /// earlier turn is kept from the cloud model. See ``RestoredConversation/isConservative``.
+    public let restoredConservatively: Bool
     /// True while a reply is being generated.
     public var isResponding: Bool { session.isResponding }
 
@@ -108,13 +111,15 @@ public final class HybridAssistant {
     ///   - whenTooLong: when the chat is too long for the route the router picks, move to a
     ///     larger model (the default) or stay and answer from the recent turns. A route passed
     ///     with `route:` always stays.
+    ///   - restoring: a conversation saved with ``snapshot()``, to continue it.
     public convenience init(
         instructions: String,
         cloud: Cloud = .off,
         appleCloudEnabled: Bool = false,
         tools: [any Tool] = [],
         historyPolicy: HistoryPolicy = .full,
-        whenTooLong: Router.TooLongPolicy = .useLargerModel
+        whenTooLong: Router.TooLongPolicy = .useLargerModel,
+        restoring: RestoredConversation? = nil
     ) {
         let network = NetworkMonitor()
         self.init(
@@ -126,6 +131,7 @@ public final class HybridAssistant {
             router: Router(classifier: OnDeviceClassifier(), detectsExactAnswers: true, whenTooLong: whenTooLong),
             estimator: OnDeviceTokenEstimator(),
             historyPolicy: historyPolicy,
+            restoring: restoring,
             isOnline: { network.isOnline }
         )
     }
@@ -146,6 +152,7 @@ public final class HybridAssistant {
         history: [Transcript.Entry] = [],
         privatePromptIDs: Set<String> = [],
         historyPolicy: HistoryPolicy = .full,
+        restoring: RestoredConversation? = nil,
         isOnline: @escaping @Sendable () -> Bool
     ) {
         let costTable = costTable ?? (try? CostTable.bundled()) ?? CostTable(updated: "", source: "", models: [:])
@@ -157,10 +164,12 @@ public final class HybridAssistant {
             appleCloud: appleCloud,
             cloud: cloud,
             costTable: costTable,
-            history: history,
-            privatePromptIDs: privatePromptIDs,
-            historyPolicy: historyPolicy
+            history: restoring?.history ?? history,
+            privatePromptIDs: restoring?.privatePromptIDs ?? privatePromptIDs,
+            historyPolicy: historyPolicy,
+            lastRoute: restoring?.lastRoute
         )
+        self.restoredConservatively = restoring?.isConservative ?? false
         self.coordinator = TurnCoordinator(router: router, policy: policy, estimator: estimator, isOnline: isOnline)
         self.privacyGuard = privacyGuard
         self.keepsImagesPrivate = keepsImagesPrivate
@@ -217,6 +226,12 @@ public final class HybridAssistant {
         if isPrivate { return PrivacyGuard.Reason.markedPrivate.label }
         if keepsImagesPrivate, !images.isEmpty { return "attached image" }
         return nil
+    }
+
+    /// The conversation so far, to save (it's `Codable`) and continue later with `restoring:`.
+    /// It holds everything said, private turns included: store it with file protection.
+    public func snapshot() -> ConversationSnapshot {
+        session.snapshot()
     }
 
     /// Route mix and cost so far, and what the same turns would have cost on the cloud model.

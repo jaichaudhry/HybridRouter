@@ -60,12 +60,12 @@ struct RoutingRulesTests {
 
     @Test func privateTurnStaysOnDevice() {
         let outcome = RoutingRules.evaluate(input(privacyReason: "Phone number"))
-        #expect(outcome == .decided(RouteDecision(route: .onDevice, reason: "Kept private: Phone number", source: .rule)))
+        #expect(outcome == .decided(RouteDecision(route: .onDevice, reason: "Kept private: Phone number", source: .rule, decidedByPrivacy: true)))
     }
 
     @Test func privateTurnTooBigForDeviceGoesToAppleCloudNeverClaude() {
         let outcome = RoutingRules.evaluate(input(privacyReason: "Medical", tokens: 10_000))
-        #expect(outcome == .decided(RouteDecision(route: .appleCloud, reason: "Kept private: Medical", source: .rule)))
+        #expect(outcome == .decided(RouteDecision(route: .appleCloud, reason: "Kept private: Medical", source: .rule, decidedByPrivacy: true)))
     }
 
     @Test func privateTurnTooBigForAppleCloudIsBlocked() {
@@ -153,7 +153,7 @@ struct RoutingRulesTests {
 
     @Test func privateImageOnDeviceSaysKeptPrivate() {
         let outcome = RoutingRules.evaluate(input(privacyReason: "Scanned receipt", hasImage: true))
-        #expect(outcome == .decided(RouteDecision(route: .onDevice, reason: "Kept private: Scanned receipt", source: .rule)))
+        #expect(outcome == .decided(RouteDecision(route: .onDevice, reason: "Kept private: Scanned receipt", source: .rule, decidedByPrivacy: true)))
     }
 
     // MARK: open turns
@@ -212,7 +212,7 @@ struct RoutingRulesTests {
         availability[.appleCloud] = .unavailable(reason: "off")
         // Before 0.4: "Too long to keep private. Start a new chat or shorten it."
         #expect(RoutingRules.evaluate(longChat(privacyReason: "health information", availability: availability))
-            == .decided(RouteDecision(route: .onDevice, reason: "Kept private: health information", source: .rule, historyBudget: 3_500)))
+            == .decided(RouteDecision(route: .onDevice, reason: "Kept private: health information", source: .rule, historyBudget: 3_500, decidedByPrivacy: true)))
     }
 
     @Test func byDefaultALargerModelThatFitsIsUsed() {

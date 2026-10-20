@@ -257,7 +257,7 @@ public enum RoutingRules {
 
     private static func decision(_ route: Route, reason: String, input: RoutingInput) -> RouteDecision {
         let prefix = input.isPrivate ? "Kept private: " : ""
-        return RouteDecision(route: route, reason: prefix + reason, source: .rule)
+        return RouteDecision(route: route, reason: prefix + reason, source: .rule, decidedByPrivacy: input.isPrivate)
     }
 
     private static func blockedReason(_ input: RoutingInput) -> String {
