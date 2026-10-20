@@ -6,17 +6,18 @@ HybridRouterKit is a Swift package with no UI.
 
 **Requirements:** Xcode 27, an iOS 27 or macOS 27 target, and a device or simulator with Apple Intelligence turned on, for the on-device model and classifier. A cloud model is optional.
 
-**In Xcode:** choose **File › Add Package Dependencies…**, paste `https://github.com/jaichaudhry/HybridRouter`, choose **Up to Next Major Version** from `0.4.0`, and add the **HybridRouterKit** library to your app target.
+**In Xcode:** choose **File › Add Package Dependencies…**, paste `https://github.com/jaichaudhry/HybridRouter`, choose **Up to Next Major Version** from `0.5.0`, and add the **HybridRouterKit** library to your app target.
 
 **In `Package.swift`:**
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.4.0"),
+    .package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.5.0"),
 ],
 targets: [
     .target(name: "MyApp", dependencies: [
         .product(name: "HybridRouterKit", package: "HybridRouter"),
+        .product(name: "HybridRouterKitVoice", package: "HybridRouter"),   // optional: voice input
     ]),
     // Optional: fake models for your tests.
     .testTarget(name: "MyAppTests", dependencies: [
@@ -102,9 +103,6 @@ Out of the box it:
 For a shipped app, use App Attest instead of an embedded key: `cloud: .claudeAuth(.appAttest(clientID: "clid_…"))`. Pass `appleCloudEnabled: true` once your team has the Private Cloud Compute entitlement.
 
 ## Voice input
-
-> [!NOTE]
-> On `main`, coming in 0.5.0. Until then, depend on the branch to try it: `.package(url: "https://github.com/jaichaudhry/HybridRouter", branch: "main")`.
 
 `HybridRouterKitVoice` turns speech into text on the device, with Apple's `SpeechTranscriber`: the audio never leaves the phone. The text then goes through the same privacy check and routing as a typed message.
 
