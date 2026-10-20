@@ -6,13 +6,13 @@ HybridRouterKit is a Swift package with no UI.
 
 **Requirements:** Xcode 27, an iOS 27 or macOS 27 target, and a device or simulator with Apple Intelligence turned on, for the on-device model and classifier. A cloud model is optional.
 
-**In Xcode:** choose **File › Add Package Dependencies…**, paste `https://github.com/jaichaudhry/HybridRouter`, choose **Up to Next Major Version** from `0.5.0`, and add the **HybridRouterKit** library to your app target.
+**In Xcode:** choose **File › Add Package Dependencies…**, paste `https://github.com/jaichaudhry/HybridRouter`, choose **Up to Next Major Version** from `0.6.0`, and add the **HybridRouterKit** library to your app target.
 
 **In `Package.swift`:**
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.5.0"),
+    .package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.6.0"),
 ],
 targets: [
     .target(name: "MyApp", dependencies: [
@@ -124,9 +124,6 @@ let reply = await assistant.respond(to: transcript.text)
 On an iPhone, 20 prompts read aloud had 3 real word errors in 154 (1.9%), and every privacy decision matched the typed prompt. The one error that mattered, "r's" heard as "hours", is caught by the exact-answer rule ([results](../Evals/results/2026-10-19-iphone-speech-check.md)).
 
 ## Saving a conversation
-
-> [!NOTE]
-> On `main`, coming in 0.6.0.
 
 A `ConversationSnapshot` is `Codable`: save it, and continue the conversation later, after a relaunch.
 
