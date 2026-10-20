@@ -21,6 +21,7 @@ Each badge says why its reply went where it did ("Multi-step planning", "Kept pr
 
 ## Privacy and security
 
+- **Saved chats stay private.** Chats are saved only on the iPhone, with complete file protection (unreadable while it's locked) and left out of backups. A reopened chat keeps withholding its private turns from the cloud model; if the saved record of them doesn't match the conversation, the cloud model sees none of its earlier messages.
 - **Private turns stay with Apple.** Once a conversation has a private turn, Claude sees it, and every later turn answered by Apple's models, as "[Private message withheld]". This holds across escalation, follow-ups and session rebuilds, and is covered by tests that check the request Claude actually receives.
 - **Scans are private by default.** OCR and barcode tools run only on Apple routes. Images that do go to Claude (non-private photos) are re-encoded without EXIF or GPS data.
 - **No keys in the repo or the binary.** A key you paste is stored in the device's Keychain. Developer keys come only from a gitignored `Secrets.xcconfig` and are blanked in Release builds. Shipped builds use App Attest instead of a key. Keys never appear in logs, metrics or exports.
@@ -44,7 +45,8 @@ The app has three scenarios, picked from the title bar. It opens in Chat, then r
 
 - **The composer** has a "+" menu for attachments (photos, the document scanner, text or PDF files) and the route (Auto, On-device, Apple Cloud, Claude), and a Private lock in the message field.
 - **Dictation:** with the field empty, the mic button turns speech into text on the device. Words appear as you speak, with bars that follow your voice; tap them to stop, check the text, then send. It's routed and privacy-checked like typing.
-- **Compare mode** (toolbar) runs one prompt on all three routes side by side, with each route's speed and cost.
+- **Chats are saved** once they have a message. The app opens to a new chat; the clock button lists saved ones by scenario, and the pencil starts a new one. Swipe to delete. Settings can turn saving off or delete them all.
+- **Compare mode** (the ⋯ menu) runs one prompt on all three routes side by side, with each route's speed and cost.
 - **Settings › Developer** has the tools that produced the [results](results.md): a routing benchmark, per-route measurements, the speech check, Apple Cloud checks, and (in Debug builds) a simulated Apple Cloud for developing without Apple's entitlement.
 
 ## APIs and frameworks used

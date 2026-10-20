@@ -82,6 +82,7 @@ All three models implement Apple's `LanguageModel` protocol, so one `LanguageMod
 > Once a turn is private, the cloud model only ever sees `[Private message withheld]` in its place, across escalations, follow-ups and session rebuilds. Tests check the request it actually receives.
 
 - Scanned documents are private by default, and OCR runs only on Apple's models.
+- Saved chats stay on the iPhone, encrypted while it's locked and left out of backups, and keep their private turns private when reopened.
 - Keys live in the Keychain or a gitignored config, never in the repo or a Release build. Shipped builds use App Attest.
 - gitleaks scans every commit, locally and in CI.
 

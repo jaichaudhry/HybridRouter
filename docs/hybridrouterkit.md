@@ -123,6 +123,31 @@ let reply = await assistant.respond(to: transcript.text)
 
 On an iPhone, 20 prompts read aloud had 3 real word errors in 154 (1.9%), and every privacy decision matched the typed prompt. The one error that mattered, "r's" heard as "hours", is caught by the exact-answer rule ([results](../Evals/results/2026-10-19-iphone-speech-check.md)).
 
+## Saving a conversation
+
+> [!NOTE]
+> On `main`, coming in 0.6.0.
+
+A `ConversationSnapshot` is `Codable`: save it, and continue the conversation later, after a relaunch.
+
+```swift
+let data = try JSONEncoder().encode(assistant.snapshot())
+try data.write(to: url, options: [.atomic, .completeFileProtection])
+
+// Later:
+let snapshot = try JSONDecoder().decode(ConversationSnapshot.self, from: Data(contentsOf: url))
+let assistant = HybridAssistant(instructions: "…", cloud: .claude(apiKey: key), restoring: try snapshot.restore())
+```
+
+- **Private turns stay private.** A snapshot records which turns were private, and the turns after them that Apple's models answered. A restored conversation keeps withholding all of them from the cloud model.
+- **Restoring fails closed.** If the saved private turns don't line up with the transcript (a damaged or edited file), every earlier turn is treated as private, and `restoredConservatively` is set so you can tell the user. A snapshot missing its privacy fields doesn't decode at all, and one from a newer version is refused.
+- **Images are kept,** as JPEG inside the transcript, so "read the receipt again" still works after a restore. A phone photo adds roughly 1–3 MB.
+- **Earlier reasoning is dropped.** It's never sent again anyway.
+- **Instructions and models come from the new session,** so a restored chat uses your app's current instructions and settings.
+- **Store it carefully.** A snapshot contains everything the user said, private turns included. Use complete file protection, and consider keeping it out of backups.
+
+`RoutedSession.snapshot()` does the same at the lower level; pass `restored.history`, `privatePromptIDs` and `lastRoute` to `RoutedSession(…)`.
+
 ## Full control: `RoutedSession` and `TurnCoordinator`
 
 `HybridAssistant` is a thin layer over these. Use them directly to supply your own providers, classifier, mapping, escalation policy or token estimator:
