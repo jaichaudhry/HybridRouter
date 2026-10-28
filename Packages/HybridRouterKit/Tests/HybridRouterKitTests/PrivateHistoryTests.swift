@@ -65,9 +65,34 @@ struct PrivateHistoryTests {
         #expect(first.decision?.route == .onDevice)
         #expect(claude.requests.isEmpty)
 
+        // Later turns stay on Apple's models unless the user names the cloud model.
         let second = await coordinator.run(.init(prompt: "Which offer should I take?"), in: routed)
-        #expect(second.decision?.route == .cloud)
+        #expect(second.decision?.route == .appleCloud)  // complex, so the larger Apple model
+        #expect(second.decision?.decidedByPrivacy == true)
+        #expect(claude.requests.isEmpty)
+
+        let third = await coordinator.run(.init(prompt: "Ask Claude which offer I should take"), in: routed)
+        #expect(third.decision?.route == .cloud)
         #expect(!texts(try #require(claude.requests.last)).joined().contains("4111"))
+    }
+
+    @Test func aFailedTurnAfterAPrivateOneDoesNotEscalateToTheCloudModel() async {
+        let claude = FakeProvider(route: .cloud, reply: "advice")
+        let routed = RoutedSession(
+            instructions: "Be brief.",
+            onDevice: FakeProvider(route: .onDevice, reply: "saved"),
+            appleCloud: FakeProvider(route: .appleCloud, reply: "x", behavior: .contextExceeded),
+            cloud: claude,
+            costTable: CostTable(updated: "", source: "", models: [:])
+        )
+        let coordinator = TurnCoordinator(router: Router(classifier: FakeClassifier.always("complex")),
+                                          estimator: FixedTokenEstimator(100), isOnline: { true })
+        _ = await coordinator.run(.init(prompt: "Card 4111 1111 1111 1111", privacyReason: "card number"), in: routed)
+
+        let second = await coordinator.run(.init(prompt: "Which offer should I take?"), in: routed)
+        #expect(second.steps.map(\.route) == [.appleCloud])
+        #expect(second.failure == "Kept private, so this wasn't sent to Claude (context too long).")
+        #expect(claude.requests.isEmpty)
     }
 
     @Test func toolActivityInPrivateTurnsIsDropped() {

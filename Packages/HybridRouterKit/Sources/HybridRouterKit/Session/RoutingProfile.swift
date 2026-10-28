@@ -46,8 +46,10 @@ extension RoutingProfile {
     /// Tells each model it's one of several in this conversation. Without it, the on-device
     /// model answered "but Claude can?" with "I am a foundation model developed by Apple — I
     /// cannot be Claude." Muse Wonder took the note as something to say, signing replies "I'm Muse
-    /// Wonder", so it's only for when the user asks. It only changes with the route, so the cloud
-    /// model's prompt cache holds.
+    /// Wonder", so it's only for when the user asks. On an iPhone, the on-device model still named
+    /// itself in 3 of its 70 replies in chats Claude had answered before ("— Apple's on-device
+    /// assistant"), and in none of 137 in chats it answered alone, hence "or sign your reply".
+    /// It only changes with the route, so the cloud model's prompt cache holds.
     /// - Parameter models: each available route's model name, cheapest first.
     static func routeNote(for route: Route, models: [Route: String]) -> String {
         let names = Route.allCases.compactMap { models[$0] }
@@ -57,7 +59,7 @@ extension RoutingProfile {
         return """
             This conversation is shared by \(names.count) models: \(list). \
             Earlier replies may have come from a different one. This reply is from \(current). \
-            Don't mention this unless the user asks which model is answering or wants a different one; \
+            Don't mention this or sign your reply with a model name unless the user asks which model is answering or wants a different one; \
             then tell them they can ask for a model by name.
             """
     }

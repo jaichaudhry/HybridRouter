@@ -145,6 +145,8 @@ struct ExactAnswerTests {
         ("How many r's are in the word 'strawberry'?", ExactAnswerDetector.Kind.counting),
         ("Count the words in this sentence: 'The quick brown fox.'", .counting),
         ("Spell 'necessary' backwards.", .counting),
+        ("A train leaves at 2:15 pm and travels 200 km at 80 km/h. When does it arrive?", .arithmetic),
+        ("What if it goes 60 mph?", .arithmetic),
         ("What's the 5th word in this sentence?", .counting),
         ("What's 17 × 24?", .arithmetic),
         ("What's 18% of 350?", .arithmetic),

@@ -4,7 +4,7 @@ import FoundationModels
 /// view of it is, before each request.
 ///
 /// By default every route sees everything. A limit for the on-device model keeps a long
-/// conversation within its 4K-token context, so short turns late in a long chat can still stay
+/// conversation within its context (4K tokens on a Mac, 8K on recent iPhones), so short turns late in a long chat can still stay
 /// on the phone, at the cost of the on-device model not seeing older turns:
 ///
 /// ```swift

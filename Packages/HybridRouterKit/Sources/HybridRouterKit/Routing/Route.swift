@@ -24,6 +24,9 @@ public enum Route: String, CaseIterable, Codable, Sendable, Hashable {
         }
     }
 
+    /// The route's place in the order from smallest model to largest.
+    var size: Int { Route.allCases.firstIndex(of: self) ?? 0 }
+
     /// The next route up for escalation, or nil at the top.
     public var escalated: Route? {
         switch self {

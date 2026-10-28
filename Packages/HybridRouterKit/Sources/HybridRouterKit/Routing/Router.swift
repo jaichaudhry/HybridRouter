@@ -183,6 +183,14 @@ public struct Router: Sendable {
         if route == target {
             return input.budgeted(RouteDecision(route: route, reason: classification.reason, source: .classifier))
         }
+        if let previous = input.previousRoute, target.size < previous.size, route == previous {
+            let reason = "\(classification.reason) (same model as the last reply)"
+            return input.budgeted(RouteDecision(route: route, reason: reason, source: .classifier))
+        }
+        if target == .cloud, input.keepsOffCloud, input.isAvailable(.cloud) {
+            let reason = "Kept private: earlier messages were private"
+            return input.budgeted(RouteDecision(route: route, reason: reason, source: .classifier, decidedByPrivacy: true))
+        }
         if input.isAvailable(target), !input.fits(target) {
             return input.budgeted(RouteDecision(
                 route: route,

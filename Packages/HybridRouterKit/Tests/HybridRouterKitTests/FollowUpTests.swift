@@ -31,6 +31,71 @@ struct FollowUpTests {
         #expect(RoutingRules.evaluate(input).decidedRoute == .onDevice)
     }
 
+    private static let all: [Route: ProviderAvailability] = [.onDevice: .available, .appleCloud: .available, .cloud: .available]
+
+    @Test func aTurnAfterTheCloudModelStaysThere() {
+        let input = RoutingInput(availability: Self.all, previousRoute: .cloud)
+        #expect(RoutingRules.evaluate(input) == .decided(RouteDecision(route: .cloud, reason: "Same model as the last reply", source: .rule)))
+    }
+
+    @Test func aTurnAfterAppleCloudCanMoveUpButNotDown() async {
+        let input = RoutingInput(availability: Self.all, previousRoute: .appleCloud)
+        #expect(RoutingRules.evaluate(input) == .open(allowed: [.appleCloud, .cloud]))
+        let simple = await Router(classifier: FakeClassifier.always("simple")).route("Shorter", input: input)
+        #expect(simple.decision?.route == .appleCloud)
+        #expect(simple.decision?.reason == "Quick conversation (same model as the last reply)")
+        let complex = await Router(classifier: FakeClassifier.always("complex")).route("Which is better?", input: input)
+        #expect(complex.decision?.route == .cloud)
+    }
+
+    @Test func aTurnAfterOnDeviceIsOpen() {
+        #expect(RoutingRules.evaluate(RoutingInput(availability: Self.all, previousRoute: .onDevice)) == .open(allowed: [.onDevice, .appleCloud, .cloud]))
+    }
+
+    @Test func aTurnAfterTheCloudModelStillMovesUpWhenTheChatIsTooLong() {
+        // The previous route doesn't fit any more: the usual too-long handling applies.
+        let input = RoutingInput(availability: Self.all, estimatedTokens: 9_000, contextBudgets: [.onDevice: 4_000, .appleCloud: 8_000],
+                                 previousRoute: .appleCloud)
+        #expect(RoutingRules.evaluate(input).decidedRoute == .cloud)
+    }
+
+    @Test func afterAPrivateTurnTheChatStaysOnApplesModels() async {
+        let input = RoutingInput(availability: Self.all, previousRoute: .cloud, hasPrivateHistory: true)
+        #expect(RoutingRules.evaluate(input) == .open(allowed: [.onDevice, .appleCloud]))
+        let complex = await Router(classifier: FakeClassifier.always("complex")).route("Which is better?", input: input)
+        #expect(complex.decision?.route == .appleCloud)
+        #expect(complex.decision?.reason == "Kept private: earlier messages were private")
+        #expect(complex.decision?.decidedByPrivacy == true)
+
+        // With Apple Cloud off, the reason says why rather than "only On-device is available".
+        let onlyDevice = RoutingInput(availability: [.onDevice: .available, .appleCloud: .unavailable(reason: "off"), .cloud: .available],
+                                      hasPrivateHistory: true)
+        #expect(RoutingRules.evaluate(onlyDevice) == .decided(RouteDecision(
+            route: .onDevice, reason: "Kept private: earlier messages were private", source: .rule, decidedByPrivacy: true)))
+    }
+
+    @Test func afterAPrivateTurnNamingTheCloudModelStillReachesIt() {
+        let input = RoutingInput(availability: Self.all, hasPrivateHistory: true, namedRoute: .cloud)
+        #expect(RoutingRules.evaluate(input).decidedRoute == .cloud)
+        // A private turn never does, named or not.
+        let privateTurn = RoutingInput(privacyReason: "card number", availability: Self.all, hasPrivateHistory: true, namedRoute: .cloud)
+        #expect(RoutingRules.evaluate(privateTurn).decidedRoute == .onDevice)
+    }
+
+    @Test func aBareFollowUpToANamedCloudReplyStaysThereInAPrivateChat() {
+        // The user asked for the cloud model last turn; "Why?" continues that.
+        let input = RoutingInput(availability: Self.all, followsUpOn: .cloud, previousRoute: .cloud, hasPrivateHistory: true)
+        #expect(RoutingRules.evaluate(input) == .decided(RouteDecision(route: .cloud, reason: "Follow-up", source: .rule)))
+    }
+
+    @Test func namingTheCloudModelInALongPrivateChatSaysItIsTooLong() async {
+        let input = RoutingInput(availability: Self.all, estimatedTokens: 9_000, contextBudgets: [.cloud: 8_000],
+                                 hasPrivateHistory: true, namedRoute: .cloud)
+        let decision = await Router(classifier: FakeClassifier.always("complex")).route("Ask Claude which is better", input: input).decision
+        #expect(decision?.tooLongFor == .cloud)
+        #expect(decision?.decidedByPrivacy == false)
+    }
+
     @Test func eachVariantGetsItsTunedInstructions() {
         #expect(OnDeviceClassifier.InstructionSet.tuned(for: .core3) == .core)
         #expect(OnDeviceClassifier.InstructionSet.tuned(for: .coreAdvanced3) == .advancedB)

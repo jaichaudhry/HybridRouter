@@ -165,7 +165,7 @@ public struct EscalationPolicy: Equatable, Sendable {
         let higher = candidates.filter { Route.allCases.firstIndex(of: $0)! > order }
         let lower = candidates.filter { Route.allCases.firstIndex(of: $0)! < order }
 
-        if shouldEscalate(cause), let next = higher.first(where: { !(input.isPrivate && $0 == .cloud) }) {
+        if shouldEscalate(cause), let next = higher.first(where: { !(input.keepsOffCloud && $0 == .cloud) }) {
             return .retry(RouteDecision(route: next, reason: "Escalated: \(cause.label)", source: .escalation))
         }
         // A smaller model can't fix a context overflow, and a refusal or guardrail is the
@@ -173,7 +173,7 @@ public struct EscalationPolicy: Equatable, Sendable {
         if fallsBack, fallsBackOn(cause), let next = lower.last {
             return .retry(RouteDecision(route: next, reason: "Fell back: \(cause.label)", source: .escalation))
         }
-        if shouldEscalate(cause), input.isPrivate, higher.contains(.cloud) {
+        if shouldEscalate(cause), input.keepsOffCloud, higher.contains(.cloud) {
             return .stop(reason: "Kept private, so this wasn't sent to \(input.labels.name(.cloud)) (\(cause.label)).")
         }
         return .stop(reason: shouldEscalate(cause)

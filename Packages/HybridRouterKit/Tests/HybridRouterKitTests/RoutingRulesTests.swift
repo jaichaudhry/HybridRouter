@@ -296,7 +296,7 @@ struct RouteMentionTests {
         #expect(muse.contains("shared by 3 models: Apple's on-device model, Apple Private Cloud Compute and Muse Wonder"))
         #expect(muse.contains("This reply is from Muse Wonder"))
         // Said only when asked, or models sign every reply with it.
-        #expect(muse.contains("Don't mention this unless the user asks"))
+        #expect(muse.contains("Don't mention this or sign your reply with a model name unless the user asks"))
     }
 
     @Test func routeNoteListsOnlyAvailableModels() {

@@ -137,17 +137,17 @@ struct SnapshotTests {
         }
         let first = assistant(cloud: FakeProvider(route: .cloud, reply: "plan"))
         _ = await first.respond(to: "Email me at sam@example.com")
-        _ = await first.respond(to: "Plan a weekend in Lisbon")
+        _ = await first.respond(to: "Ask Claude to plan a weekend in Lisbon")
         let data = try JSONEncoder().encode(first.snapshot())
 
         let cloud = FakeProvider(route: .cloud, reply: "more")
         let second = assistant(cloud: cloud, restoring: try decoded(data).restore())
         #expect(!second.restoredConservatively)
         #expect(second.session.transcript.count == first.session.transcript.count)
-        _ = await second.respond(to: "Add a museum")
+        _ = await second.respond(to: "Ask Claude to add a museum")
         let seen = String(describing: try #require(cloud.requests.last))
         #expect(!seen.contains("sam@example.com"))
-        #expect(seen.contains("Plan a weekend in Lisbon"))
+        #expect(seen.contains("plan a weekend in Lisbon"))
     }
 
     @Test func decisionsAndRepliesAreCodable() throws {

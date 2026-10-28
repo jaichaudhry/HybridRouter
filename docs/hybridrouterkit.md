@@ -93,8 +93,8 @@ for await event in assistant.send("Compare these two hotels") {
 
 Out of the box it:
 
-- **checks privacy on-device first.** Card numbers, IDs, contact details and health terms, plus messages with an image or sent with `isPrivate: true`, stay on Apple's models. The cloud model only ever sees `[Private message withheld]` in their place. Set `privacyGuard = nil` or `keepsImagesPrivate = false` to change that.
-- **routes each message** with the rules, the exact-answer check and the on-device classifier. Pass `route:` to force one.
+- **checks privacy on-device first.** Card numbers, IDs, contact details and health terms, plus messages with an image or sent with `isPrivate: true`, stay on Apple's models. The cloud model only ever sees `[Private message withheld]` in their place, so later turns in that conversation stay on Apple's models too, unless the user names the cloud model ("ask Claude…"). Set `privacyGuard = nil` or `keepsImagesPrivate = false` to change that.
+- **routes each message** with the rules, the exact-answer check and the on-device classifier. After a reply from a larger model, the next message stays at least that large. Pass `route:` to force one.
 - **handles failures.** A rate limit, timeout or dropped connection is retried once on the same route after about a second. The turn then escalates one route up, or **falls back** to a smaller model when nothing above can help, for example when Claude stays rate limited or the phone goes offline mid-reply. A route the user forced is retried but never moved.
 - **tracks the network** and **keeps the Claude key out of logs.**
 
@@ -186,7 +186,7 @@ historyPolicy: .recentTurns(6)                      // or a fixed number of turn
 historyPolicy: HistoryPolicy(limits: [.onDevice: .tokens(2_000), .appleCloud: .tokens(20_000)])
 ```
 
-Without a limit, a long conversation (or one pasted document) soon outgrows the on-device model's 4K-token window, and every later turn, even "thanks", has to leave the phone. With one, the on-device model sees only recent turns, so short turns can stay on the phone. The cost is that it can't see older turns. The context-fit rule checks each route against the history it will actually see.
+Without a limit, a long conversation (or one pasted document) soon outgrows the on-device model's window (4K tokens on a Mac's AFM 3 Core, 8K on an iPhone 17 Pro Max's Core Advanced), and every later turn, even "thanks", has to leave the phone. With one, the on-device model sees only recent turns, so short turns can stay on the phone. The cost is that it can't see older turns. The context-fit rule checks each route against the history it will actually see.
 
 A token limit usually works better than a turn count. On the benchmark, an exchange is about 115 tokens when the phone answers and about 300 when Claude does, and long answers run past 1,000. A fixed turn count either forgets too much or doesn't fit.
 

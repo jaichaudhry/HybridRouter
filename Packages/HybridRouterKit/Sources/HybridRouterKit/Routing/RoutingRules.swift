@@ -29,6 +29,12 @@ public struct RoutingInput: Equatable, Sendable {
     /// The route of the previous reply, if this turn is a bare follow-up question to it
     /// ("Why?"). Such turns stay on that route.
     public var followsUpOn: Route?
+    /// The route of the previous reply, for any turn. A turn after a larger model's reply
+    /// doesn't move to a smaller one.
+    public var previousRoute: Route?
+    /// Earlier turns in the chat were private, so the cloud model only sees placeholders for
+    /// them. Later turns stay on Apple's models unless the user names the cloud model.
+    public var hasPrivateHistory: Bool
     /// The previous user message, shown to the classifier for short turns.
     public var previousPrompt: String?
     /// A route the user named in the message ("ask Claude"). See ``RouteMention``.
@@ -52,6 +58,8 @@ public struct RoutingInput: Equatable, Sendable {
         hasImage: Bool = false,
         visionRoutes: Set<Route> = [],
         followsUpOn: Route? = nil,
+        previousRoute: Route? = nil,
+        hasPrivateHistory: Bool = false,
         previousPrompt: String? = nil,
         namedRoute: Route? = nil,
         labels: RouteLabels = .standard,
@@ -69,6 +77,8 @@ public struct RoutingInput: Equatable, Sendable {
         self.hasImage = hasImage
         self.visionRoutes = visionRoutes
         self.followsUpOn = followsUpOn
+        self.previousRoute = previousRoute
+        self.hasPrivateHistory = hasPrivateHistory
         self.previousPrompt = previousPrompt
         self.namedRoute = namedRoute
         self.labels = labels
@@ -76,6 +86,13 @@ public struct RoutingInput: Equatable, Sendable {
     }
 
     public var isPrivate: Bool { privacyReason != nil }
+
+    /// The cloud model is off limits for this turn: the turn is private, or earlier turns were
+    /// and the user didn't ask for the cloud model by name (or follow up on a reply they asked
+    /// it for). Routing, escalation and fallback all check this.
+    public var keepsOffCloud: Bool {
+        isPrivate || (hasPrivateHistory && namedRoute != .cloud && followsUpOn != .cloud)
+    }
 
     func fits(_ route: Route) -> Bool {
         contextBudgets[route].map { (estimatedTokensByRoute[route] ?? estimatedTokens) <= $0 } ?? true
@@ -170,9 +187,14 @@ public enum RoutingRules {
             return .decided(.forced(override, labels: input.labels))
         }
 
-        // A1 Privacy and A2 availability narrow the candidates.
+        // A1 Privacy and A2 availability narrow the candidates. After a private turn, the cloud
+        // model sees that turn, and the Apple-route turns after it, only as placeholders, so it
+        // can't answer what builds on them: on the multi-turn benchmark it failed all 7 such
+        // turns, asking for details it couldn't see. The rest of the chat stays on Apple's
+        // models, unless the user asks for the cloud model by name.
+        let keepsHistoryPrivate = input.keepsOffCloud && !input.isPrivate
         var allowed = Route.allCases.filter(input.isAvailable)
-        if input.isPrivate {
+        if input.keepsOffCloud {
             allowed.removeAll { $0 == .cloud }
         }
         if !input.isOnline {
@@ -225,6 +247,27 @@ public enum RoutingRules {
         // the cloud model: the on-device model gets about half of these wrong.
         if let exact = input.exactAnswer, fitting.contains(.cloud) {
             return .decided(RouteDecision(route: .cloud, reason: "Needs an exact answer (\(exact.label))", source: .rule))
+        }
+
+        // The previous reply came from a larger model: stay at least that large. A smaller model
+        // reworking a larger one's answer ("Shorter, as a bullet list") dropped parts of it or
+        // made errors: 16 of 28 such turns failed on the multi-turn benchmark, against none of
+        // 44 that stayed on the cloud model.
+        if let previous = input.previousRoute, previous != .onDevice, fitting.contains(previous) {
+            let atLeast = fitting.filter { $0.size >= previous.size }
+            if atLeast.count == 1 {
+                return .decided(RouteDecision(route: previous, reason: "Same model as the last reply", source: .rule))
+            }
+            fitting = atLeast
+        }
+
+        // Earlier private turns keep the chat on Apple's models. With only one of them left,
+        // say why rather than "only this one is available".
+        if keepsHistoryPrivate, fitting.count == 1 {
+            return .decided(RouteDecision(
+                route: fitting[0], reason: "Kept private: earlier messages were private",
+                source: .rule, decidedByPrivacy: true
+            ))
         }
 
         // Only one route is available and big enough: no choice left for the classifier.
