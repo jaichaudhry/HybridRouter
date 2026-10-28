@@ -51,6 +51,26 @@ Intervals are 95% paired bootstrap ranges.
 - **The "what does it need?" classifier** asks the on-device model what a prompt needs instead of how complex it sounds. It's consistently cheaper, but its effect on quality is unclear, so it stays an experiment, a candidate for a future "save money" setting.
 - **What didn't work:** asking the on-device model to check its own answers. It called 94% of them trustworthy, wrong ones included. Learned routers on 175 examples weren't better than the classifier either. Giving the on-device model tools for exact answers (a calculator, date maths, time zones, counting and unit conversion) instead of sending those questions to the cloud: it passed 11 of 20 of them against Sonnet's 19, fewer of the other prompts, and slowed every reply from 1.9 to 7.0 s, so the tools were removed ([details](../Evals/results/2026-10-16-on-device-tools.md)). Details are in [`Evals/results/2026-10-15-routing-replays.md`](../Evals/results/2026-10-15-routing-replays.md).
 
+## Multi-turn conversations
+
+Single prompts don't test what happens across a chat: follow-ups, private turns, chats that outgrow the on-device window, and outages mid-conversation. The [multi-turn benchmark](../Evals/multiturn_benchmark.json) has 36 conversations of 4–6 turns (169 turns, 9 conversations held out), in four groups: follow-ups, privacy, long chats with a pasted document of about 5,000 tokens, and failures with an injected rate limit, timeout or dropped connection. Each conversation runs start to finish under the router, always on-device and always Claude Sonnet, on an iPhone 17 Pro Max (8K on-device window), and Claude Opus grades every turn. A conversation passes only if every turn does.
+
+| On an iPhone 17 Pro Max | Turns passed | Whole conversations passed | Cost per conversation | On the phone |
+|---|---|---|---|---|
+| Router in 0.6.0 | 77% | 25% | $0.026 | 45% |
+| **Router now** | **83%** | **61%** | **$0.031** | **28%** |
+| Always on-device | 54% | 11% | $0 | 100% |
+| Always Claude Sonnet | 97% | 86% | $0.038 | 0% |
+
+Held out: the router passes 76% of turns and 57% of conversations (Claude: 94% and 71%).
+
+- **What changed:** after a reply from a larger model, the next turn doesn't move to a smaller one; after a private turn, the rest of the chat stays on Apple's models; speeds count as exact answers. Follow-ups that stayed on the model that answered before went from 36 to 50 of 53.
+- **On follow-ups and long chats the router matches Claude:** 16 of 20 conversations pass on both, with the same two Claude misses in each. Every long chat started with a document summary, which the router sent to Claude and kept there, so moving a chat up mid-way still hasn't been tested on the phone. Recall questions passed 100% on the router and 61% on-device.
+- **Most of the remaining failures are by design.** 7 of the 14 failing conversations are privacy chats: Apple Cloud isn't available in this run, so after a private turn everything stays on the phone, and always-on-device fails 6 of those 8 chats too. Always Claude passes them only because it sends the private turns to Claude. No private content leaked. 3 more are outages longer than one retry, where the turn falls back to the on-device model as intended.
+- **Cost:** 18% cheaper than always-Claude. Keeping follow-ups on the larger model sends more to Claude than 0.6.0 did, and the long-chat documents are now longer, so the two runs' costs don't compare directly.
+
+The results cost $12.18, four fifths of it the Opus judge. $2.61 of that is the always-on-device and always-Claude runs for the 20 conversations whose prompts didn't change, reused from the first run. Results are in [`Evals/results/2026-10-28-iphone-multiturn.md`](../Evals/results/2026-10-28-iphone-multiturn.md).
+
 ## Speech-to-text
 
 Apple's on-device `SpeechTranscriber`, on 20 prompts read aloud on an iPhone (Settings › Developer › Speech check):
