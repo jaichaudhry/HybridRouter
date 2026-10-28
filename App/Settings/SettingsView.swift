@@ -129,6 +129,9 @@ struct SettingsView: View {
                     NavigationLink("Answer quality") {
                         QualityEvalView(app: model)
                     }
+                    NavigationLink("Conversations") {
+                        MultiTurnEvalView(app: model)
+                    }
                     NavigationLink("Speech check") {
                         SpeechCheckView(app: model)
                     }

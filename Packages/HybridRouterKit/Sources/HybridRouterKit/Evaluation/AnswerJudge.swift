@@ -67,6 +67,9 @@ public struct ModelAnswerJudge: AnswerJudge {
 
     static func prompt(for benchmarkCase: QualityBenchmark.Case, answer: String) -> String {
         var parts: [String] = []
+        if let conversation = benchmarkCase.conversation {
+            parts.append("The conversation so far (judge only the final answer, in its context):\n\(conversation)")
+        }
         if let previous = benchmarkCase.previousPrompt {
             parts.append("Earlier in the conversation the user asked:\n\(previous)")
         }

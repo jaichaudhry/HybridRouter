@@ -22,8 +22,10 @@
 		82A204264E0B2AC4EC6255CE /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D9E8BDCF8EEBF317AD45C7 /* AppConfig.swift */; };
 		91492B8BCA83F48890A1E49E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3A2B3F2007FA3C54EF3F9DF /* ContentView.swift */; };
 		9A3883F1B0A1332A5DC8F297 /* 2026-10-15-iphone-quality-testset.json in Resources */ = {isa = PBXBuildFile; fileRef = 956E9CD1DDE33B8C4C3FFE15 /* 2026-10-15-iphone-quality-testset.json */; };
+		9AF7BCB0911BB6482FA4C188 /* multiturn_benchmark.json in Resources */ = {isa = PBXBuildFile; fileRef = 228B3D0D9B93AD2EAED74EB0 /* multiturn_benchmark.json */; };
 		A29724AA347156C6ED0AE5E7 /* PlacesTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EDA3B0B2C8A6931897A98E6 /* PlacesTool.swift */; };
 		A85ED142CB286D27CA187F13 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */; };
+		B274CFC1F72C761F276265CD /* MultiTurnEvalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2B3C7903C2B56F58D03909 /* MultiTurnEvalView.swift */; };
 		C020849E266F855ECC342AEB /* DocumentHelperScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 749770A29283B53825397EEC /* DocumentHelperScenario.swift */; };
 		D026BB74E903117DCE548FD2 /* HybridRouterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F403000424EB9780533C886E /* HybridRouterApp.swift */; };
 		D169671AD8291E5F8AFF8848 /* MeasureRoutesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2A77CA1F811B723F0F5882C /* MeasureRoutesView.swift */; };
@@ -40,6 +42,7 @@
 		18B5B6663B7DB28AA51BD343 /* QualityEvalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QualityEvalView.swift; sourceTree = "<group>"; };
 		20F77900120E6155D0FC4141 /* Itinerary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Itinerary.swift; sourceTree = "<group>"; };
 		21346C9E4202204A5B4C946C /* ItineraryCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItineraryCards.swift; sourceTree = "<group>"; };
+		228B3D0D9B93AD2EAED74EB0 /* multiturn_benchmark.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = multiturn_benchmark.json; sourceTree = "<group>"; };
 		2A0B5D7416B9B563BDAC2D6E /* classifier_benchmark.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = classifier_benchmark.json; sourceTree = "<group>"; };
 		2D5D235154C4571E34593212 /* TripPlannerScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlannerScenario.swift; sourceTree = "<group>"; };
 		40D9B067395E4F3454748AD4 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
@@ -63,6 +66,7 @@
 		E3D9E8BDCF8EEBF317AD45C7 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		EDBBF4A2C281E5F4F69565DD /* HybridRouterKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HybridRouterKit; path = Packages/HybridRouterKit; sourceTree = SOURCE_ROOT; };
 		EDBDECAC3AE3C5005D93777B /* DocumentSchemas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentSchemas.swift; sourceTree = "<group>"; };
+		EF2B3C7903C2B56F58D03909 /* MultiTurnEvalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiTurnEvalView.swift; sourceTree = "<group>"; };
 		F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		F403000424EB9780533C886E /* HybridRouterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HybridRouterApp.swift; sourceTree = "<group>"; };
 		F8E24A6F752500FF0E3D76E5 /* RoutingBenchmarkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingBenchmarkView.swift; sourceTree = "<group>"; };
@@ -131,6 +135,7 @@
 			children = (
 				B1270BE3E83D2B9E245B8ED1 /* AppleCloudChecksView.swift */,
 				E2A77CA1F811B723F0F5882C /* MeasureRoutesView.swift */,
+				EF2B3C7903C2B56F58D03909 /* MultiTurnEvalView.swift */,
 				18B5B6663B7DB28AA51BD343 /* QualityEvalView.swift */,
 				F8E24A6F752500FF0E3D76E5 /* RoutingBenchmarkView.swift */,
 				F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */,
@@ -164,6 +169,7 @@
 			isa = PBXGroup;
 			children = (
 				2A0B5D7416B9B563BDAC2D6E /* classifier_benchmark.json */,
+				228B3D0D9B93AD2EAED74EB0 /* multiturn_benchmark.json */,
 				4EE4F5466197C29F330B6A58 /* quality_benchmark.json */,
 				A12CA4D69F48FB5D4D33778A /* quality_testset.json */,
 				A3C25A17FF49FB4EF895D71A /* results */,
@@ -264,6 +270,7 @@
 				9A3883F1B0A1332A5DC8F297 /* 2026-10-15-iphone-quality-testset.json in Resources */,
 				31E817D090FB2CC071C90B6D /* AppIcon.icon in Resources */,
 				E513A3FEF9215BCE00EC66E8 /* classifier_benchmark.json in Resources */,
+				9AF7BCB0911BB6482FA4C188 /* multiturn_benchmark.json in Resources */,
 				7D981EF0DE2488E69D3A6EA5 /* quality_benchmark.json in Resources */,
 				F50724C376D4DA06F17837A9 /* quality_testset.json in Resources */,
 			);
@@ -287,6 +294,7 @@
 				522962104E2B3019DAD7EBE3 /* Itinerary.swift in Sources */,
 				529DD3CECA47CE1207474B77 /* ItineraryCards.swift in Sources */,
 				D169671AD8291E5F8AFF8848 /* MeasureRoutesView.swift in Sources */,
+				B274CFC1F72C761F276265CD /* MultiTurnEvalView.swift in Sources */,
 				A29724AA347156C6ED0AE5E7 /* PlacesTool.swift in Sources */,
 				5CC9B639AB5132479D7B3F26 /* QualityEvalView.swift in Sources */,
 				7B1A64C6A3AEAAED2E5603B3 /* RoutingBenchmarkView.swift in Sources */,

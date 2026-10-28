@@ -18,10 +18,12 @@ public enum QualityBenchmark {
         public let previousPrompt: String?
         /// What a correct answer must contain, for the judge. Nil for open-ended prompts.
         public let criteria: String?
+        /// The conversation before this prompt, for the judge, in multi-turn runs.
+        public let conversation: String?
 
         public init(
             id: Int, split: String, group: String, task: String, difficulty: String,
-            prompt: String, previousPrompt: String? = nil, criteria: String? = nil
+            prompt: String, previousPrompt: String? = nil, criteria: String? = nil, conversation: String? = nil
         ) {
             self.id = id
             self.split = split
@@ -31,6 +33,7 @@ public enum QualityBenchmark {
             self.prompt = prompt
             self.previousPrompt = previousPrompt
             self.criteria = criteria
+            self.conversation = conversation
         }
     }
 

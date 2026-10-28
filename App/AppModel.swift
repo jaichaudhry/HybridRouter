@@ -254,6 +254,28 @@ final class AppModel {
         )
     }
 
+    /// A fresh session for the multi-turn benchmark: Claude Sonnet behind `tap`, and Apple Cloud
+    /// only with the real entitlement, never the stand-in, so the router's choices match the app.
+    func makeMultiTurnSession(tap: CloudTap) -> RoutedSession {
+        Self.makeSession(
+            instructions: QualityBenchmark.answerInstructions,
+            config: config,
+            cloud: tap.wrap(ClaudeProvider(auth: claudeAuth, tier: .standard)),
+            costTable: costTable,
+            simulatesAppleCloud: false
+        )
+    }
+
+    /// The app's coordinator, as a chat runs turns, for the multi-turn benchmark. Long chats move
+    /// up to a larger model, the default.
+    func makeMultiTurnCoordinator() -> TurnCoordinator {
+        TurnCoordinator(
+            router: Router(classifier: OnDeviceClassifier(), detectsExactAnswers: true, whenTooLong: .useLargerModel),
+            estimator: OnDeviceTokenEstimator(),
+            isOnline: { [network] in network.isOnline }
+        )
+    }
+
     func makeCoordinator(for scenario: any Scenario) -> TurnCoordinator {
         Self.makeCoordinator(scenario: scenario, network: network, longChats: longChats)
     }
