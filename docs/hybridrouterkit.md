@@ -6,13 +6,13 @@ HybridRouterKit is a Swift package with no UI.
 
 **Requirements:** Xcode 27, an iOS 27 or macOS 27 target, and a device or simulator with Apple Intelligence turned on, for the on-device model and classifier. A cloud model is optional.
 
-**In Xcode:** choose **File › Add Package Dependencies…**, paste `https://github.com/jaichaudhry/HybridRouter`, choose **Up to Next Major Version** from `0.6.0`, and add the **HybridRouterKit** library to your app target.
+**In Xcode:** choose **File › Add Package Dependencies…**, paste `https://github.com/jaichaudhry/HybridRouter`, choose **Up to Next Major Version** from `0.7.0`, and add the **HybridRouterKit** library to your app target.
 
 **In `Package.swift`:**
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.6.0"),
+    .package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.7.0"),
 ],
 targets: [
     .target(name: "MyApp", dependencies: [

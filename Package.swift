@@ -3,7 +3,7 @@ import PackageDescription
 
 // Lets other apps depend on HybridRouterKit with this repository's URL:
 //
-//     .package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.6.0")
+//     .package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.7.0")
 //
 // The targets live in Packages/HybridRouterKit, which the app and its tests use directly. Keep this
 // manifest in step with Packages/HybridRouterKit/Package.swift; CI builds both.

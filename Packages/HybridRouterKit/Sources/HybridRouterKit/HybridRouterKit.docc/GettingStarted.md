@@ -7,7 +7,7 @@ Add HybridRouterKit to an app and route a conversation.
 HybridRouterKit needs iOS 27 or macOS 27. In Xcode, add the package `https://github.com/jaichaudhry/HybridRouter` and the `HybridRouterKit` library, or in `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.6.0")
+.package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.7.0")
 ```
 
 ## Route a conversation

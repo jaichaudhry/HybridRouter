@@ -89,7 +89,7 @@ All three models implement Apple's `LanguageModel` protocol, so one `LanguageMod
 ## Use HybridRouterKit in your app
 
 ```swift
-.package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.6.0")
+.package(url: "https://github.com/jaichaudhry/HybridRouter", from: "0.7.0")
 ```
 
 ```swift
