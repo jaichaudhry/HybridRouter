@@ -230,7 +230,8 @@ public final class ChatModel {
     public var steps: [StepMetrics] { messages.flatMap(\.steps) }
 
     public var summary: SessionSummary {
-        SessionSummary(steps: steps, costTable: costTable, cloudModelID: session.provider(for: .cloud).modelID)
+        let cloud = session.provider(for: .cloud)
+        return SessionSummary(steps: steps, costTable: costTable.including([cloud]), cloudModelID: cloud.modelID)
     }
 
     /// Sends the draft, or `text` if given (e.g. a sample-prompt chip).

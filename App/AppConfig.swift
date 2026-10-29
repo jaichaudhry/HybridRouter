@@ -9,6 +9,8 @@ struct AppConfig {
     let developerKey: String?
     /// A Meta Model API key for Muse Wonder, for Debug builds only.
     let metaDeveloperKey: String?
+    /// An OpenRouter key, for Debug builds only. Shipped builds use the person's own key.
+    let openRouterDeveloperKey: String?
 
     static func load(bundle: Bundle = .main) -> AppConfig {
         func value(_ key: String) -> String? {
@@ -20,7 +22,8 @@ struct AppConfig {
             // Only from the gitignored Secrets.xcconfig. The shared scheme is committed, so keys
             // must never go in its environment variables.
             developerKey: value("HRDeveloperAnthropicKey"),
-            metaDeveloperKey: value("HRDeveloperMetaKey")
+            metaDeveloperKey: value("HRDeveloperMetaKey"),
+            openRouterDeveloperKey: value("HRDeveloperOpenRouterKey")
         )
     }
 
@@ -28,6 +31,15 @@ struct AppConfig {
     var allowedMetaDeveloperKey: String? {
         #if DEBUG
         metaDeveloperKey
+        #else
+        nil
+        #endif
+    }
+
+    /// The OpenRouter developer key, if this build may use one. Never in Release.
+    var allowedOpenRouterDeveloperKey: String? {
+        #if DEBUG
+        openRouterDeveloperKey
         #else
         nil
         #endif

@@ -44,9 +44,11 @@ public struct SessionSummaryView: View {
     }
 }
 
-/// "$0.42 saved vs. all-Claude", how many steps stayed with Apple, and a route-mix donut.
+/// "$0.42 saved vs. all-Claude" (named for the cloud model), how many steps stayed with Apple,
+/// and a route-mix donut.
 private struct SummaryHero: View {
     let summary: SessionSummary
+    @Environment(\.routeLabels) private var labels
 
     var body: some View {
         HStack(spacing: 20) {
@@ -55,7 +57,7 @@ private struct SummaryHero: View {
                     .font(.largeTitle.weight(.semibold))
                     .fontDesign(.rounded)
                     .monospacedDigit()
-                Text("saved vs. all-Claude")
+                Text("saved vs. all-\(labels.cloudName)")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Text("\(appleSteps) of \(summary.stepCount) steps stayed with Apple")

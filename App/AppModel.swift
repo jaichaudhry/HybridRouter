@@ -52,6 +52,19 @@ final class AppModel {
 
     /// Bumped when the Meta key changes, so views reading `hasMetaKey` refresh.
     private var metaKeyVersion = 0
+    /// Bumped when the OpenRouter key changes, so views reading `hasUserOpenRouterKey` refresh.
+    private var openRouterKeyVersion = 0
+    /// The model on OpenRouter that serves the cloud route when ``cloudModel`` is `.openRouter`.
+    var openRouterModel: OpenRouterModel = AppModel.storedOpenRouterModel {
+        didSet {
+            if let data = try? JSONEncoder().encode(openRouterModel) {
+                UserDefaults.standard.set(data, forKey: Self.openRouterModelKey)
+            }
+            rebuildSessions()
+        }
+    }
+    /// OpenRouter's model list, cached so the picker opens offline. Refreshed from Settings.
+    private(set) var openRouterCatalog: OpenRouterCatalog? = AppModel.cachedOpenRouterCatalog
     /// Why App Attest was abandoned this launch, if it was.
     private(set) var appAttestFailure: String?
     /// The open chat in each scenario. The app starts with new chats; saved ones open from the
@@ -91,7 +104,8 @@ final class AppModel {
         let auth = Self.resolveAuth(config: config, secrets: secrets, skipAppAttest: false)
         self.claudeAuth = auth
         let network = network
-        let cloud = Self.cloudProvider(Self.storedCloudModel, auth: auth, metaKey: Self.metaKey(config: config, secrets: secrets))
+        let cloud = Self.cloudProvider(Self.storedCloudModel, auth: auth, metaKey: Self.metaKey(config: config, secrets: secrets),
+                                       openRouterKey: Self.openRouterKey(config: config, secrets: secrets), openRouterModel: Self.storedOpenRouterModel)
         var chats: [String: ChatModel] = [:]
         for scenario in scenarios {
             chats[scenario.id] = ChatModel(
@@ -280,7 +294,8 @@ final class AppModel {
         Self.makeCoordinator(scenario: scenario, network: network, longChats: longChats)
     }
 
-    var prices: CostTable { costTable }
+    /// Prices, including the current OpenRouter model's from its catalog.
+    var prices: CostTable { costTable.including([currentCloudProvider]) }
 
     var hasUserKey: Bool {
         ((try? secrets.read(KeychainStore.claudeAPIKeyAccount)) ?? nil) != nil
@@ -336,8 +351,8 @@ final class AppModel {
         UserDefaults.standard.string(forKey: cloudModelKey).flatMap(CloudModel.init(rawValue:)) ?? .claude
     }
 
-    /// Names for the UI, with the cloud route named for the model serving it.
-    var routeLabels: RouteLabels { RouteLabels(cloud: cloudModel) }
+    /// Names for the UI, with the cloud route named for the model serving it, e.g. "GPT-5.6 Luna".
+    var routeLabels: RouteLabels { RouteLabels(cloud: currentCloudProvider) }
 
     /// The user's Meta key from the Keychain, else the Debug-only developer key.
     var metaKey: String? {
@@ -364,7 +379,7 @@ final class AppModel {
     }
 
     private var currentCloudProvider: any ModelProvider {
-        Self.cloudProvider(cloudModel, auth: claudeAuth, metaKey: metaKey)
+        Self.cloudProvider(cloudModel, auth: claudeAuth, metaKey: metaKey, openRouterKey: openRouterKey, openRouterModel: openRouterModel)
     }
 
     private static func metaKey(config: AppConfig, secrets: any SecretStore) -> String? {
@@ -372,11 +387,70 @@ final class AppModel {
         return userKey ?? config.allowedMetaDeveloperKey
     }
 
-    private static func cloudProvider(_ model: CloudModel, auth: ClaudeAuth, metaKey: String?) -> any ModelProvider {
+    private static func cloudProvider(_ model: CloudModel, auth: ClaudeAuth, metaKey: String?,
+                                      openRouterKey: String?, openRouterModel: OpenRouterModel) -> any ModelProvider {
         switch model {
         case .claude: ClaudeProvider(auth: auth)
         case .museWonder: MuseProvider(apiKey: metaKey)
+        case .openRouter: OpenRouterProvider(apiKey: openRouterKey, model: openRouterModel)
         }
+    }
+
+    // MARK: OpenRouter
+
+    static let openRouterAPIKeyAccount = "openrouter-api-key"
+    /// OpenRouter only calls back to https pages; this one (site/openrouter/index.html, on GitHub
+    /// Pages) forwards the sign-in code to the app's scheme.
+    static let openRouterCallbackURL = URL(string: "https://jaichaudhry.github.io/HybridRouter/openrouter/")!
+    static let openRouterCallbackScheme = "hybridrouter"
+    private static let openRouterModelKey = "HROpenRouterModel"
+    private static let openRouterCatalogFile = URL.cachesDirectory.appending(path: "openrouter-models.json")
+
+    private static var storedOpenRouterModel: OpenRouterModel {
+        UserDefaults.standard.data(forKey: openRouterModelKey)
+            .flatMap { try? JSONDecoder().decode(OpenRouterModel.self, from: $0) } ?? .claudeSonnet
+    }
+
+    private static var cachedOpenRouterCatalog: OpenRouterCatalog? {
+        (try? Data(contentsOf: openRouterCatalogFile)).flatMap { try? JSONDecoder().decode(OpenRouterCatalog.self, from: $0) }
+    }
+
+    /// The user's OpenRouter key from the Keychain, else the Debug-only developer key.
+    var openRouterKey: String? {
+        _ = openRouterKeyVersion
+        return Self.openRouterKey(config: config, secrets: secrets)
+    }
+
+    /// Whether the user saved their own OpenRouter key (not the developer one).
+    var hasUserOpenRouterKey: Bool {
+        _ = openRouterKeyVersion
+        return ((try? secrets.read(Self.openRouterAPIKeyAccount)) ?? nil) != nil
+    }
+
+    func saveOpenRouterKey(_ key: String) throws {
+        try secrets.write(key.trimmingCharacters(in: .whitespacesAndNewlines), for: Self.openRouterAPIKeyAccount)
+        openRouterKeyVersion += 1
+        rebuildSessions()
+    }
+
+    func removeOpenRouterKey() throws {
+        try secrets.delete(Self.openRouterAPIKeyAccount)
+        openRouterKeyVersion += 1
+        rebuildSessions()
+    }
+
+    /// Downloads OpenRouter's model list (public, no key) and caches it.
+    func refreshOpenRouterCatalog() async throws {
+        let catalog = try await OpenRouterCatalog.fetch()
+        openRouterCatalog = catalog
+        if let data = try? JSONEncoder().encode(catalog) {
+            try? data.write(to: Self.openRouterCatalogFile, options: .atomic)
+        }
+    }
+
+    private static func openRouterKey(config: AppConfig, secrets: any SecretStore) -> String? {
+        let userKey = (try? secrets.read(openRouterAPIKeyAccount)) ?? nil
+        return userKey ?? config.allowedOpenRouterDeveloperKey
     }
 
     // MARK: Simulated Apple Cloud (Debug builds only)

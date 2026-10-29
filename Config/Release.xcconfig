@@ -3,3 +3,4 @@
 // A developer key must never ship.
 ANTHROPIC_API_KEY =
 META_API_KEY =
+OPENROUTER_API_KEY =

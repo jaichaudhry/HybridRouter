@@ -26,6 +26,7 @@
 		A29724AA347156C6ED0AE5E7 /* PlacesTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EDA3B0B2C8A6931897A98E6 /* PlacesTool.swift */; };
 		A85ED142CB286D27CA187F13 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */; };
 		B274CFC1F72C761F276265CD /* MultiTurnEvalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2B3C7903C2B56F58D03909 /* MultiTurnEvalView.swift */; };
+		8777597D116F1E9C911BC3D1 /* OpenRouterModelPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0761F9AEA81EE67C72700E9 /* OpenRouterModelPicker.swift */; };
 		C020849E266F855ECC342AEB /* DocumentHelperScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 749770A29283B53825397EEC /* DocumentHelperScenario.swift */; };
 		D026BB74E903117DCE548FD2 /* HybridRouterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F403000424EB9780533C886E /* HybridRouterApp.swift */; };
 		D169671AD8291E5F8AFF8848 /* MeasureRoutesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2A77CA1F811B723F0F5882C /* MeasureRoutesView.swift */; };
@@ -67,6 +68,7 @@
 		EDBBF4A2C281E5F4F69565DD /* HybridRouterKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HybridRouterKit; path = Packages/HybridRouterKit; sourceTree = SOURCE_ROOT; };
 		EDBDECAC3AE3C5005D93777B /* DocumentSchemas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentSchemas.swift; sourceTree = "<group>"; };
 		EF2B3C7903C2B56F58D03909 /* MultiTurnEvalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiTurnEvalView.swift; sourceTree = "<group>"; };
+		E0761F9AEA81EE67C72700E9 /* OpenRouterModelPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenRouterModelPicker.swift; sourceTree = "<group>"; };
 		F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		F403000424EB9780533C886E /* HybridRouterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HybridRouterApp.swift; sourceTree = "<group>"; };
 		F8E24A6F752500FF0E3D76E5 /* RoutingBenchmarkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutingBenchmarkView.swift; sourceTree = "<group>"; };
@@ -136,6 +138,7 @@
 				B1270BE3E83D2B9E245B8ED1 /* AppleCloudChecksView.swift */,
 				E2A77CA1F811B723F0F5882C /* MeasureRoutesView.swift */,
 				EF2B3C7903C2B56F58D03909 /* MultiTurnEvalView.swift */,
+				E0761F9AEA81EE67C72700E9 /* OpenRouterModelPicker.swift */,
 				18B5B6663B7DB28AA51BD343 /* QualityEvalView.swift */,
 				F8E24A6F752500FF0E3D76E5 /* RoutingBenchmarkView.swift */,
 				F0D46F75FF26EAA75DE51D6F /* SettingsView.swift */,
@@ -295,6 +298,7 @@
 				529DD3CECA47CE1207474B77 /* ItineraryCards.swift in Sources */,
 				D169671AD8291E5F8AFF8848 /* MeasureRoutesView.swift in Sources */,
 				B274CFC1F72C761F276265CD /* MultiTurnEvalView.swift in Sources */,
+				8777597D116F1E9C911BC3D1 /* OpenRouterModelPicker.swift in Sources */,
 				A29724AA347156C6ED0AE5E7 /* PlacesTool.swift in Sources */,
 				5CC9B639AB5132479D7B3F26 /* QualityEvalView.swift in Sources */,
 				7B1A64C6A3AEAAED2E5603B3 /* RoutingBenchmarkView.swift in Sources */,

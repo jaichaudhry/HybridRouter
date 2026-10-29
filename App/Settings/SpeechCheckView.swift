@@ -371,7 +371,7 @@ final class SpeechCheckModel {
         let input = RoutingInput(
             privacyReason: privacy,
             availability: [.onDevice: .available, .appleCloud: .available, .cloud: .available],
-            namedRoute: RouteMention.named(in: prompt),
+            namedRoute: RouteMention.named(in: prompt, cloudName: app.routeLabels.cloudName),
             labels: app.routeLabels
         )
         let router = Router(classifier: OnDeviceClassifier(), detectsExactAnswers: true)

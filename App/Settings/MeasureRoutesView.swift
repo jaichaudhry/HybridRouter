@@ -21,7 +21,7 @@ struct MeasureRoutesView: View {
                 }
                 .disabled(measurement.isRunning)
             } footer: {
-                Text("Runs \(RouteMeasurement.speedPrompts.count) prompts on each available route, then each scenario's sample prompts on Auto. Claude replies are billed to your key (a few cents).")
+                Text("Runs \(RouteMeasurement.speedPrompts.count) prompts on each available route, then each scenario's sample prompts on Auto. \(app.routeLabels.cloudName) replies are billed to your key (a few cents).")
             }
 
             if !measurement.speed.isEmpty {
@@ -54,7 +54,7 @@ struct MeasureRoutesView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(mix.scenario).font(.subheadline.weight(.semibold))
                             Text(mix.shareText).font(.caption)
-                            Text("Cost \(ResultsFormat.money(mix.summary.totalCost)) · all-Claude \(ResultsFormat.money(mix.summary.allCloudCost)) · saved \(ResultsFormat.money(mix.summary.saved))")
+                            Text("Cost \(ResultsFormat.money(mix.summary.totalCost)) · all-\(app.routeLabels.cloudName) \(ResultsFormat.money(mix.summary.allCloudCost)) · saved \(ResultsFormat.money(mix.summary.saved))")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -137,6 +137,8 @@ final class RouteMeasurement {
     }
 
     private var appleCloudStatus = ""
+    /// The cloud model's name when the run started, for the all-cloud column.
+    private var cloudName = "Claude"
 
     private(set) var speed: [SpeedRow] = []
     private(set) var mixes: [Mix] = []
@@ -150,6 +152,7 @@ final class RouteMeasurement {
         speed = []
         mixes = []
         appleCloudStatus = Self.appleCloudStatus(app)
+        cloudName = app.routeLabels.cloudName
 
         let general = app.scenarios.first { $0.id == GeneralScenario().id } ?? app.scenarios[0]
         for route in Route.allCases {
@@ -222,7 +225,7 @@ final class RouteMeasurement {
                 lines.append("| \(row.routeName) | \(row.modelID) | \(row.firstTokenText) | \(row.tokensPerSecondText) | \(row.costText) |")
             }
         }
-        lines += ["", "| Scenario (sample prompts on Auto) | Route mix | Cost | All on Claude | Saved |", "|---|---|---|---|---|"]
+        lines += ["", "| Scenario (sample prompts on Auto) | Route mix | Cost | All on \(cloudName) | Saved |", "|---|---|---|---|---|"]
         for mix in mixes {
             lines.append("| \(mix.scenario) | \(mix.shareText) | \(ResultsFormat.money(mix.summary.totalCost)) | \(ResultsFormat.money(mix.summary.allCloudCost)) | \(ResultsFormat.money(mix.summary.saved)) |")
         }

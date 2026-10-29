@@ -69,11 +69,12 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         NSMicrophoneUsageDescription: Speak a message instead of typing it. Speech is transcribed on your device, and the audio never leaves it.
         NSSpeechRecognitionUsageDescription: Turn what you say into text on your device.
-        NSCameraUsageDescription: Scan receipts and documents. Scans stay on your device or Apple's Private Cloud Compute and are never sent to Claude or Muse Wonder.
+        NSCameraUsageDescription: Scan receipts and documents. Scans stay on your device or Apple's Private Cloud Compute and are never sent to a cloud model outside Apple.
         HRAppleCloudEnabled: $(HR_APPLE_CLOUD_ENABLED)
         HRClaudeClientID: $(CLAUDE_CLIENT_ID)
         HRDeveloperAnthropicKey: $(ANTHROPIC_API_KEY)
         HRDeveloperMetaKey: $(META_API_KEY)
+        HRDeveloperOpenRouterKey: $(OPENROUTER_API_KEY)
     settings:
       base:
         GENERATE_INFOPLIST_FILE: NO

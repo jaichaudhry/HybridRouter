@@ -1,3 +1,4 @@
+import AuthenticationServices
 import ChatUI
 import HybridRouterKit
 import SwiftUI
@@ -7,8 +8,12 @@ struct SettingsView: View {
     @Bindable var model: AppModel
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.webAuthenticationSession) private var webAuthenticationSession
+    @State private var isSigningIn = false
+    @State private var signInError: String?
     @State private var keyDraft = ""
     @State private var metaKeyDraft = ""
+    @State private var openRouterKeyDraft = ""
     @State private var errorMessage: String?
     @State private var confirmsDeleteAll = false
 
@@ -95,6 +100,48 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    LabeledContent("OpenRouter", value: model.hasUserOpenRouterKey ? "Your key" : (model.openRouterKey != nil ? "Dev key" : "Not set"))
+                    NavigationLink {
+                        OpenRouterModelPicker(app: model)
+                    } label: {
+                        LabeledContent("Model", value: model.openRouterModel.shortName)
+                    }
+                    if model.hasUserOpenRouterKey {
+                        Button("Remove your key", role: .destructive) {
+                            perform { try model.removeOpenRouterKey() }
+                        }
+                    } else {
+                        Button {
+                            Task { await signInWithOpenRouter() }
+                        } label: {
+                            if isSigningIn {
+                                ProgressView()
+                            } else {
+                                Label("Sign in with OpenRouter", systemImage: "person.badge.key")
+                            }
+                        }
+                        .disabled(isSigningIn)
+                        if let signInError {
+                            Text(signInError).font(.footnote).foregroundStyle(.red)
+                        }
+                        SecureField("Or paste an OpenRouter API key", text: $openRouterKeyDraft)
+                            .textContentType(.password)
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
+                        Button("Save key") {
+                            perform { try model.saveOpenRouterKey(openRouterKeyDraft) }
+                            openRouterKeyDraft = ""
+                        }
+                        .disabled(openRouterKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        Link("Get a key at openrouter.ai/keys", destination: URL(string: "https://openrouter.ai/keys")!)
+                    }
+                } header: {
+                    Text("OpenRouter")
+                } footer: {
+                    Text("Hundreds of models, including Claude, GPT and Gemini, with your own OpenRouter account: replies are billed to your OpenRouter credits. Signing in creates a key on your account; you can cap its spending there and revoke it at openrouter.ai/keys. Your key is stored in this device's Keychain and sent only to OpenRouter. The router was tuned and benchmarked with Claude; other models work but haven't been benchmarked.")
+                }
+
+                Section {
                     LabeledContent("Apple Cloud", value: model.isAppleCloudEnabled
                         ? "Enabled in this build"
                         : (model.simulatesAppleCloud ? "Simulated on-device" : "Not enabled"))
@@ -155,6 +202,30 @@ struct SettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
+        }
+    }
+
+    /// OpenRouter's sign-in in a browser sheet, then the code is traded for a key on the
+    /// person's account, saved to the Keychain like a pasted one.
+    private func signInWithOpenRouter() async {
+        isSigningIn = true
+        signInError = nil
+        defer { isSigningIn = false }
+        let authorization = OpenRouterAuth.authorization(callbackURL: AppModel.openRouterCallbackURL,
+                                                         keyLabel: "HybridRouter on \(UIDevice.current.name)")
+        do {
+            let callback = try await webAuthenticationSession.authenticate(
+                using: authorization.url,
+                callback: .customScheme(AppModel.openRouterCallbackScheme),
+                additionalHeaderFields: [:]
+            )
+            let code = try OpenRouterAuth.code(from: callback, expectedState: authorization.state)
+            let key = try await OpenRouterAuth.exchange(code: code, codeVerifier: authorization.codeVerifier)
+            try model.saveOpenRouterKey(key)
+        } catch let error as ASWebAuthenticationSessionError where error.code == .canceledLogin {
+            return
+        } catch {
+            signInError = error.localizedDescription
         }
     }
 
