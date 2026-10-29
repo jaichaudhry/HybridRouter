@@ -25,7 +25,7 @@
   <sub><i>An itinerary on Apple Cloud, a critique on Claude, a quick rewrite on-device. Every reply says where it ran, why and what it cost.</i></sub>
 </p>
 
-- **One conversation, three models.** Apple's on-device model, Apple Private Cloud Compute and a cloud model (Claude, or Meta's Muse Wonder) share a single transcript. Each turn goes to the one that fits it.
+- **One conversation, three models.** Apple's on-device model, Apple Private Cloud Compute and a cloud model (Claude, Meta's Muse Wonder, or any model on OpenRouter) share a single transcript. Each turn goes to the one that fits it.
 - **Private stays private.** Sensitive turns never reach the cloud model, even after retries or follow-ups. This is enforced in code and checked in tests.
 - **Measured, not guessed.** Every reply shows its route, reason, speed and cost, and a benchmark grades routing on answer quality against cost.
 
@@ -33,7 +33,7 @@
 |---|---|---|---|
 | <img src="docs/images/route-on-device.svg" width="12" alt=""> **On-device** | Apple's on-device foundation model | Quick, private or offline turns | Free |
 | <img src="docs/images/route-apple-cloud.svg" width="12" alt=""> **Apple Cloud** | Apple Private Cloud Compute | Longer context, multi-step plans | Free |
-| <img src="docs/images/route-cloud.svg" width="12" alt=""> **Cloud model** | Claude Sonnet 5.5 / Opus 5.5, or Muse Wonder | Judgment calls, trade-offs, code, exact answers | Paid |
+| <img src="docs/images/route-cloud.svg" width="12" alt=""> **Cloud model** | Claude Sonnet 5.5 / Opus 5.5, Muse Wonder, or any OpenRouter model | Judgment calls, trade-offs, code, exact answers | Paid |
 
 ## Results
 
@@ -97,7 +97,7 @@ import HybridRouterKit
 
 let assistant = HybridAssistant(
     instructions: "You are a helpful travel assistant.",
-    cloud: .claude(apiKey: key)          // or .museWonder(apiKey:), or .off for Apple's models only
+    cloud: .claude(apiKey: key)          // or .openRouter(apiKey:), .museWonder(apiKey:), or .off for Apple's models only
 )
 let reply = await assistant.respond(to: "Plan three days in Kyoto")
 print(reply.decision?.reason ?? "", reply.text)   // "Multi-step planning", the itinerary
@@ -123,9 +123,10 @@ open HybridRouter/HybridRouter.xcodeproj
 Run it. The on-device model needs no keys or accounts. Then try the three scenarios (Chat, Trip Planner and Document Helper) and Compare mode, which runs one prompt on every route side by side.
 
 <details>
-<summary><b>Add Claude, Muse Wonder or Apple Cloud</b></summary>
+<summary><b>Add Claude, OpenRouter, Muse Wonder or Apple Cloud</b></summary>
 
 - **Claude:** paste an Anthropic API key in Settings, or set `ANTHROPIC_API_KEY` in the gitignored `Config/Secrets.xcconfig` for Debug builds.
+- **OpenRouter:** sign in with OpenRouter or paste your own key in Settings › OpenRouter (or set `OPENROUTER_API_KEY`), pick any model from its catalog, then pick OpenRouter under Settings › Cloud model. Replies are billed to that key's OpenRouter credits.
 - **Muse Wonder:** paste a Meta Model API key in Settings › Muse Wonder (or set `META_API_KEY`), then pick it under Settings › Cloud model.
 - **Apple Cloud:** needs Apple's Private Cloud Compute entitlement. Until then, Debug builds can simulate it on-device.
 - **Shipping:** use App Attest instead of an embedded key.

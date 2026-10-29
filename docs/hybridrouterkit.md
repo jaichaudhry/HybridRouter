@@ -35,7 +35,7 @@ import HybridRouterKit
 
 let assistant = HybridAssistant(
     instructions: "You are a helpful travel assistant.",
-    cloud: .claude(apiKey: key)          // or .museWonder(apiKey:), .claudeAuth(.appAttest(clientID:)), .off
+    cloud: .claude(apiKey: key)          // or .openRouter(apiKey:model:), .museWonder(apiKey:), .claudeAuth(.appAttest(clientID:)), .off
     // whenTooLong: .trimHistory          // stay on the picked model in long chats instead of moving up
 )
 
@@ -172,9 +172,33 @@ let outcome = await coordinator.run(.init(prompt: prompt, privacyReason: privacy
 
 With this API, the privacy check is up to you: a turn is only private if you pass `privacyReason`.
 
+### OpenRouter: any model, with your users' own keys
+
+`.openRouter(apiKey:model:)` serves the cloud route with any model on OpenRouter, billed to the key's OpenRouter credits. That suits apps where each person brings their own key. `OpenRouterCatalog.fetch()` downloads OpenRouter's public model list (no key needed) with each model's context size, price and image support. Pick a model from it, or use the default, `OpenRouterModel.claudeSonnet`:
+
+```swift
+let catalog = try await OpenRouterCatalog.fetch()
+let model = catalog.model(id: "openai/gpt-5.6-luna") ?? .claudeSonnet
+let assistant = HybridAssistant(instructions: "…", cloud: .openRouter(apiKey: usersKey, model: model))
+```
+
+- **Sign in with OpenRouter:** `OpenRouterAuth` runs OpenRouter's OAuth PKCE flow, so people get a key on their own account without copying one. OpenRouter only calls back to https pages, so host a page that forwards `code` and `state` to your app's URL scheme (HybridRouter's is [`site/openrouter/index.html`](../site/openrouter/index.html)):
+
+  ```swift
+  let auth = OpenRouterAuth.authorization(callbackURL: yourPage, keyLabel: "My App")
+  let callback = try await webAuthenticationSession.authenticate(using: auth.url, callback: .customScheme("myapp"), additionalHeaderFields: [:])
+  let key = try await OpenRouterAuth.exchange(code: try OpenRouterAuth.code(from: callback, expectedState: auth.state),
+                                              codeVerifier: auth.codeVerifier)
+  ```
+- **Names:** badges and reasons use the model's name ("GPT-5.6 Luna"), and naming it in a message ("ask GPT…") asks for the cloud route.
+- **What's sent:** only what the catalog says the model supports. Images go only to models that take them, and structured output only where it's listed.
+- **Cost:** counted from the catalog's prices.
+- **Errors:** a refused key or too few credits falls back to Apple's models, with "key not accepted" or "out of credits" as the reason.
+- **Benchmarks:** the router was tuned and benchmarked with Claude. Other models pass a check of text, history, images and structured output, but haven't been benchmarked behind the router.
+
 ### Your own cloud model
 
-Any `LanguageModel` can serve the cloud route. Conform a type to `ModelProvider` with `route: .cloud` and give it a `displayName`; reasons and badges then use that name ("You asked for Gemini"). Add its price to a `CostTable` so its cost is counted. Steps from a model without a price are reported in `SessionSummary.unpricedSteps` rather than silently counted as free.
+Any `LanguageModel` can serve the cloud route. Conform a type to `ModelProvider` with `route: .cloud` and give it a `displayName`; reasons and badges then use that name ("You asked for Gemini"). Add its price to a `CostTable`, or return it from the provider's `price`, so its cost is counted. Steps from a model without a price are reported in `SessionSummary.unpricedSteps` rather than silently counted as free.
 
 ### How much history each route sees
 

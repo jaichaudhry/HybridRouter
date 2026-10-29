@@ -20,6 +20,15 @@ Either:
 
 Create a key at [dev.meta.ai](https://dev.meta.ai/api-keys) (Standard mode, so your prompts aren't used for training). Then either paste it in Settings › Muse Wonder, or set `META_API_KEY` in `Config/Secrets.xcconfig` for Debug builds, and pick **Muse Wonder** under Settings › Cloud model. Replies are labelled with the model that wrote them, so a conversation can switch back and forth. Expect slower replies than Claude: Muse reasons before answering and its reply arrives all at once, a median 9.3 s to the first word against 2.2 s for Sonnet (see [Quality vs cost](results.md#quality-vs-cost)). Meta has no App Attest equivalent, so for other people's devices each user brings their own key.
 
+## Using OpenRouter instead
+
+[OpenRouter](https://openrouter.ai) serves hundreds of models, including Claude, GPT, Gemini, DeepSeek and Llama, through one key, billed to that key's own OpenRouter credits. Add a few dollars of credit to an OpenRouter account. Then, in Settings › OpenRouter, either tap **Sign in with OpenRouter** and approve in the sheet that opens, or paste a key from [openrouter.ai/keys](https://openrouter.ai/keys). For Debug builds you can instead set `OPENROUTER_API_KEY` in `Config/Secrets.xcconfig`. Pick a model under Settings › OpenRouter › Model; the list comes from OpenRouter's public catalog, with each model's context size, price and whether it can see images. Finally, pick **OpenRouter** under Settings › Cloud model. Badges, reasons and "ask …" use the model's own name, so "Ask GPT…" reaches GPT-5.6 Luna when that's the chosen model.
+
+- **Signing in creates a key on your own account.** OpenRouter's approval page lets you cap its spending and set it to expire, and you can revoke it at openrouter.ai/keys. The app uses OAuth with PKCE. OpenRouter only sends people back to https pages, so it returns to [a small page](../site/openrouter/index.html) on this repo's GitHub Pages, which hands the one-time code to the app. That code is useless without a secret the app never sends anywhere but OpenRouter.
+- **Everyone uses their own key.** Your key is stored in the device's Keychain and sent only to OpenRouter. Release builds ignore the developer key, so other people's devices need their own OpenRouter key.
+- **Low credits:** OpenRouter checks before each reply that the key can pay for the longest reply allowed (16,000 tokens). If it can't, the reply falls back to Apple's models and the badge says "Fell back: out of credits". Add credits or raise the key's limit at openrouter.ai/keys.
+- **Only Claude has been benchmarked.** The router was tuned with Claude, and [the results](results.md) are Claude's. Other models work: GPT-5.6 Luna, Gemini 3.8 Flash and DeepSeek V4.1 Flash each passed a check of text, history, images and structured output, but their answer quality behind the router hasn't been measured.
+
 ## Shipping with App Attest
 
 For builds that run on other people's devices, don't embed a key. App Attest lets each install prove it's your genuine app and get short-lived Claude tokens:
