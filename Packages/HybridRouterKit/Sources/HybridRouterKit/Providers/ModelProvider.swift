@@ -23,10 +23,13 @@ public protocol ModelProvider: Sendable {
     var maximumResponseTokens: Int? { get }
     /// True for a stand-in model serving another route (e.g. Apple Cloud simulated on-device).
     var isSimulated: Bool { get }
+    /// The model's price, for models priced at runtime (OpenRouter's). Nil uses `prices.json`.
+    var price: CostTable.Price? { get }
 }
 
 extension ModelProvider {
     public var displayName: String { route.displayName }
     public var maximumResponseTokens: Int? { nil }
     public var isSimulated: Bool { false }
+    public var price: CostTable.Price? { nil }
 }

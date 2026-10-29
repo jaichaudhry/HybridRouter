@@ -31,6 +31,9 @@ public final class HybridAssistant {
         case claudeAuth(ClaudeAuth, tier: ClaudeProvider.Tier = .standard)
         /// Meta's Muse Wonder with a Meta Model API key.
         case museWonder(apiKey: String)
+        /// Any model on OpenRouter with the person's own OpenRouter key, billed to their credits.
+        /// Pick `model` from ``OpenRouterCatalog``; the default is Claude Sonnet.
+        case openRouter(apiKey: String, model: OpenRouterModel = .claudeSonnet)
         /// Any provider for the cloud route.
         case provider(any ModelProvider)
 
@@ -40,6 +43,7 @@ public final class HybridAssistant {
             case .claude(apiKey: let apiKey, tier: let tier): ClaudeProvider(auth: .apiKey(apiKey), tier: tier)
             case .claudeAuth(let auth, let tier): ClaudeProvider(auth: auth, tier: tier)
             case .museWonder(let apiKey): MuseProvider(apiKey: apiKey)
+            case .openRouter(let apiKey, let model): OpenRouterProvider(apiKey: apiKey, model: model)
             case .provider(let provider): provider
             }
         }
@@ -155,7 +159,8 @@ public final class HybridAssistant {
         restoring: RestoredConversation? = nil,
         isOnline: @escaping @Sendable () -> Bool
     ) {
-        let costTable = costTable ?? (try? CostTable.bundled()) ?? CostTable(updated: "", source: "", models: [:])
+        let costTable = (costTable ?? (try? CostTable.bundled()) ?? CostTable(updated: "", source: "", models: [:]))
+            .including([onDevice, appleCloud, cloud])
         self.costTable = costTable
         self.session = RoutedSession(
             instructions: instructions,

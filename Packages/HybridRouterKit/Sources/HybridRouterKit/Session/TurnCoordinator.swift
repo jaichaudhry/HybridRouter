@@ -270,7 +270,7 @@ public struct TurnCoordinator {
             previousRoute: session.lastRoute,
             hasPrivateHistory: !session.privatePromptIDs.isEmpty,
             previousPrompt: session.lastPromptText,
-            namedRoute: RouteMention.named(in: request.prompt),
+            namedRoute: RouteMention.named(in: request.prompt, cloudName: session.labels.cloudName),
             labels: session.labels
         )
     }

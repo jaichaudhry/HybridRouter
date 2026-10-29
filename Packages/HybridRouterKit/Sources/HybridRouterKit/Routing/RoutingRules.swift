@@ -132,18 +132,28 @@ public enum FollowUp {
 }
 
 /// Finds a route the user asked for by name, such as "ask Claude" or "but Claude can?".
-/// Either cloud model's name ("Claude", "Muse Wonder") asks for the cloud route, whichever model
-/// serves it. Only the cloud route and Apple Cloud count: "on device" turns up in ordinary questions ("store it
+/// Either built-in cloud model's name ("Claude", "Muse Wonder"), or the name of the model serving
+/// the cloud route ("GPT-5.6 Luna", or just "GPT"), asks for the cloud route. Only the cloud route and Apple Cloud count: "on device" turns up in ordinary questions ("store it
 /// on device"), and On-device is where most turns go anyway.
 public enum RouteMention {
     /// The single route named in the message, or nil if none or both are named.
-    public static func named(in prompt: String) -> Route? {
+    /// - Parameter cloudName: the name of the model serving the cloud route, e.g. from ``RouteLabels``.
+    public static func named(in prompt: String, cloudName: String? = nil) -> Route? {
+        let cloudNames = ["claude", "muse wonder"] + aliases(of: cloudName)
         let names: [(Route, String)] = [
-            (.cloud, #"\b(claude|muse wonder)\b"#),
+            (.cloud, #"\b("# + cloudNames.map(NSRegularExpression.escapedPattern(for:)).joined(separator: "|") + #")\b"#),
             (.appleCloud, #"\b(apple cloud|private cloud compute)\b"#),
         ]
         let named = names.filter { prompt.range(of: $0.1, options: [.regularExpression, .caseInsensitive]) != nil }
         return named.count == 1 ? named[0].0 : nil
+    }
+
+    /// The full name, and its leading word without version numbers ("GPT" for "GPT-5.6 Luna",
+    /// "Gemini" for "Gemini 3.8 Flash") when that's at least three letters.
+    static func aliases(of name: String?) -> [String] {
+        guard let name = name?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { return [] }
+        let leading = String(name.prefix(while: \.isLetter))
+        return leading.count >= 3 && leading.count < name.count ? [name, leading] : [name]
     }
 }
 

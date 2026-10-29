@@ -92,6 +92,7 @@ private struct TappedProvider: ModelProvider {
     var availability: ProviderAvailability { wrapped.availability }
     var maximumResponseTokens: Int? { wrapped.maximumResponseTokens }
     var isSimulated: Bool { wrapped.isSimulated }
+    var price: CostTable.Price? { wrapped.price }
     func contextSize() async -> Int? { await wrapped.contextSize() }
 }
 

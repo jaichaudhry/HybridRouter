@@ -17,6 +17,10 @@ public enum FailureCause: Equatable, Sendable {
     case unsupported
     case cancelled
     case providerError
+    /// The cloud model's key was refused or is missing.
+    case keyRejected
+    /// The account can't pay for the reply, e.g. OpenRouter credits or a key's spending limit.
+    case outOfCredits
 
     /// Shown after "Escalated:" on the badge.
     public var label: String {
@@ -32,6 +36,8 @@ public enum FailureCause: Equatable, Sendable {
         case .unsupported: "unsupported request"
         case .cancelled: "cancelled"
         case .providerError: "model error"
+        case .keyRejected: "key not accepted"
+        case .outOfCredits: "out of credits"
         }
     }
 
@@ -60,6 +66,8 @@ public enum FailureCause: Equatable, Sendable {
             case .quotaLimitReached: .rateLimited
             default: .providerError
             }
+        case ClaudeError.missingCredential:
+            self = .keyRejected
         case is ClassifierTimeoutError:
             self = .timeout
         case is CancellationError:
@@ -71,7 +79,9 @@ public enum FailureCause: Equatable, Sendable {
         case let error as URLError where Self.networkCodes.contains(error.code):
             self = .network
         default:
-            self = Self.isContextOverflow(error) ? .contextExceeded : .providerError
+            self = Self.isContextOverflow(error) ? .contextExceeded
+                : Self.isOutOfCredits(error) ? .outOfCredits
+                : .providerError
         }
     }
 
@@ -86,6 +96,13 @@ public enum FailureCause: Equatable, Sendable {
         case .rateLimited, .timeout, .network: true
         default: false
         }
+    }
+
+    /// OpenRouter's 402, which the bridge passes on as an untyped API error: "This request
+    /// requires more credits, or fewer max_tokens…" or "Insufficient credits". Seen October 2026.
+    static func isOutOfCredits(_ error: any Error) -> Bool {
+        let text = String(describing: error)
+        return text.contains("requires more credits") || text.localizedCaseInsensitiveContains("insufficient credits")
     }
 
     /// When the on-device model runs out of context mid-generation (e.g. after tool calls), it
@@ -195,7 +212,7 @@ public struct EscalationPolicy: Equatable, Sendable {
 
     private func fallsBackOn(_ cause: FailureCause) -> Bool {
         switch cause {
-        case .rateLimited, .timeout, .network, .providerError: true
+        case .rateLimited, .timeout, .network, .providerError, .keyRejected, .outOfCredits: true
         default: false
         }
     }
@@ -206,7 +223,7 @@ public struct EscalationPolicy: Equatable, Sendable {
             true
         case .guardrail, .refusal:
             escalatesOnGuardrail
-        case .cancelled:
+        case .cancelled, .keyRejected, .outOfCredits:
             false
         }
     }

@@ -336,7 +336,7 @@ struct RouteLabelsTests {
             instructions: "", onDevice: FakeProvider(route: .onDevice, reply: ""), appleCloud: FakeProvider(route: .appleCloud, reply: ""),
             cloud: MuseProvider(apiKey: "test"), costTable: costTable
         )
-        #expect(session.labels == RouteLabels(cloud: .museWonder))
+        #expect(session.labels == RouteLabels(cloudName: "Muse Wonder", cloudSymbol: "infinity", cloudModelID: "muse-wonder-1.0"))
         #expect(session.availability(of: .cloud) == .available)
         #expect(MuseProvider(apiKey: nil).availability == .unavailable(reason: "Muse Wonder not configured"))
     }

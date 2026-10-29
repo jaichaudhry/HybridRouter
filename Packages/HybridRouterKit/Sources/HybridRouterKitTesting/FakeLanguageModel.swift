@@ -148,6 +148,8 @@ public struct FakeProvider: ModelProvider {
     public var contextLimit: Int?
     public var maximumResponseTokens: Int?
     public var isSimulated = false
+    /// A runtime price, like OpenRouter's; nil uses the cost table.
+    public var price: CostTable.Price?
 
     public init(
         route: Route,
@@ -159,8 +161,10 @@ public struct FakeProvider: ModelProvider {
         maximumResponseTokens: Int? = nil,
         behavior: FakeBehavior = .reply,
         modelID: String? = nil,
-        displayName: String? = nil
+        displayName: String? = nil,
+        price: CostTable.Price? = nil
     ) {
+        self.price = price
         self.route = route
         self.contextLimit = contextLimit
         self.maximumResponseTokens = maximumResponseTokens

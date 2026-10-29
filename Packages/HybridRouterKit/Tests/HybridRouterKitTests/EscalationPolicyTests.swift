@@ -165,7 +165,7 @@ struct FailureCauseTests {
         #expect(FailureCause(URLError(.cancelled)) == .cancelled)
         #expect(FailureCause(URLError(.notConnectedToInternet)) == .network)
         #expect(FailureCause(URLError(.networkConnectionLost)) == .network)
-        #expect(FailureCause(ClaudeError.missingCredential) == .providerError)
+        #expect(FailureCause(ClaudeError.missingCredential) == .keyRejected)
     }
 
     @Test func onDeviceOverflowMidGenerationCountsAsContext() {

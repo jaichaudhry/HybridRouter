@@ -14,6 +14,7 @@ struct MisplacedProvider: ModelProvider {
     var modelID: String { wrapped.modelID }
     var displayName: String { wrapped.displayName }
     var model: any LanguageModel { wrapped.model }
+    var price: CostTable.Price? { wrapped.price }
 
     var availability: ProviderAvailability {
         .unavailable(reason: "Misconfigured: a \(wrapped.route.displayName) provider was passed for \(route.displayName)")

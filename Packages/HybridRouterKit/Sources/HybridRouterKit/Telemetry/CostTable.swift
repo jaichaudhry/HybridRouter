@@ -50,6 +50,15 @@ public struct CostTable: Codable, Equatable, Sendable {
         return try JSONDecoder().decode(CostTable.self, from: Data(contentsOf: url))
     }
 
+    /// This table with the prices of providers priced at runtime (``ModelProvider/price``) added.
+    public func including(_ providers: [any ModelProvider]) -> CostTable {
+        var table = self
+        for provider in providers {
+            if let price = provider.price { table.models[provider.modelID] = price }
+        }
+        return table
+    }
+
     /// Estimated cost in USD, or nil if the model has no price entry.
     public func cost(of usage: TokenUsage, modelID: String) -> Double? {
         guard let price = models[modelID] else { return nil }

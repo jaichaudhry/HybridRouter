@@ -73,7 +73,7 @@ public final class RoutedSession {
             provider.route == route ? provider : MisplacedProvider(wrapped: provider, slot: route)
         }
         self.providers = Dictionary(uniqueKeysWithValues: slotted.map { ($0.route, $0) })
-        self.costTable = costTable
+        self.costTable = costTable.including([onDevice, appleCloud, cloud])
         let models = RouteModels(onDevice: slotted[0], appleCloud: slotted[1], cloud: slotted[2])
         let longestNote = Route.allCases.map { RoutingProfile.routeNote(for: $0, models: models.names) }.max { $0.count < $1.count } ?? ""
         let toolText = (tools + appleOnlyTools).map { "\($0.name): \($0.description)" }
