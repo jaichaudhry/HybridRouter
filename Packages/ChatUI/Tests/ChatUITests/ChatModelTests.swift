@@ -269,7 +269,10 @@ extension ChatModelTests {
         #expect(model.messages[1].decision?.route == .onDevice)
         #expect(model.isPrivate == false)
         await model.send("Which offer should I take?")
-        #expect(model.messages[3].decision?.route == .cloud)
+        #expect(model.messages[2].privacyReason == nil)
+        // The chat now has a private turn, so it stays on Apple's models.
+        #expect(model.messages[3].decision?.route == .appleCloud)
+        #expect(model.messages[3].decision?.decidedByPrivacy == true)
     }
 
     @Test func forcingClaudeOnAPrivateMessageIsBlocked() async {
